@@ -3,11 +3,11 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <xstd/type_traits/conditional_data_member.hpp> // conditional_data_member
-#include <xstd/test/constexpr_check.hpp>                // XSTD_CONSTEXPR_CHECK
-#include <boost/test/unit_test.hpp>                     // BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_AUTO_TEST_CASE
-#include <concepts>                                     // same_as
-#include <type_traits>                                  // is_empty_v
+#include <xstd/core/type_traits/conditional_data_member.hpp> // conditional_data_member
+#include <xstd/test/constexpr_check.hpp>                     // XSTD_CONSTEXPR_CHECK
+#include <boost/test/unit_test.hpp>                          // BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_AUTO_TEST_CASE
+#include <concepts>                                          // same_as
+#include <type_traits>                                       // is_empty_v
 
 BOOST_AUTO_TEST_SUITE(TypeTraits)
 
