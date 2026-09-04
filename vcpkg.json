@@ -1,8 +1,8 @@
 {
-  "name": "xstd-ints",
+  "name": "xstd-misc",
   "version-string": "0.1.0",
-  "description": "Do as the ints do",
-  "homepage": "https://github.com/rhalbersma/xstd-ints",
+  "description": "Miscellaneous extensions to the C++ Standard Library",
+  "homepage": "https://github.com/rhalbersma/xstd-misc",
   "license": "BSL-1.0",
   "default-features": [
     "test"
@@ -11,7 +11,6 @@
     "test": {
       "description": "Build the Boost.Test-based unit tests",
       "dependencies": [
-        "boost-align",
         "boost-test"
       ]
     }
