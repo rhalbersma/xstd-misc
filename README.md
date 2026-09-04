@@ -65,18 +65,6 @@ Each directory has an umbrella exporting what is under it -- `<xstd/misc/concept
 `<xstd/misc/type_traits.hpp>`, `<xstd/misc/utility.hpp>` -- and `<xstd/misc.hpp>` exports
 the three, so one include brings the whole surface.
 
-If you lint with `clang-tidy` and use any Boost library, `misc-include-cleaner`
-will report that nothing provides the Boost names you write, here and anywhere
-else you use Boost: no Boost library ships the IWYU pragmas the check reads, and
-its public headers reach their declarations through private implementation ones.
-The answer is one line in your own `.clang-tidy`, which no library can supply for
-you:
-
-```yaml
-CheckOptions:
-  misc-include-cleaner.IgnoreHeaders: 'boost/.*'
-```
-
 ## Examples
 
 `to_underlying` is one spelling over both forms of an enum value: it forwards a
