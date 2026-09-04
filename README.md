@@ -1,5 +1,14 @@
 # Miscellaneous extensions to the C++ Standard Library
 
+> ‘The time has come,’ the Walrus said,  
+> ‘To talk of many things:  
+> Of shoes—and ships—and sealing-wax—  
+> Of cabbages—and kings—  
+> And why the sea is boiling hot—  
+> And whether pigs have wings.’
+>
+> -- Lewis Carroll, *Through the Looking-Glass* (1871), "The Walrus and the Carpenter"
+
 [![Language](https://img.shields.io/badge/language-C++-blue.svg)](https://isocpp.org/)
 [![Standard](https://img.shields.io/badge/c%2B%2B-23-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B#Standardization)
 [![License](https://img.shields.io/badge/license-Boost-blue.svg)](https://opensource.org/licenses/BSL-1.0)
