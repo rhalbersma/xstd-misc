@@ -3,15 +3,15 @@
 #    (See accompanying file LICENSE_1_0.txt or copy at
 #          http://www.boost.org/LICENSE_1_0.txt)
 
-add_library(xstd_ints_test_options INTERFACE)
-option(XSTD_INTS_WARNINGS_AS_ERRORS "Treat warnings as errors in xstd-ints tests" ${PROJECT_IS_TOP_LEVEL})
+add_library(xstd_misc_test_options INTERFACE)
+option(XSTD_MISC_WARNINGS_AS_ERRORS "Treat warnings as errors in xstd-misc tests" ${PROJECT_IS_TOP_LEVEL})
 
 # clang-cl reports CXX_COMPILER_ID Clang but only understands its MSVC-style
 # driver flags, not GNU-style ones like -pedantic-errors.
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
-    set(xstd_ints_is_clang_cl ON)
+    set(xstd_misc_is_clang_cl ON)
 else()
-    set(xstd_ints_is_clang_cl OFF)
+    set(xstd_misc_is_clang_cl OFF)
 endif()
 
 set(cxx_compile_definitions
@@ -40,17 +40,6 @@ set(cxx_compile_options_warnings
         -Wno-global-constructors            # triggered by Boost.Test
         -Wno-used-but-marked-unused         # triggered by Boost.Test
         -Wno-c2y-extensions                 # triggered by Boost.Test's use of __COUNTER__
-        -Wno-bit-int-extension              # _BitInt is C23; in C++ Clang alone has it
-        -Wno-lifetime-safety-lifetimebound-violation  # can't verify chained operator<< returns ostr
-        # Reads any reference to a container as a reference into it, so a
-        # function that grows one twice - the div_result formatter's loop over
-        # to_chars output - is a use after invalidation to it. Reached only
-        # when an element type has no std::formatter of its own, which is why
-        # absl::int128 is the first to draw it. Clang 23 and 24-SVN both.
-        -Wno-lifetime-safety-invalidation
-        # xstd::to_chars takes a char* range because std::to_chars does, so
-        # every pointer step inside that contract draws this.
-        -Wno-unsafe-buffer-usage
     >
     $<$<CXX_COMPILER_ID:GNU>:
         -Wall
@@ -61,41 +50,33 @@ set(cxx_compile_options_warnings
         -Wsign-compare
         -Wsign-conversion
         -Wsign-promo
-        # A false positive inside <bits/unicode.h>, raised after inlining so
-        # system-header suppression does not reach it. Scoped to GCC.
-        -Wno-maybe-uninitialized
     >
-    $<$<AND:$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>,$<NOT:$<BOOL:${xstd_ints_is_clang_cl}>>>:
+    $<$<AND:$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>,$<NOT:$<BOOL:${xstd_misc_is_clang_cl}>>>:
         -pedantic-errors
     >
 )
 
 target_compile_definitions(
-    xstd_ints_test_options INTERFACE
+    xstd_misc_test_options INTERFACE
     ${cxx_compile_definitions}
 )
 target_compile_options(
-    xstd_ints_test_options INTERFACE
+    xstd_misc_test_options INTERFACE
     ${cxx_compile_options_warnings}
-    $<$<AND:$<BOOL:${XSTD_INTS_WARNINGS_AS_ERRORS}>,$<CXX_COMPILER_ID:MSVC>>:/WX>
-    $<$<AND:$<BOOL:${XSTD_INTS_WARNINGS_AS_ERRORS}>,$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>>:-Werror>
-    # Pre-empts MinGW's 32-byte aligned stores to a 16-byte aligned stack, which bite the
-    # moment AVX is enabled. The assembler rewrites them unaligned, so 256-bit vectors
-    # survive (rhalbersma/bit_set#54, GCC PR target/54412, binutils 2.38+).
-    $<$<AND:$<CXX_COMPILER_ID:GNU>,$<PLATFORM_ID:Windows>>:-Wa$<COMMA>-muse-unaligned-vector-move>
+    $<$<AND:$<BOOL:${XSTD_MISC_WARNINGS_AS_ERRORS}>,$<CXX_COMPILER_ID:MSVC>>:/WX>
+    $<$<AND:$<BOOL:${XSTD_MISC_WARNINGS_AS_ERRORS}>,$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>>:-Werror>
 )
 target_include_directories(
-    xstd_ints_test_options INTERFACE
+    xstd_misc_test_options INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 # Each public header is compiled as its own translation unit (linked against
 # the same warning flags as the unit tests), proving it is self-sufficient.
-# Any target named after the header is one it needs to be self-sufficient against.
 set(public_header_dir ${PROJECT_SOURCE_DIR}/include)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/header_self_sufficiency)
 
-function(xstd_ints_add_header_self_sufficiency_test h)
+function(xstd_misc_add_header_self_sufficiency_test h)
     string(REPLACE "/" "." header_test_id ${h})
     string(REGEX REPLACE "[.]hpp$" "" header_test_id ${header_test_id})
     set(header_test_source ${CMAKE_CURRENT_BINARY_DIR}/header_self_sufficiency/${header_test_id}.cpp)
@@ -109,9 +90,8 @@ function(xstd_ints_add_header_self_sufficiency_test h)
     add_executable(header.${header_test_id} ${header_test_source})
     target_link_libraries(
         header.${header_test_id} PRIVATE
-        xstd::ints
-        ${ARGN}
-        xstd_ints_test_options
+        xstd::misc
+        xstd_misc_test_options
     )
     add_test(NAME header.${header_test_id} COMMAND header.${header_test_id})
 endfunction()
@@ -123,45 +103,26 @@ file(
     ${public_header_dir}/xstd/*.hpp
 )
 
-# Every header but those under ext/, which cannot compile before their optional dependency resolves.
-list(FILTER public_headers EXCLUDE REGEX "^xstd/ints/ext/")
-
-# The libraries are leaves: neither may include the other, or the split would make a chain of them.
-foreach(lib misc ints)
-    if(lib STREQUAL misc)
-        set(forbidden ints)
-    else()
-        set(forbidden misc)
+# The libraries are leaves: xstd/misc may include neither of its siblings, or
+# the split that gave each of them a repository would make a chain of them.
+foreach(h ${public_headers})
+    file(STRINGS ${public_header_dir}/${h} offending REGEX "#include[ \t]*<xstd/(bits|ints)/")
+    if(offending)
+        message(FATAL_ERROR "include/${h} includes a sibling library: xstd/misc must stay a leaf.\n  ${offending}")
     endif()
-    file(GLOB_RECURSE lib_headers CONFIGURE_DEPENDS ${public_header_dir}/xstd/${lib}/*.hpp)
-    list(APPEND lib_headers ${public_header_dir}/xstd/${lib}.hpp)
-    foreach(h ${lib_headers})
-        file(STRINGS ${h} offending REGEX "#include[ \t]*<xstd/${forbidden}/")
-        if(offending)
-            message(FATAL_ERROR "${h} includes <xstd/${forbidden}/...>: xstd/${lib} and xstd/${forbidden} must stay leaves.\n  ${offending}")
-        endif()
-    endforeach()
 endforeach()
 
 foreach(h ${public_headers})
-    xstd_ints_add_header_self_sufficiency_test(${h})
+    xstd_misc_add_header_self_sufficiency_test(${h})
 endforeach()
 
 # The test tree mirrors the header tree: every public header is answered by exactly
-# one test source at the same path. A reviewer reading include/xstd/ints/cstdlib/abs.hpp
-# knows where its tests are without looking. Enforced here so it cannot drift -- the
-# glob above already lists every header, and ext/ is back in, its tests compiling
-# against whichever of the two optional libraries is present.
-file(
-    GLOB_RECURSE all_public_headers
-    CONFIGURE_DEPENDS
-    RELATIVE ${public_header_dir}
-    ${public_header_dir}/xstd/*.hpp
-)
-
+# one test source at the same path. A reviewer reading include/xstd/misc/utility/to_underlying.hpp
+# knows where its tests are without looking. Enforced here so it cannot drift --
+# the glob above already lists every header.
 set(unmirrored_headers)
-foreach(h ${all_public_headers})
-    # xstd/ints/cstdlib/abs.hpp is answered by test/src/ints/cstdlib/abs.cpp.
+foreach(h ${public_headers})
+    # xstd/misc/utility/to_underlying.hpp is answered by test/src/misc/utility/to_underlying.cpp.
     string(REGEX REPLACE "^xstd/" "" mirrored ${h})
     string(REGEX REPLACE "[.]hpp$" ".cpp" mirrored ${mirrored})
     if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/${mirrored})
@@ -185,91 +146,8 @@ endif()
 
 find_package(
     Boost 1.70 CONFIG REQUIRED COMPONENTS
-    align
     unit_test_framework
 )
-
-# The one 128-bit type the suite tests against that xstd knows nothing about,
-# and not a hard dependency. Ships with Boost 1.92; until then the fetch below.
-option(XSTD_INTS_TEST_FETCH_BOOST_INT128 "Fetch Boost.Int128 when no installed copy is found" ON)
-
-find_package(boost_int128 CONFIG QUIET)
-if(NOT TARGET Boost::int128 AND XSTD_INTS_TEST_FETCH_BOOST_INT128)
-    include(FetchContent)
-    FetchContent_Declare(
-        boost_int128
-        GIT_REPOSITORY https://github.com/cppalliance/int128.git
-        # A development commit rather than v3.1.0, the types having lost their
-        # _t suffix after it was cut. Pinned rather than tracking a branch.
-        GIT_TAG f437657470186b79f1f314bc2c76a112bcc2529c
-        # Its CMakeLists.txt builds its own test suite under BUILD_TESTING;
-        # naming a subdirectory without one keeps the download and drops that.
-        SOURCE_SUBDIR does-not-exist
-    )
-    FetchContent_MakeAvailable(boost_int128)
-
-    # SYSTEM because these headers are not written to this project's warning
-    # level; an installed copy arrives as an imported target, already system.
-    add_library(Boost::int128 INTERFACE IMPORTED)
-    target_include_directories(Boost::int128 SYSTEM INTERFACE ${boost_int128_SOURCE_DIR}/include)
-endif()
-
-if(TARGET Boost::int128)
-    set(xstd_ints_test_boost_int128 Boost::int128)
-else()
-    set(xstd_ints_test_boost_int128)
-endif()
-
-# The other half of the same extension point, and not a hard dependency
-# either: absl::int128 declares no noexcept anywhere, which is the case the
-# integer functions' conditional exception specification exists for.
-option(XSTD_INTS_TEST_FETCH_ABSL_INT128 "Fetch Abseil when no installed copy is found" ON)
-
-find_package(absl CONFIG QUIET)
-if(NOT TARGET absl::int128 AND XSTD_INTS_TEST_FETCH_ABSL_INT128)
-    include(FetchContent)
-    FetchContent_Declare(
-        absl_int128
-        GIT_REPOSITORY https://github.com/abseil/abseil-cpp.git
-        # A release tag, the spelling of these two types being settled.
-        GIT_TAG 20260526.0
-        # Abseil's CMakeLists.txt configures the whole library and its tests;
-        # naming a subdirectory without one keeps the download and drops that,
-        # leaving the one translation unit these two types need.
-        SOURCE_SUBDIR does-not-exist
-    )
-    FetchContent_MakeAvailable(absl_int128)
-
-    # int128.cc is where operator/ and operator% live on a platform with no
-    # 128-bit intrinsic to lower them to; the rest of the type is header-only.
-    add_library(xstd_ints_test_absl_int128_lib STATIC ${absl_int128_SOURCE_DIR}/absl/numeric/int128.cc)
-
-    # Built to the same standard as the tests, not to the compiler's default:
-    # absl::strong_ordering is std::strong_ordering only where the library
-    # sees C++20's <compare>, and the two spellings must not meet at a link.
-    target_compile_features(xstd_ints_test_absl_int128_lib PUBLIC cxx_std_23)
-
-    # SYSTEM for the reason Boost::int128's includes are.
-    target_include_directories(xstd_ints_test_absl_int128_lib SYSTEM PUBLIC ${absl_int128_SOURCE_DIR})
-
-    add_library(absl::int128 ALIAS xstd_ints_test_absl_int128_lib)
-endif()
-
-if(TARGET absl::int128)
-    set(xstd_ints_test_absl_int128 absl::int128)
-else()
-    set(xstd_ints_test_absl_int128)
-endif()
-
-# The headers held back above, each compiled only where the library it adapts is there to adapt.
-if(TARGET Boost::int128)
-    xstd_ints_add_header_self_sufficiency_test(xstd/ints/ext/boost.hpp ${xstd_ints_test_boost_int128})
-    xstd_ints_add_header_self_sufficiency_test(xstd/ints/ext/boost/int128.hpp ${xstd_ints_test_boost_int128})
-endif()
-if(TARGET absl::int128)
-    xstd_ints_add_header_self_sufficiency_test(xstd/ints/ext/absl.hpp ${xstd_ints_test_absl_int128})
-    xstd_ints_add_header_self_sufficiency_test(xstd/ints/ext/absl/int128.hpp ${xstd_ints_test_absl_int128})
-endif()
 
 set(current_source_dir ${CMAKE_CURRENT_SOURCE_DIR}/src)
 file(
@@ -288,11 +166,9 @@ foreach(t ${targets})
 
     target_link_libraries(
         ${target_id} PRIVATE
-        xstd::ints
+        xstd::misc
         Boost::unit_test_framework
-        ${xstd_ints_test_boost_int128}
-        ${xstd_ints_test_absl_int128}
-        xstd_ints_test_options
+        xstd_misc_test_options
     )
 
     add_test(NAME ${target_id} COMMAND ${target_id} --log_level=all)
