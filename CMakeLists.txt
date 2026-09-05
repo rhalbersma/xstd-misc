@@ -8,6 +8,7 @@ project(
     xstd-misc
     VERSION 0.1.0
     DESCRIPTION "Miscellaneous extensions to the C++ Standard Library"
+    # Spelled out: project()'s own arguments expand before it sets PROJECT_NAME, so ${PROJECT_NAME} here is empty.
     HOMEPAGE_URL "https://github.com/rhalbersma/xstd-misc"
     LANGUAGES CXX
 )

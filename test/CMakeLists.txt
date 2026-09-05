@@ -3,15 +3,20 @@
 #    (See accompanying file LICENSE_1_0.txt or copy at
 #          http://www.boost.org/LICENSE_1_0.txt)
 
-add_library(xstd_misc_test_options INTERFACE)
-option(XSTD_MISC_WARNINGS_AS_ERRORS "Treat warnings as errors in xstd-misc tests" ${PROJECT_IS_TOP_LEVEL})
+# The project name as an identifier and as a cache-option prefix, so a rename carries the test tree with it.
+string(MAKE_C_IDENTIFIER ${PROJECT_NAME} project_id)
+# In that order: TOUPPER alone would leave XSTD-MISC, which is no name a cache option can have.
+string(TOUPPER ${project_id} project_option_prefix)
+
+add_library(${project_id}_test_options INTERFACE)
+option(${project_option_prefix}_WARNINGS_AS_ERRORS "Treat warnings as errors in ${PROJECT_NAME} tests" ${PROJECT_IS_TOP_LEVEL})
 
 # clang-cl reports CXX_COMPILER_ID Clang but only understands its MSVC-style
 # driver flags, not GNU-style ones like -pedantic-errors.
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
-    set(xstd_misc_is_clang_cl ON)
+    set(${project_id}_is_clang_cl ON)
 else()
-    set(xstd_misc_is_clang_cl OFF)
+    set(${project_id}_is_clang_cl OFF)
 endif()
 
 set(cxx_compile_definitions
@@ -51,23 +56,23 @@ set(cxx_compile_options_warnings
         -Wsign-conversion
         -Wsign-promo
     >
-    $<$<AND:$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>,$<NOT:$<BOOL:${xstd_misc_is_clang_cl}>>>:
+    $<$<AND:$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>,$<NOT:$<BOOL:${${project_id}_is_clang_cl}>>>:
         -pedantic-errors
     >
 )
 
 target_compile_definitions(
-    xstd_misc_test_options INTERFACE
+    ${project_id}_test_options INTERFACE
     ${cxx_compile_definitions}
 )
 target_compile_options(
-    xstd_misc_test_options INTERFACE
+    ${project_id}_test_options INTERFACE
     ${cxx_compile_options_warnings}
-    $<$<AND:$<BOOL:${XSTD_MISC_WARNINGS_AS_ERRORS}>,$<CXX_COMPILER_ID:MSVC>>:/WX>
-    $<$<AND:$<BOOL:${XSTD_MISC_WARNINGS_AS_ERRORS}>,$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>>:-Werror>
+    $<$<AND:$<BOOL:${${project_option_prefix}_WARNINGS_AS_ERRORS}>,$<CXX_COMPILER_ID:MSVC>>:/WX>
+    $<$<AND:$<BOOL:${${project_option_prefix}_WARNINGS_AS_ERRORS}>,$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>>:-Werror>
 )
 target_include_directories(
-    xstd_misc_test_options INTERFACE
+    ${project_id}_test_options INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
@@ -76,7 +81,7 @@ target_include_directories(
 set(public_header_dir ${PROJECT_SOURCE_DIR}/include)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/header_self_sufficiency)
 
-function(xstd_misc_add_header_self_sufficiency_test h)
+function(${project_id}_add_header_self_sufficiency_test h)
     string(REPLACE "/" "." header_test_id ${h})
     string(REGEX REPLACE "[.]hpp$" "" header_test_id ${header_test_id})
     set(header_test_source ${CMAKE_CURRENT_BINARY_DIR}/header_self_sufficiency/${header_test_id}.cpp)
@@ -91,7 +96,7 @@ function(xstd_misc_add_header_self_sufficiency_test h)
     target_link_libraries(
         header.${header_test_id} PRIVATE
         xstd::misc
-        xstd_misc_test_options
+        ${project_id}_test_options
     )
     add_test(NAME header.${header_test_id} COMMAND header.${header_test_id})
 endfunction()
@@ -113,7 +118,7 @@ foreach(h ${public_headers})
 endforeach()
 
 foreach(h ${public_headers})
-    xstd_misc_add_header_self_sufficiency_test(${h})
+    cmake_language(CALL ${project_id}_add_header_self_sufficiency_test ${h})
 endforeach()
 
 # The test tree mirrors the header tree: every public header is answered by exactly
@@ -168,7 +173,7 @@ foreach(t ${targets})
         ${target_id} PRIVATE
         xstd::misc
         Boost::unit_test_framework
-        xstd_misc_test_options
+        ${project_id}_test_options
     )
 
     add_test(NAME ${target_id} COMMAND ${target_id} --log_level=all)
