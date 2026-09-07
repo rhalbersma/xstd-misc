@@ -141,6 +141,12 @@ libraries) in both Debug and Release mode:
 | Windows  | Clang-CL   | MSVC             | 19.1.5 (VS 2022)          | 20.1.8 (VS 2026)          | 20.1.8 (VS 2026-Preview)       | [![Clang-CL](https://github.com/rhalbersma/xstd-misc/actions/workflows/clang-cl.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/clang-cl.yml) |
 | Windows  | MSVC       | MSVC             | 2022 (17.11+)             | 2026                      | 2026-Preview                   | [![MSVC](https://github.com/rhalbersma/xstd-misc/actions/workflows/msvc.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/msvc.yml) |
 
+## Acknowledgements
+
+We acknowledge Walter E. Brown for discussing the idea for `std::to_underlying`
+and JeanHeyd Meneide for drafting it into an actual proposal and shepherding
+[P1682](https://wg21.link/p1682) through the C++ standardization process.
+
 ## License
 
 <pre>
