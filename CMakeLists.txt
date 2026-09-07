@@ -36,7 +36,7 @@ add_library(xstd::misc ALIAS ${PROJECT_NAME})
 # directory, and install(TARGETS ... FILE_SET) adds the install destination.
 target_compile_features(
     ${PROJECT_NAME} INTERFACE
-    cxx_std_23
+    cxx_std_20
 )
 
 target_sources(

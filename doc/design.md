@@ -6,8 +6,8 @@ xstd-misc is a header-only collection of small C++ standard-library extensions
 that belong to no one domain. There is no single proposal behind it: it collects
 facilities suggested by existing practice that can be implemented portably, with
 a standard-library interface. What is here is what the domain libraries kept
-reaching for and none of them owns. The baseline is [C++23](https://wg21.link/N4950),
-and may move to C++26 once that is common across the tested toolchains. Consumers
+reaching for and none of them owns. The baseline is [C++20](https://wg21.link/N4861),
+and may move once a later standard is common across the tested toolchains. Consumers
 need no third-party dependencies.
 
 ## Principles
@@ -21,7 +21,7 @@ need no third-party dependencies.
   gave each of them a repository would make a chain of them. `test/CMakeLists.txt`
   enforces this over every public header rather than trusting it.
 - **Stay modular and dependency-free.** Linking `xstd::misc` adds include paths
-  and the [C++23](https://wg21.link/N4950) requirement, but no runtime library or
+  and the [C++20](https://wg21.link/N4861) requirement, but no runtime library or
   transitive package.
 
 ## API shape
@@ -75,11 +75,31 @@ roles. The xstd overload complements it: given an enum value wrapped in
 `std::integral_constant`, it returns an `integral_constant` of the underlying
 type, preserving the value at the type level.
 
-A second overload forwards a plain enum to `std::to_underlying`, so `xstd::` is
-one spelling over both forms rather than a name a caller has to remember to
-switch away from for the unwrapped case. It is an overload rather than a
-using-declaration because the constraint is then written where it applies, as
-the wrapped one writes its own.
+A second overload takes a plain enum, so `xstd::` is one spelling over both
+forms rather than a name a caller has to remember to switch away from for the
+unwrapped case. It is an overload rather than a using-declaration because the
+constraint is then written where it applies, as the wrapped one writes its own.
+
+It performs the cast rather than calling `std::to_underlying`, which would put
+the library's baseline at [C++23](https://wg21.link/N4950) for one function. The
+cast is not an approximation of that function: P1682R1's Returns clause is
+`static_cast<underlying_type_t<T>>(value)` and nothing more, so this is the
+standard's own wording rather than a reimplementation of it. Selecting between
+the two on `__cpp_lib_to_underlying` was considered and dropped: it would buy
+nothing an identity can give, at the price of a header included on some builds
+and not others, and a branch only one CI dimension ever compiles.
+
+The wrapped overload calls the plain one rather than repeating the cast. The
+call is qualified: unqualified, an enum's own namespace could supply a
+`to_underlying` that ADL would prefer.
+
+Writing the cast out puts it where a linter can see it, which delegating did
+not. Instantiated for an enum whose underlying type is `bool` and which has no
+enumerators, it becomes a cast to `bool`, and
+`bugprone-non-zero-enum-to-bool-conversion` reports that as always true; a
+value-initialized one converts to `false`, so it is not. The suppression sits on
+that line rather than in `.clang-tidy`, so it reaches a consumer linting their
+own code -- their configuration is not ours to fix.
 
 ## Boost and include-cleaner
 
@@ -94,12 +114,12 @@ linter, and CMake carries no usage requirement that could propagate one.
 
 ## Requirements and evolution
 
-xstd-misc requires a conforming [C++23](https://wg21.link/N4950) compiler, and the
+xstd-misc requires a conforming [C++20](https://wg21.link/N4861) compiler, and the
 CMake project CMake 3.28 or later, exporting the header-only `xstd::misc` target.
 Consumers build neither the tests nor their dependencies. New facilities should
 stay small, portable and motivated by current practice; one that enters the
-standard library can be retired, and the baseline can advance to C++26 once that
-is a practical default. A facility that grows a domain of its own belongs in a
+standard library can be retired, and the baseline can advance once a later
+standard is a practical default. A facility that grows a domain of its own belongs in a
 library named for it rather than here.
 
 ## CI policy
