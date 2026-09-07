@@ -10,7 +10,7 @@
 > -- Lewis Carroll, *Through the Looking-Glass* (1871), "The Walrus and the Carpenter"
 
 [![Language](https://img.shields.io/badge/language-C++-blue.svg)](https://isocpp.org/)
-[![Standard](https://img.shields.io/badge/c%2B%2B-23-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B#Standardization)
+[![Standard](https://img.shields.io/badge/c%2B%2B-20-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B#Standardization)
 [![License](https://img.shields.io/badge/license-Boost-blue.svg)](https://opensource.org/licenses/BSL-1.0)
 [![GCC](https://github.com/rhalbersma/xstd-misc/actions/workflows/gcc.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/gcc.yml)
 [![MinGW](https://github.com/rhalbersma/xstd-misc/actions/workflows/mingw.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/mingw.yml)
@@ -27,7 +27,7 @@ belong to no one domain, and so to none of the other xstd libraries. Recognizing
 a class template specialization, an empty type that keeps its place in a layout,
 a data member that is there only under a condition, the portable spelling of
 `[[no_unique_address]]`, and `to_underlying` over both a plain enum and a wrapped
-one. It relies on the [C++23](https://wg21.link/N4950) standard and targets the
+one. It relies on the [C++20](https://wg21.link/N4861) standard and targets the
 draft [C++29](https://wg21.link/std) standard library. All public APIs are in
 namespace `xstd`.
 
@@ -36,9 +36,13 @@ is what lets a project take this one alone.
 
 ## Requirements
 
-- A conforming [C++23](https://wg21.link/N4950) compiler
+- A conforming [C++20](https://wg21.link/N4861) compiler
 - CMake 3.28 or later when using the supplied CMake project
 - No third-party runtime or library dependencies
+
+Earliest toolchains known to compile the library: GCC 10, Clang 11, MSVC 19.29
+(VS 2019 16.11). CI only covers the versions in the table below; the floors were
+verified by hand.
 
 ## Add xstd-misc to a project
 
@@ -128,7 +132,7 @@ See [the design notes](doc/design.md) for rationale, and
 ## Continuous integration
 
 We continuously test the stable, qualification, and development branches of the
-major [C++23](https://wg21.link/N4950) toolchains (compilers and standard
+major [C++20](https://wg21.link/N4861) toolchains (compilers and standard
 libraries) in both Debug and Release mode:
 
 | Platform | Compiler   | Standard Library | Stable                    | Qualification             | Development                    | CI    |

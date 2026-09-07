@@ -7,7 +7,6 @@
 #include <test/constexpr_check.hpp>            // XSTD_CONSTEXPR_CHECK, XSTD_CONSTEXPR_CHECK_EQUAL
 #include <boost/test/unit_test.hpp>            // BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_AUTO_TEST_CASE
 #include <type_traits>                         // integral_constant
-#include <utility>                             // to_underlying
 
 BOOST_AUTO_TEST_SUITE(Misc)
 BOOST_AUTO_TEST_SUITE(Utility)
@@ -27,11 +26,11 @@ template<e5 N> using e5_ = std::integral_constant<e5, N>;
 
 BOOST_AUTO_TEST_CASE(YieldsTheUnderlyingValue)
 {
-        XSTD_CONSTEXPR_CHECK_EQUAL(std::to_underlying(e1()), 0);
-        XSTD_CONSTEXPR_CHECK_EQUAL(std::to_underlying(e2()), false);
-        XSTD_CONSTEXPR_CHECK_EQUAL(std::to_underlying(e3()), static_cast<char>(0));
-        XSTD_CONSTEXPR_CHECK_EQUAL(std::to_underlying(e4()), static_cast<unsigned char>(0));
-        XSTD_CONSTEXPR_CHECK_EQUAL(std::to_underlying(e5()), static_cast<unsigned>(0));
+        XSTD_CONSTEXPR_CHECK_EQUAL(xstd::to_underlying(e1()), 0);
+        XSTD_CONSTEXPR_CHECK_EQUAL(xstd::to_underlying(e2()), false);
+        XSTD_CONSTEXPR_CHECK_EQUAL(xstd::to_underlying(e3()), static_cast<char>(0));
+        XSTD_CONSTEXPR_CHECK_EQUAL(xstd::to_underlying(e4()), static_cast<unsigned char>(0));
+        XSTD_CONSTEXPR_CHECK_EQUAL(xstd::to_underlying(e5()), static_cast<unsigned>(0));
 
         // use {} instead of () inside <> to avoid vexing parse
         XSTD_CONSTEXPR_CHECK_EQUAL(xstd::to_underlying(e1_<e1{}>()), 0);
