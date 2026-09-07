@@ -8,7 +8,7 @@
 
 #include <xstd/misc/type_traits/empty_type.hpp>        // IWYU pragma: export; empty_type
 #include <xstd/misc/type_traits/no_unique_address.hpp> // IWYU pragma: export; XSTD_NO_UNIQUE_ADDRESS
-#include <type_traits>                                 // conditional
+#include <type_traits>                                 // conditional, conditional_t
 
 namespace xstd {
 
@@ -16,8 +16,10 @@ namespace xstd {
 template<bool Condition, class Type, class Tag>
 using conditional_data_member = std::conditional<Condition, Type, empty_type<Tag>>;
 
+// Spelled with conditional_t rather than through the trait's ::type: the dependent
+// ::type would need a typename that only P0634R3 makes optional, which Clang got in 16.
 template<bool Condition, class Type, class Tag>
-using conditional_data_member_t = conditional_data_member<Condition, Type, Tag>::type;
+using conditional_data_member_t = std::conditional_t<Condition, Type, empty_type<Tag>>;
 
 } // namespace xstd
 
