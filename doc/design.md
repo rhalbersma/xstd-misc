@@ -14,7 +14,7 @@ need no third-party dependencies.
 
 - **Prefer `constexpr`.** Value-oriented functions are usable during constant
   evaluation unless the standard library operation they delegate to prevents it.
-- **Keep metaprogramming small.** `specialization_of`, `empty_type` and
+- **Keep metaprogramming small.** `specialization_of`, the two empty types and
   `conditional_data_member_t` solve local problems without a framework.
 - **Stay a leaf.** No header here includes `<xstd/ints/...>` or `<xstd/bits/...>`.
   A library that everything may depend on can depend on nothing, or the split that
@@ -32,9 +32,10 @@ The type utilities intentionally remain narrow:
 
 - `is_specialization_of` and `specialization_of` recognize specializations of
   class templates whose parameters are types.
-- `empty_type` and `conditional_data_member_t` support optional
-  `[[no_unique_address]]` storage. Its tag defaults to `void`, so `empty_type<>`
-  also serves the uses with nothing to keep distinct.
+- `empty_member_type` and `conditional_data_member_t` support optional
+  `[[no_unique_address]]` storage, and `empty_base_type` is the same idea for a
+  base class. Both tags default to `void`, so `empty_member_type<>` and
+  `empty_base_type<>` serve the uses with nothing to keep distinct.
 - `to_underlying` forwards a plain enum and preserves one wrapped in
   `std::integral_constant`.
 
@@ -46,10 +47,27 @@ trait and `specialization_of` the constraint, as `std::is_integral` stands besid
 
 ### Conditional storage
 
-`empty_type` carries a tag because two empty members of the same type in one
-layout are not required to share an address, and a class with two absent members
-would otherwise be paying for one of them. The tag is a type the enclosing class
-names, so nothing about the members' order or number is a layout question.
+`empty_member_type` carries a tag because two empty members of the same type in
+one layout are not required to share an address, and a class with two absent
+members would otherwise be paying for one of them. The tag is a type the
+enclosing class names, so nothing about the members' order or number is a layout
+question. `empty_base_type` carries one for a different reason: a class cannot
+derive from the same base twice.
+
+The two are separate types because a comparison behaves differently in the two
+positions. `empty_member_type` has a defaulted `operator<=>` so that an enclosing
+class can default its own comparisons over the member, and that is safe: a
+member's associated classes are not the enclosing class's, so the hidden friend
+is invisible to it. A base's associated classes ARE the derived class's, so the
+same defaulted comparison would be found by ADL for every derived object and
+would answer *equal* for any two of them, having only the empty base to compare.
+`empty_base_type` therefore carries nothing.
+
+The price is exact: a derived class cannot default its own comparisons over a
+base that has none, the defaulted operator being defined as deleted. So
+`empty_base_type` serves the incomparable case. A class wanting an empty base and
+defaulted comparisons wants a base that carries them, which is a different type
+and belongs where it is used.
 
 Its members exist for the class holding it rather than for its own sake: a
 variadic constructor lets an enclosing class construct the member without a

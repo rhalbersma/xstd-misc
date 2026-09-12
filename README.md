@@ -70,7 +70,8 @@ the same `xstd::misc` target.
 | `<xstd/misc/concepts/specialization_of.hpp>` | `specialization_of` | Constraint form of `is_specialization_of` | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
 | `<xstd/misc/type_traits/is_specialization_of.hpp>` | `is_specialization_of` <br> `is_specialization_of_v` | Is a type a specialization of a type-parameter-only class template? | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
 | `<xstd/misc/type_traits/no_unique_address.hpp>` | `XSTD_NO_UNIQUE_ADDRESS` | Portable spelling of `no_unique_address` | none |
-| `<xstd/misc/type_traits/empty_type.hpp>` | `empty_type` | A tagged empty type | none |
+| `<xstd/misc/type_traits/empty_member_type.hpp>` | `empty_member_type` | A tagged empty type for a data member that is not there | none |
+| `<xstd/misc/type_traits/empty_base_type.hpp>` | `empty_base_type` | A tagged empty type for a base class that is not there | none |
 | `<xstd/misc/type_traits/conditional_data_member.hpp>` | `conditional_data_member` <br> `conditional_data_member_t` | A conditionally present member | none |
 | `<xstd/misc/utility/to_underlying.hpp>` | `to_underlying` | `std::to_underlying`, plus an `std::integral_constant` overload | [p1682r1](https://wg21.link/p1682r1) (`std::to_underlying`) |
 
@@ -93,7 +94,7 @@ static_assert(xstd::to_underlying(color::red) == 1u);
 static_assert(decltype(xstd::to_underlying(std::integral_constant<color, color::red>()))::value == 1u);
 ```
 
-`empty_type` and `conditional_data_member_t` give a member that is present only
+`empty_member_type` and `conditional_data_member_t` give a member that is present only
 under a condition, and `XSTD_NO_UNIQUE_ADDRESS` costs it nothing when it is not.
 The tag keeps two absent members distinct, which their layout would otherwise
 collapse:
