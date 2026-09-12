@@ -3,41 +3,42 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <xstd/misc/type_traits/empty_type.hpp> // empty_type
-#include <test/constexpr_check.hpp>             // XSTD_CONSTEXPR_CHECK
-#include <boost/test/unit_test.hpp>             // BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_AUTO_TEST_CASE
-#include <compare>                              // strong_ordering
-#include <concepts>                             // regular, same_as, totally_ordered
-#include <type_traits>                          // is_constructible_v, is_convertible_v, is_empty_v, is_nothrow_constructible_v, is_nothrow_default_constructible_v, is_trivially_constructible_v, is_trivially_copyable_v
+#include <xstd/misc/type_traits/empty_member_type.hpp>  // empty_member_type
+#include <xstd/misc/type_traits/no_unique_address.hpp>  // XSTD_NO_UNIQUE_ADDRESS
+#include <test/constexpr_check.hpp>                     // XSTD_CONSTEXPR_CHECK
+#include <boost/test/unit_test.hpp>                     // BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_AUTO_TEST_CASE
+#include <compare>                                      // strong_ordering
+#include <concepts>                                     // regular, same_as, totally_ordered
+#include <type_traits>                                  // is_constructible_v, is_convertible_v, is_empty_v, is_nothrow_constructible_v, is_nothrow_default_constructible_v, is_trivially_constructible_v, is_trivially_copyable_v
 
 BOOST_AUTO_TEST_SUITE(Misc)
 BOOST_AUTO_TEST_SUITE(TypeTraits)
-BOOST_AUTO_TEST_SUITE(EmptyType)
+BOOST_AUTO_TEST_SUITE(EmptyMemberType)
 
 BOOST_AUTO_TEST_CASE(IsEmpty)
 {
-        using empty = xstd::empty_type<struct tag>;
+        using empty = xstd::empty_member_type<struct tag>;
 
         XSTD_CONSTEXPR_CHECK((std::is_empty_v<empty>));
 }
 
 BOOST_AUTO_TEST_CASE(IsRegular)
 {
-        using empty = xstd::empty_type<struct tag>;
+        using empty = xstd::empty_member_type<struct tag>;
 
         XSTD_CONSTEXPR_CHECK((std::regular<empty>));
 }
 
 BOOST_AUTO_TEST_CASE(IsTotallyOrdered)
 {
-        using empty = xstd::empty_type<struct tag>;
+        using empty = xstd::empty_member_type<struct tag>;
 
         XSTD_CONSTEXPR_CHECK((std::totally_ordered<empty>));
 }
 
 BOOST_AUTO_TEST_CASE(IsTrivial)
 {
-        using empty = xstd::empty_type<struct tag>;
+        using empty = xstd::empty_member_type<struct tag>;
 
         XSTD_CONSTEXPR_CHECK(std::is_trivially_destructible_v<empty>);
         XSTD_CONSTEXPR_CHECK(std::is_trivially_default_constructible_v<empty>);
@@ -49,7 +50,7 @@ BOOST_AUTO_TEST_CASE(IsTrivial)
 
 BOOST_AUTO_TEST_CASE(IsNoThrow)
 {
-        using empty = xstd::empty_type<struct tag>;
+        using empty = xstd::empty_member_type<struct tag>;
 
         XSTD_CONSTEXPR_CHECK(std::is_nothrow_destructible_v<empty>);
         XSTD_CONSTEXPR_CHECK(std::is_nothrow_default_constructible_v<empty>);
@@ -66,7 +67,7 @@ BOOST_AUTO_TEST_CASE(IsNoThrow)
 // Defaulted on first declaration is implicitly constexpr, which is the point here.
 BOOST_AUTO_TEST_CASE(IsUsableInConstantExpressions)
 {
-        using empty = xstd::empty_type<struct tag>;
+        using empty = xstd::empty_member_type<struct tag>;
 
         static_assert((empty{} <=> empty{}) == std::strong_ordering::equal);
         static_assert(empty{} == empty{});
@@ -76,7 +77,7 @@ BOOST_AUTO_TEST_CASE(IsUsableInConstantExpressions)
 
 BOOST_AUTO_TEST_CASE(InstancesAreEqual)
 {
-        using empty = xstd::empty_type<struct tag>;
+        using empty = xstd::empty_member_type<struct tag>;
 
         XSTD_CONSTEXPR_CHECK(empty() == empty(0));
         XSTD_CONSTEXPR_CHECK(empty(0) == empty(1));
@@ -84,24 +85,43 @@ BOOST_AUTO_TEST_CASE(InstancesAreEqual)
 
 BOOST_AUTO_TEST_CASE(InstancesAreEquallyOrdered)
 {
-        using empty = xstd::empty_type<struct tag>;
+        using empty = xstd::empty_member_type<struct tag>;
 
         XSTD_CONSTEXPR_CHECK((empty() <=> empty(0)) == std::strong_ordering::equal);
         XSTD_CONSTEXPR_CHECK((empty(0) <=> empty(1)) == std::strong_ordering::equal);
 }
 
-// The default serves the uses with nothing to keep distinct, such as a base class.
+// The default serves the uses with nothing to keep distinct.
 BOOST_AUTO_TEST_CASE(TagDefaultsToVoid)
 {
-        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::empty_type<>, xstd::empty_type<void>>));
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::empty_member_type<>, xstd::empty_member_type<void>>));
 }
 
 BOOST_AUTO_TEST_CASE(DifferentTagsGiveDistinctTypes)
 {
-        using empty1 = xstd::empty_type<struct tag1>;
-        using empty2 = xstd::empty_type<struct tag2>;
+        using empty1 = xstd::empty_member_type<struct tag1>;
+        using empty2 = xstd::empty_member_type<struct tag2>;
 
         XSTD_CONSTEXPR_CHECK((not std::same_as<empty1, empty2>));
+}
+
+// Why this is the MEMBER half. A member's associated classes are not the enclosing class's, so the hidden
+// operator<=> below is invisible to the enclosing type's own comparisons; a base's ARE the derived class's, so
+// deriving from this would hand every derived type a comparison answering equal for any two objects. The
+// requirements are named on a template parameter, a deleted or absent operator being a hard error otherwise.
+namespace {
+
+template<class T> concept comparable = requires (T a, T b) { a <=> b; };
+
+struct as_member { [[XSTD_NO_UNIQUE_ADDRESS]] xstd::empty_member_type<struct m> e; int* p; };
+struct as_base : xstd::empty_member_type<struct b>                             { int* p; };
+
+}       // namespace
+
+BOOST_AUTO_TEST_CASE(ItsComparisonReachesADerivedTypeAndNotAnEnclosingOne)
+{
+        XSTD_CONSTEXPR_CHECK(not comparable<as_member>);
+        XSTD_CONSTEXPR_CHECK(comparable<as_base>);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

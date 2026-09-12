@@ -18,7 +18,7 @@ struct tag2;
 
 struct compressed_member
 {
-        [[XSTD_NO_UNIQUE_ADDRESS]] xstd::empty_type<tag1> empty;
+        [[XSTD_NO_UNIQUE_ADDRESS]] xstd::empty_member_type<tag1> empty;
         int value;
 };
 
@@ -31,7 +31,7 @@ using member2 = xstd::conditional_data_member_t<false, tag1, struct member2_tag>
 BOOST_AUTO_TEST_CASE(SelectsTheMemberOrATaggedEmptyStandIn)
 {
         XSTD_CONSTEXPR_CHECK((std::same_as<xstd::conditional_data_member_t<true, tag1, tag2>, tag1>));
-        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::conditional_data_member_t<false, tag1, tag2>, xstd::empty_type<tag2>>));
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::conditional_data_member_t<false, tag1, tag2>, xstd::empty_member_type<tag2>>));
         XSTD_CONSTEXPR_CHECK((std::is_empty_v<xstd::conditional_data_member_t<false, tag1, tag2>>));
 
         // the tag names the member, so two absent ones can still overlap in the layout
