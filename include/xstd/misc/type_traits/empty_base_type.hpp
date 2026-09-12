@@ -20,7 +20,8 @@ namespace xstd {
 //
 // The tag keeps two empty bases distinct: a class cannot derive from the same one twice.
 template<class Tag = void>
-struct empty_base_type {};
+struct empty_base_type
+{};
 
 } // namespace xstd
 

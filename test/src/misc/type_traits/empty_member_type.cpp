@@ -3,13 +3,13 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <xstd/misc/type_traits/empty_member_type.hpp>  // empty_member_type
-#include <xstd/misc/type_traits/no_unique_address.hpp>  // XSTD_NO_UNIQUE_ADDRESS
-#include <test/constexpr_check.hpp>                     // XSTD_CONSTEXPR_CHECK
-#include <boost/test/unit_test.hpp>                     // BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_AUTO_TEST_CASE
-#include <compare>                                      // strong_ordering
-#include <concepts>                                     // regular, same_as, totally_ordered
-#include <type_traits>                                  // is_constructible_v, is_convertible_v, is_empty_v, is_nothrow_constructible_v, is_nothrow_default_constructible_v, is_trivially_constructible_v, is_trivially_copyable_v
+#include <xstd/misc/type_traits/empty_member_type.hpp> // empty_member_type
+#include <xstd/misc/type_traits/no_unique_address.hpp> // XSTD_NO_UNIQUE_ADDRESS
+#include <test/constexpr_check.hpp>                    // XSTD_CONSTEXPR_CHECK
+#include <boost/test/unit_test.hpp>                    // BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_AUTO_TEST_CASE
+#include <compare>                                     // strong_ordering
+#include <concepts>                                    // regular, same_as, totally_ordered
+#include <type_traits>                                 // is_constructible_v, is_convertible_v, is_empty_v, is_nothrow_constructible_v, is_nothrow_default_constructible_v, is_trivially_constructible_v, is_trivially_copyable_v
 
 BOOST_AUTO_TEST_SUITE(Misc)
 BOOST_AUTO_TEST_SUITE(TypeTraits)
@@ -111,12 +111,20 @@ BOOST_AUTO_TEST_CASE(DifferentTagsGiveDistinctTypes)
 // requirements are named on a template parameter, a deleted or absent operator being a hard error otherwise.
 namespace {
 
-template<class T> concept comparable = requires (T a, T b) { a <=> b; };
+template<class T>
+concept comparable = requires (T a, T b) { a <=> b; };
 
-struct as_member { [[XSTD_NO_UNIQUE_ADDRESS]] xstd::empty_member_type<struct m> e; int* p; };
-struct as_base : xstd::empty_member_type<struct b>                             { int* p; };
+struct as_member
+{
+        [[XSTD_NO_UNIQUE_ADDRESS]] xstd::empty_member_type<struct m> e;
+        int* p;
+};
+struct as_base : xstd::empty_member_type<struct b>
+{
+        int* p;
+};
 
-}       // namespace
+} // namespace
 
 BOOST_AUTO_TEST_CASE(ItsComparisonReachesADerivedTypeAndNotAnEnclosingOne)
 {

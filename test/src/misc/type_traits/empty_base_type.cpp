@@ -3,13 +3,13 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <xstd/misc/type_traits/empty_base_type.hpp>    // empty_base_type
-#include <xstd/misc/type_traits/empty_member_type.hpp>  // empty_member_type
-#include <test/constexpr_check.hpp>                     // XSTD_CONSTEXPR_CHECK
-#include <boost/test/unit_test.hpp>                     // BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_AUTO_TEST_CASE
-#include <compare>                                      // strong_ordering
-#include <concepts>                                     // regular, same_as
-#include <type_traits>                                  // is_empty_v, is_nothrow_default_constructible_v, is_trivially_copyable_v
+#include <xstd/misc/type_traits/empty_base_type.hpp>   // empty_base_type
+#include <xstd/misc/type_traits/empty_member_type.hpp> // empty_member_type
+#include <test/constexpr_check.hpp>                    // XSTD_CONSTEXPR_CHECK
+#include <boost/test/unit_test.hpp>                    // BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_AUTO_TEST_CASE
+#include <compare>                                     // strong_ordering
+#include <concepts>                                    // regular, same_as
+#include <type_traits>                                 // is_empty_v, is_nothrow_default_constructible_v, is_trivially_copyable_v
 
 BOOST_AUTO_TEST_SUITE(Misc)
 BOOST_AUTO_TEST_SUITE(TypeTraits)
@@ -72,15 +72,25 @@ BOOST_AUTO_TEST_CASE(DifferentTagsGiveDistinctTypes)
 // a template parameter, an absent operator in a requires-expression over a concrete type being a hard error.
 namespace {
 
-template<class T> concept eq       = requires (T a, T b) { a ==  b; };
-template<class T> concept ne       = requires (T a, T b) { a !=  b; };
-template<class T> concept three_way = requires (T a, T b) { a <=> b; };
-template<class T> concept lt       = requires (T a, T b) { a <   b; };
+template<class T>
+concept eq = requires (T a, T b) { a == b; };
+template<class T>
+concept ne = requires (T a, T b) { a != b; };
+template<class T>
+concept three_way = requires (T a, T b) { a <=> b; };
+template<class T>
+concept lt = requires (T a, T b) { a < b; };
 
-struct over_base   : xstd::empty_base_type<struct b>   { int* p; };
-struct over_member : xstd::empty_member_type<struct m> { int* p; };
+struct over_base : xstd::empty_base_type<struct b>
+{
+        int* p;
+};
+struct over_member : xstd::empty_member_type<struct m>
+{
+        int* p;
+};
 
-}       // namespace
+} // namespace
 
 BOOST_AUTO_TEST_CASE(ItHasNoComparisonAndHandsNoneToADerivedClass)
 {
