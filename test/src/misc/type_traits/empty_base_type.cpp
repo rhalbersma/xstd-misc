@@ -7,8 +7,7 @@
 #include <xstd/misc/type_traits/empty_member_type.hpp> // empty_member_type
 #include <test/constexpr_check.hpp>                    // XSTD_CONSTEXPR_CHECK
 #include <boost/test/unit_test.hpp>                    // BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_AUTO_TEST_CASE
-#include <compare>                                     // strong_ordering
-#include <concepts>                                    // regular, same_as
+#include <concepts>                                    // same_as, semiregular
 #include <type_traits>                                 // is_empty_v, is_nothrow_default_constructible_v, is_trivially_copyable_v
 
 BOOST_AUTO_TEST_SUITE(Misc)
