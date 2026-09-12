@@ -12,16 +12,7 @@
 
 namespace xstd {
 
-// A stand-in for a data member that is not there, and a MEMBER is what it is for: an enclosing class both
-// constructs it and defaults its comparisons over it, and the hidden friend below reaches neither anyone else's
-// ADL nor anyone else's overload set, a member's associated classes not being the enclosing class's.
-//
-// empty_base_type is the other half, and the two are not interchangeable. Derive from this one and its
-// operator<=> -- with the operator== [class.compare.default] declares beside it -- is found by ADL for the
-// DERIVED type, whose only base is empty, so any two objects of that type compare EQUAL. Use empty_base_type
-// where the empty thing is a base.
-//
-// The tag keeps two empty data members distinct in a layout.
+// An absent data member, safely comparable where empty_base_type is not: a member's hidden friends do not reach the enclosing class. Tagged, to keep two distinct in a layout.
 template<class Tag = void>
 struct empty_member_type
 {

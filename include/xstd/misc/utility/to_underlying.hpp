@@ -10,23 +10,17 @@
 
 namespace xstd {
 
-// The cast P1682R1 specifies std::to_underlying as: its Returns clause is
-// static_cast<underlying_type_t<T>>(value) and nothing more.
+// The cast P1682R1 specifies std::to_underlying as, and nothing more.
 template<class Enum>
         requires std::is_enum_v<Enum>
 [[nodiscard]] constexpr auto to_underlying(Enum value) noexcept
         -> std::underlying_type_t<Enum>
 {
-        // An enum with a bool underlying type and no enumerators makes this a cast to
-        // bool, which bugprone-non-zero-enum-to-bool-conversion reads as always true.
-        // A value-initialized one converts to false, so it is not. Suppressed here
-        // rather than in .clang-tidy, so a consumer linting their own code gets it too.
-        // NOLINTNEXTLINE(bugprone-non-zero-enum-to-bool-conversion)
+        // NOLINTNEXTLINE(bugprone-non-zero-enum-to-bool-conversion): a bool-underlying enum value-initializes to false, so the cast is not always true.
         return static_cast<std::underlying_type_t<Enum>>(value);
 }
 
-// Preserves compile-time constantness for an integral_constant-wrapped enum.
-// Qualified, so an enum's own namespace cannot supply a to_underlying by ADL.
+// Preserves constantness for an integral_constant-wrapped enum; qualified, so no enum namespace supplies its own by ADL.
 template<class Enum, Enum N>
         requires std::is_enum_v<Enum>
 [[nodiscard]] constexpr auto to_underlying(std::integral_constant<Enum, N>) noexcept

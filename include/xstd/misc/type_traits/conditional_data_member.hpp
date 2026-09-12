@@ -16,8 +16,7 @@ namespace xstd {
 template<bool Condition, class Type, class Tag>
 using conditional_data_member = std::conditional<Condition, Type, empty_member_type<Tag>>;
 
-// Spelled with conditional_t rather than through the trait's ::type: the dependent
-// ::type would need a typename that only P0634R3 makes optional, which Clang got in 16.
+// conditional_t, not the trait's dependent ::type, which would need the typename P0634R3 made optional in Clang 16.
 template<bool Condition, class Type, class Tag>
 using conditional_data_member_t = std::conditional_t<Condition, Type, empty_member_type<Tag>>;
 

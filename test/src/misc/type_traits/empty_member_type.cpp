@@ -105,10 +105,7 @@ BOOST_AUTO_TEST_CASE(DifferentTagsGiveDistinctTypes)
         XSTD_CONSTEXPR_CHECK((not std::same_as<empty1, empty2>));
 }
 
-// Why this is the MEMBER half. A member's associated classes are not the enclosing class's, so the hidden
-// operator<=> below is invisible to the enclosing type's own comparisons; a base's ARE the derived class's, so
-// deriving from this would hand every derived type a comparison answering equal for any two objects. The
-// requirements are named on a template parameter, a deleted or absent operator being a hard error otherwise.
+// Why this is the MEMBER half: a member's hidden friends do not reach the enclosing class by ADL, a base's do reach the derived one.
 namespace {
 
 template<class T>

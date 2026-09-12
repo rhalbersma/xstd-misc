@@ -68,8 +68,7 @@ BOOST_AUTO_TEST_CASE(DifferentTagsGiveDistinctTypes)
         XSTD_CONSTEXPR_CHECK((not std::same_as<empty1, empty2>));
 }
 
-// The whole of what this type is: nothing to compare, and so nothing reaching a derived class by ADL. Named on
-// a template parameter, an absent operator in a requires-expression over a concrete type being a hard error.
+// Named on a template parameter: an absent operator in a requires-expression over a concrete type is a hard error.
 namespace {
 
 template<class T>
@@ -101,8 +100,7 @@ BOOST_AUTO_TEST_CASE(ItHasNoComparisonAndHandsNoneToADerivedClass)
         XSTD_CONSTEXPR_CHECK(not three_way<empty>);
         XSTD_CONSTEXPR_CHECK(not lt<empty>);
 
-        // The contrast that makes the two halves two types: empty_member_type hands its comparison down, and
-        // the derived class then answers equal for every pair of objects, having only the empty base to compare.
+        // The contrast that makes them two types: empty_member_type hands its comparison down, answering equal for every pair.
         XSTD_CONSTEXPR_CHECK(not three_way<over_base>);
         XSTD_CONSTEXPR_CHECK(three_way<over_member>);
 }
