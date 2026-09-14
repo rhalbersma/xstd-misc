@@ -130,7 +130,7 @@ static_assert(xstd::specialization_of<std::complex<double>, std::complex>);
 See [the design notes](doc/design.md) for rationale, and
 [CONTRIBUTING.md](CONTRIBUTING.md) to build the library itself.
 
-## Continuous integration
+## Continuous Integration
 
 We continuously test the stable, qualification, and development branches of the
 major [C++20](https://wg21.link/N4861) toolchains (compilers and standard
