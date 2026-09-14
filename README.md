@@ -27,17 +27,20 @@
 [![CodeQL](https://github.com/rhalbersma/xstd-misc/actions/workflows/codeql.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/codeql.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/rhalbersma/xstd-misc/badge)](https://scorecard.dev/viewer/?uri=github.com/rhalbersma/xstd-misc)
 
-xstd-misc is the assortment: the small, portable, header-only facilities that
-belong to no one domain, and so to none of the other xstd libraries. Recognizing
-a class template specialization, an empty type that keeps its place in a layout,
-a data member that is there only under a condition, the portable spelling of
-`[[no_unique_address]]`, and `to_underlying` over both a plain enum and a wrapped
-one. It relies on the [C++20](https://wg21.link/N4861) standard and targets the
-draft [C++29](https://wg21.link/std) standard library. All public APIs are in
-namespace `xstd`.
+xstd-misc is a header-only collection of small extensions to the C++ standard
+library: facilities too small, and too unrelated to one another, to deserve a
+library of their own. Each lives under the standard header it extends, so the
+layout mirrors `<concepts>`, `<type_traits>` and `<utility>`. It adds a concept
+and a trait for recognizing a specialization of a class template, tagged empty
+types that keep a place in a class layout, a data member present only when a
+condition holds, a portable spelling of `[[no_unique_address]]`, and
+`to_underlying` over both a plain enum and one wrapped in
+`std::integral_constant`.
 
-The library is a leaf: nothing here includes `xstd::ints` or `xstd::bits`, which
-is what lets a project take this one alone.
+Nothing here needs more than the standard library itself, so a project can take
+it on its own. It relies on the [C++20](https://wg21.link/N4861) standard and
+targets the draft [C++29](https://wg21.link/std) standard library. All public
+APIs are in namespace `xstd`.
 
 ## Requirements
 
