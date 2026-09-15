@@ -73,6 +73,17 @@ target_link_libraries(my_target PRIVATE xstd::misc)
 `find_package(xstd-misc CONFIG REQUIRED)` and `add_subdirectory(external/xstd-misc)` provide
 the same `xstd::misc` target.
 
+To build and install the headers alone, without the test suite and its Boost.Test
+dependency, configure with tests off:
+
+```sh
+cmake --preset no-tests   # or: cmake -S . -B build -DBUILD_TESTING=OFF
+cmake --install build/no-tests --prefix /usr/local
+```
+
+Tests are built only when xstd-misc is the top-level project, so a `FetchContent` or
+`add_subdirectory` consumer never needs Boost.Test.
+
 ## Headers
 
 | Header | Additions | Description | Reference |
