@@ -46,11 +46,13 @@ target_sources(
     FILES
         include/xstd/misc.hpp
         include/xstd/misc/concepts.hpp
+        include/xstd/misc/concepts/same_template_as.hpp
         include/xstd/misc/concepts/specialization_of.hpp
         include/xstd/misc/type_traits.hpp
         include/xstd/misc/type_traits/conditional_data_member.hpp
         include/xstd/misc/type_traits/empty_base_type.hpp
         include/xstd/misc/type_traits/empty_member_type.hpp
+        include/xstd/misc/type_traits/is_same_template_as.hpp
         include/xstd/misc/type_traits/is_specialization_of.hpp
         include/xstd/misc/type_traits/no_unique_address.hpp
         include/xstd/misc/utility.hpp

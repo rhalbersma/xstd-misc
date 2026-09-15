@@ -30,8 +30,9 @@
 xstd-misc is a header-only collection of small extensions to the C++ standard
 library: facilities too small, and too unrelated to one another, to deserve a
 library of their own. Each lives under the standard header it extends, so the
-layout mirrors `<concepts>`, `<type_traits>` and `<utility>`. It adds a concept
-and a trait for recognizing a specialization of a class template, tagged empty
+layout mirrors `<concepts>`, `<type_traits>` and `<utility>`. It adds two pairs
+of a concept and a trait for recognizing a specialization of a class template --
+one naming the template, one naming an example of it -- tagged empty
 types that keep a place in a class layout, a data member present only when a
 condition holds, a portable spelling of `[[no_unique_address]]`, and
 `to_underlying` over both a plain enum and one wrapped in
@@ -75,8 +76,10 @@ the same `xstd::misc` target.
 
 | Header | Additions | Description | Reference |
 | :----- | :-------- | :---------- | :-------- |
+| `<xstd/misc/concepts/same_template_as.hpp>` | `same_template_as` | Constraint form of `is_same_template_as` | none |
 | `<xstd/misc/concepts/specialization_of.hpp>` | `specialization_of` | Constraint form of `is_specialization_of` | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
 | `<xstd/misc/type_traits/is_specialization_of.hpp>` | `is_specialization_of` <br> `is_specialization_of_v` | Is a type a specialization of a type-parameter-only class template? | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
+| `<xstd/misc/type_traits/is_same_template_as.hpp>` | `is_same_template_as` <br> `is_same_template_as_v` | Are two types specializations of one class template, whatever its parameter kinds? | none |
 | `<xstd/misc/type_traits/no_unique_address.hpp>` | `XSTD_NO_UNIQUE_ADDRESS` | Portable spelling of `no_unique_address` | none |
 | `<xstd/misc/type_traits/empty_member_type.hpp>` | `empty_member_type` | A tagged empty type for a data member that is not there | none |
 | `<xstd/misc/type_traits/empty_base_type.hpp>` | `empty_base_type` | A tagged empty type for a base class that is not there | none |
@@ -133,6 +136,29 @@ where a constraint is what a caller writes:
 
 static_assert(xstd::is_specialization_of_v<std::complex<double>, std::complex>);
 static_assert(xstd::specialization_of<std::complex<double>, std::complex>);
+```
+
+Those two name the template itself, which limits them to templates whose parameters
+are all types: `std::array` takes a value, so no template template parameter accepts
+it alongside `std::complex`. `is_same_template_as` and `same_template_as` ask the same
+question of a template of any parameter kinds, by naming an example specialization of
+it rather than the template:
+
+```cpp
+#include <xstd/misc/concepts.hpp>
+#include <array>
+#include <bitset>
+#include <complex>
+#include <vector>
+
+static_assert(xstd::same_template_as<std::array<int, 3>, std::array<char, 7>>);
+static_assert(xstd::same_template_as<std::vector<int>, std::vector<char>>);
+static_assert(xstd::same_template_as<std::bitset<8>, std::bitset<64>>);
+static_assert(xstd::same_template_as<std::complex<double>, std::complex<float>>);
+
+// and as a type-constraint, the constrained type first
+template<xstd::same_template_as<std::array<int, 1>> T>
+constexpr auto first(T const& a) { return a.front(); }
 ```
 
 See [the design notes](doc/design.md) for rationale, and

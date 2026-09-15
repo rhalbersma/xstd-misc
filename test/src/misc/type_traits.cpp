@@ -3,7 +3,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <xstd/misc/type_traits.hpp> // XSTD_NO_UNIQUE_ADDRESS, conditional_data_member_t, empty_base_type, empty_member_type, is_specialization_of
+#include <xstd/misc/type_traits.hpp> // XSTD_NO_UNIQUE_ADDRESS, conditional_data_member_t, empty_base_type, empty_member_type, is_same_template_as, is_specialization_of
 #include <boost/test/unit_test.hpp>  // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END
 #include <concepts>                  // same_as
 #include <type_traits>               // is_empty_v
@@ -36,6 +36,7 @@ BOOST_AUTO_TEST_CASE(TheAbsentBranchIsAnEmptyTypeTheTraitRecognises)
         static_assert(std::same_as<absent, xstd::empty_member_type<struct slot>>);
         static_assert(xstd::is_specialization_of<absent, xstd::empty_member_type>::value);
         static_assert(not xstd::is_specialization_of<int, xstd::empty_member_type>::value);
+        static_assert(xstd::is_same_template_as<absent, xstd::empty_member_type<struct other>>::value);
         BOOST_CHECK(true);
 }
 

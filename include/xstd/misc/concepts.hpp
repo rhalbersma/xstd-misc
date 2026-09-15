@@ -6,6 +6,7 @@
 #ifndef XSTD_MISC_CONCEPTS_HPP
 #define XSTD_MISC_CONCEPTS_HPP
 
-#include <xstd/misc/concepts/specialization_of.hpp> // IWYU pragma: export; specialization_of
+#include <xstd/misc/concepts/same_template_as.hpp>   // IWYU pragma: export; same_template_as
+#include <xstd/misc/concepts/specialization_of.hpp>  // IWYU pragma: export; specialization_of
 
 #endif // XSTD_MISC_CONCEPTS_HPP
