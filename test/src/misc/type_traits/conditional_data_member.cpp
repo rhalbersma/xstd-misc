@@ -35,18 +35,19 @@ struct two_absent
 static_assert(sizeof(two_absent) == sizeof(int));
 
 // The same tag twice is the mistake this guards against: one type, so two subobjects of it.
+#if defined(__clang__)
+// Both of these exist to be measured, and a class holding nothing but empty members pads:
+// to a byte where they overlap, and past it where they may not. -Wpadded reports that, and
+// which of the two it reports depends on the ABI, so it is off for the pair.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpadded"
+#endif
+
 struct distinct_tags
 {
         [[XSTD_NO_UNIQUE_ADDRESS]] xstd::empty_member_type<struct here> one;
         [[XSTD_NO_UNIQUE_ADDRESS]] xstd::empty_member_type<struct there> two;
 };
-
-#if defined(__clang__)
-// -Wpadded fires here and nowhere above, which is the failure mode stated as a diagnostic:
-// the second member of one type cannot share the first's address, so a byte is spent on it.
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpadded"
-#endif
 
 struct one_tag_twice
 {
