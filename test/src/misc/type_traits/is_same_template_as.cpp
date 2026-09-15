@@ -21,10 +21,12 @@ BOOST_AUTO_TEST_SUITE(IsSameTemplateAs)
 
 // The shape the standard library does not have, and the one the trait does not spell.
 template<std::size_t N, class T, class... Ts>
-struct value_first {};
+struct value_first
+{};
 
 template<class T, std::size_t N, class U>
-struct unlisted {};
+struct unlisted
+{};
 
 // One name over all four parameter-kind shapes, where a template template parameter
 // reaches only one: <class...> misses std::array, <auto...> misses std::complex.
