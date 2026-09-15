@@ -6,6 +6,6 @@
 #ifndef XSTD_MISC_CONCEPTS_HPP
 #define XSTD_MISC_CONCEPTS_HPP
 
-#include <xstd/misc/concepts/specialization_of.hpp> // IWYU pragma: export; specialization_of
+#include <xstd/misc/concepts/specialization_of.hpp> // IWYU pragma: export; the specialization_of constraints, one per parameter shape
 
 #endif // XSTD_MISC_CONCEPTS_HPP

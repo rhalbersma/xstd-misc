@@ -30,8 +30,9 @@
 xstd-misc is a header-only collection of small extensions to the C++ standard
 library: facilities too small, and too unrelated to one another, to deserve a
 library of their own. Each lives under the standard header it extends, so the
-layout mirrors `<concepts>`, `<type_traits>` and `<utility>`. It adds a concept
-and a trait for recognizing a specialization of a class template, tagged empty
+layout mirrors `<concepts>`, `<type_traits>` and `<utility>`. It adds two pairs
+of a concept and a trait for recognizing a specialization of a class template --
+one naming the template, one naming an example of it -- tagged empty
 types that keep a place in a class layout, a data member present only when a
 condition holds, a portable spelling of `[[no_unique_address]]`, and
 `to_underlying` over both a plain enum and one wrapped in
@@ -75,12 +76,12 @@ the same `xstd::misc` target.
 
 | Header | Additions | Description | Reference |
 | :----- | :-------- | :---------- | :-------- |
-| `<xstd/misc/concepts/specialization_of.hpp>` | `specialization_of` | Constraint form of `is_specialization_of` | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
-| `<xstd/misc/type_traits/is_specialization_of.hpp>` | `is_specialization_of` <br> `is_specialization_of_v` | Is a type a specialization of a type-parameter-only class template? | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
+| `<xstd/misc/concepts/specialization_of.hpp>` | `specialization_of` | Constraint form of `is_specialization_of`, seeing through a `const` owner | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
+| `<xstd/misc/type_traits/is_specialization_of.hpp>` | `is_specialization_of` | Is a type a specialization of a class template? | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
 | `<xstd/misc/type_traits/no_unique_address.hpp>` | `XSTD_NO_UNIQUE_ADDRESS` | Portable spelling of `no_unique_address` | none |
 | `<xstd/misc/type_traits/empty_member_type.hpp>` | `empty_member_type` | A tagged empty type for a data member that is not there | none |
 | `<xstd/misc/type_traits/empty_base_type.hpp>` | `empty_base_type` | A tagged empty type for a base class that is not there | none |
-| `<xstd/misc/type_traits/conditional_data_member.hpp>` | `conditional_data_member` <br> `conditional_data_member_t` | A conditionally present member | none |
+| `<xstd/misc/type_traits/conditional_data_member.hpp>` | `conditional_data_member` | A conditionally present member | none |
 | `<xstd/misc/utility/to_underlying.hpp>` | `to_underlying` | `std::to_underlying`, plus an `std::integral_constant` overload | [p1682r1](https://wg21.link/p1682r1) (`std::to_underlying`) |
 
 Each directory has an umbrella exporting what is under it -- `<xstd/misc/concepts.hpp>`,
@@ -123,17 +124,62 @@ Use `XSTD_NO_UNIQUE_ADDRESS` inside an attribute-specifier. It expands to
 `msvc::no_unique_address` with the MSVC-compatible frontend, which keeps the
 standard spelling layout-neutral, and to `no_unique_address` elsewhere.
 
-`is_specialization_of` answers whether a type is a specialization of a class
-template whose parameters are types, and `specialization_of` is the same question
-where a constraint is what a caller writes:
+`is_specialization_of_T` answers whether a type is a specialization of a class
+template whose parameters are all types, and `specialization_of_T` is the same
+question where a constraint is what a caller writes:
 
 ```cpp
 #include <xstd/misc/concepts.hpp>
+#include <xstd/misc/type_traits.hpp>
 #include <complex>
 
-static_assert(xstd::is_specialization_of_v<std::complex<double>, std::complex>);
-static_assert(xstd::specialization_of<std::complex<double>, std::complex>);
+static_assert(xstd::is_specialization_of_T_v<std::complex<double>, std::complex>);
+static_assert(xstd::specialization_of_T<std::complex<double>, std::complex>);
 ```
+
+Name the shape the template has. A suffix spells its parameter kinds in the order it declares
+them, `T` for a type and `N` for a value: `specialization_of_T` takes one whose parameters are
+all types, `specialization_of_N` one whose parameters are all values, `specialization_of_TN` one
+taking a type and then values, and `specialization_of_NT` one taking a value and then types, as
+`std::enable_if` and `std::tuple_element` do. The kinds are part of a template's type and no one template
+template parameter binds them all, so there is a concept per shape rather than one that takes
+any template.
+
+`specialization_of` and `is_specialization_of` are the `_T` pair under the name without a suffix,
+which is the spelling p2098 gives the all-types case. The concept is defined in terms of the
+suffixed one and normalizes to it, so constrained overloads written either way order against
+each other rather than clash.
+
+```cpp
+#include <xstd/misc/concepts.hpp>
+#include <array>
+#include <bitset>
+#include <vector>
+
+static_assert(xstd::specialization_of_T<std::vector<int>, std::vector>);      // types only
+static_assert(xstd::specialization_of_N<std::bitset<8>, std::bitset>);        // values only
+static_assert(xstd::specialization_of_TN<std::array<int, 3>, std::array>);    // a type, then values
+```
+
+A constrained parameter is no obstacle: an unconstrained template template parameter does not
+consider the constraints on its argument, so a `template<contiguous_range Blocks, size_t N>`
+storage binds where a `template<class, size_t>` one does.
+
+The trait is the exact question and the concept is the one a caller writes, which is why only
+the concept sees through a `const`: an adaptor over a const owner names `Container const`, and
+no specialization pattern matches that. A reference is a specialization of nothing either way.
+
+```cpp
+#include <xstd/misc/concepts.hpp>
+#include <vector>
+
+template<xstd::specialization_of<std::vector> Owner>
+class view { Owner* owner; };
+
+using mutable_view = view<std::vector<int>>;        // the owner as it is
+using const_view   = view<std::vector<int> const>;  // and a view over a const one
+```
+
 
 See [the design notes](doc/design.md) for rationale, and
 [CONTRIBUTING.md](CONTRIBUTING.md) to build the library itself.

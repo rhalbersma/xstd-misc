@@ -3,7 +3,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <xstd/misc/concepts.hpp>   // specialization_of
+#include <xstd/misc/concepts.hpp>   // specialization_of, specialization_of_N, specialization_of_TN
 #include <boost/test/unit_test.hpp> // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END
 
 BOOST_AUTO_TEST_SUITE(Misc)
@@ -17,6 +17,7 @@ struct box
 BOOST_AUTO_TEST_CASE(ReExportsTheWholeDirectory)
 {
         static_assert(xstd::specialization_of<box<int>, box>);
+        static_assert(xstd::specialization_of<box<int> const, box>);
         BOOST_CHECK(true);
 }
 

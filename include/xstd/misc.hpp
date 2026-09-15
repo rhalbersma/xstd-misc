@@ -6,8 +6,8 @@
 #ifndef XSTD_MISC_HPP
 #define XSTD_MISC_HPP
 
-#include <xstd/misc/concepts.hpp>    // IWYU pragma: export; specialization_of
-#include <xstd/misc/type_traits.hpp> // IWYU pragma: export; the storage utilities and is_specialization_of
+#include <xstd/misc/concepts.hpp>    // IWYU pragma: export; the specialization_of constraints
+#include <xstd/misc/type_traits.hpp> // IWYU pragma: export; the storage utilities and the recognizers
 #include <xstd/misc/utility.hpp>     // IWYU pragma: export; to_underlying
 
 #endif // XSTD_MISC_HPP
