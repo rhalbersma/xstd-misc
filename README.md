@@ -76,10 +76,14 @@ the same `xstd::misc` target.
 
 | Header | Additions | Description | Reference |
 | :----- | :-------- | :---------- | :-------- |
+| `<xstd/misc/concepts/mixed_specialization_of.hpp>` | `mixed_specialization_of` | Constraint form of `is_mixed_specialization_of`, seeing through a `const` owner | none |
+| `<xstd/misc/concepts/nontype_specialization_of.hpp>` | `nontype_specialization_of` | Constraint form of `is_nontype_specialization_of`, seeing through a `const` owner | none |
 | `<xstd/misc/concepts/same_template_as.hpp>` | `same_template_as` | Constraint form of `is_same_template_as`, seeing through a `const` owner | none |
 | `<xstd/misc/concepts/specialization_of.hpp>` | `specialization_of` | Constraint form of `is_specialization_of`, seeing through a `const` owner | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
 | `<xstd/misc/type_traits/is_specialization_of.hpp>` | `is_specialization_of` <br> `is_specialization_of_v` | Is a type a specialization of a type-parameter-only class template? | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
 | `<xstd/misc/type_traits/is_same_template_as.hpp>` | `is_same_template_as` <br> `is_same_template_as_v` | Are two types specializations of one class template, whatever its parameter kinds? | none |
+| `<xstd/misc/type_traits/is_mixed_specialization_of.hpp>` | `is_mixed_specialization_of` <br> `is_mixed_specialization_of_v` | Is a type a specialization of a class template taking a type, then values? | none |
+| `<xstd/misc/type_traits/is_nontype_specialization_of.hpp>` | `is_nontype_specialization_of` <br> `is_nontype_specialization_of_v` | Is a type a specialization of a class template whose parameters are all values? | none |
 | `<xstd/misc/type_traits/no_unique_address.hpp>` | `XSTD_NO_UNIQUE_ADDRESS` | Portable spelling of `no_unique_address` | none |
 | `<xstd/misc/type_traits/empty_member_type.hpp>` | `empty_member_type` | A tagged empty type for a data member that is not there | none |
 | `<xstd/misc/type_traits/empty_base_type.hpp>` | `empty_base_type` | A tagged empty type for a base class that is not there | none |
@@ -137,6 +141,26 @@ where a constraint is what a caller writes:
 static_assert(xstd::is_specialization_of_v<std::complex<double>, std::complex>);
 static_assert(xstd::specialization_of<std::complex<double>, std::complex>);
 ```
+
+Where the template takes values, name the shape it has: `nontype_specialization_of` for one whose
+parameters are all values, `mixed_specialization_of` for one taking a type and then values. The
+kinds of a template's parameters are part of its type and no one template template parameter
+binds them all, so there is a concept per shape rather than one that takes any template.
+
+```cpp
+#include <xstd/misc/concepts.hpp>
+#include <array>
+#include <bitset>
+#include <vector>
+
+static_assert(xstd::specialization_of<std::vector<int>, std::vector>);             // types only
+static_assert(xstd::nontype_specialization_of<std::bitset<8>, std::bitset>);       // values only
+static_assert(xstd::mixed_specialization_of<std::array<int, 3>, std::array>);      // a type, then values
+```
+
+A constrained parameter is no obstacle: an unconstrained template template parameter does not
+consider the constraints on its argument, so a `template<contiguous_range Blocks, size_t N>`
+storage binds where a `template<class, size_t>` one does.
 
 The trait is the exact question and the concept is the one a caller writes, which is why only
 the concept sees through a `const`: an adaptor over a const owner names `Container const`, and
