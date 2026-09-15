@@ -13,8 +13,9 @@
 #include <cstddef>                                        // size_t
 #include <ratio>                                          // ratio
 #include <span>                                           // span
-#include <type_traits>                                    // conditional, enable_if, integral_constant
 #include <tuple>                                          // tuple, tuple_element
+#include <type_traits>                                    // conditional, enable_if, integral_constant
+#include <utility>                                        // integer_sequence
 #include <variant>                                        // variant, variant_alternative
 #include <vector>                                         // vector
 
