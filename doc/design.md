@@ -30,8 +30,8 @@ need no third-party dependencies.
 
 The type utilities intentionally remain narrow:
 
-- `is_specialization_of` and `specialization_of` recognize specializations of
-  class templates whose parameters are types.
+- `is_specialization_of_T` and `specialization_of_T` recognize specializations of
+  class templates whose parameters are all types.
 - `is_specialization_of_N` and `is_specialization_of_TN`, with their
   constraint spellings, are the same question for the other two parameter shapes a
   class template may have: all values, and a type then values. Three names rather
@@ -41,8 +41,11 @@ The type utilities intentionally remain narrow:
   `std::vector`, so the set does not grow with use. An adaptor over a storage names
   the backend's template directly under whichever of the three its shape calls for.
   The suffix spells the parameter kinds in the order the template declares them, `T`
-  for a type and `N` for a value; `specialization_of` keeps p2098's unsuffixed spelling
-  for the all-types case, which is both the common one and the one that paper is about.
+  for a type and `N` for a value, so the all-types shape is `specialization_of_T`.
+  `specialization_of` is that one under p2098's unsuffixed spelling, defined in terms
+  of it rather than beside it: a concept cannot be aliased with `using`, but one
+  defined as another normalizes to the same constraint, so the two spellings subsume
+  each other and constrained overloads written either way order rather than clash.
 - `empty_member_type` and `conditional_data_member_t` support optional
   `[[no_unique_address]]` storage, and `empty_base_type` is the same idea for a
   base class. Both tags default to `void`, so `empty_member_type<>` and

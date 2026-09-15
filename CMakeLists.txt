@@ -49,6 +49,7 @@ target_sources(
         include/xstd/misc/concepts/specialization_of_TN.hpp
         include/xstd/misc/concepts/specialization_of_N.hpp
         include/xstd/misc/concepts/specialization_of.hpp
+        include/xstd/misc/concepts/specialization_of_T.hpp
         include/xstd/misc/type_traits.hpp
         include/xstd/misc/type_traits/conditional_data_member.hpp
         include/xstd/misc/type_traits/empty_base_type.hpp
@@ -56,6 +57,7 @@ target_sources(
         include/xstd/misc/type_traits/is_specialization_of_TN.hpp
         include/xstd/misc/type_traits/is_specialization_of_N.hpp
         include/xstd/misc/type_traits/is_specialization_of.hpp
+        include/xstd/misc/type_traits/is_specialization_of_T.hpp
         include/xstd/misc/type_traits/no_unique_address.hpp
         include/xstd/misc/utility.hpp
         include/xstd/misc/utility/to_underlying.hpp

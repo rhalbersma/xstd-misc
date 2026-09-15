@@ -78,8 +78,10 @@ the same `xstd::misc` target.
 | :----- | :-------- | :---------- | :-------- |
 | `<xstd/misc/concepts/specialization_of_TN.hpp>` | `specialization_of_TN` | Constraint form of `is_specialization_of_TN`, seeing through a `const` owner | none |
 | `<xstd/misc/concepts/specialization_of_N.hpp>` | `specialization_of_N` | Constraint form of `is_specialization_of_N`, seeing through a `const` owner | none |
-| `<xstd/misc/concepts/specialization_of.hpp>` | `specialization_of` | Constraint form of `is_specialization_of`, seeing through a `const` owner | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
-| `<xstd/misc/type_traits/is_specialization_of.hpp>` | `is_specialization_of` <br> `is_specialization_of_v` | Is a type a specialization of a type-parameter-only class template? | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
+| `<xstd/misc/concepts/specialization_of_T.hpp>` | `specialization_of_T` | Constraint form of `is_specialization_of_T`, seeing through a `const` owner | none |
+| `<xstd/misc/concepts/specialization_of.hpp>` | `specialization_of` | `specialization_of_T` under the name without a suffix | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
+| `<xstd/misc/type_traits/is_specialization_of_T.hpp>` | `is_specialization_of_T` <br> `is_specialization_of_T_v` | Is a type a specialization of a class template whose parameters are all types? | none |
+| `<xstd/misc/type_traits/is_specialization_of.hpp>` | `is_specialization_of` <br> `is_specialization_of_v` | `is_specialization_of_T` under the name without a suffix | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
 | `<xstd/misc/type_traits/is_specialization_of_TN.hpp>` | `is_specialization_of_TN` <br> `is_specialization_of_TN_v` | Is a type a specialization of a class template taking a type, then values? | none |
 | `<xstd/misc/type_traits/is_specialization_of_N.hpp>` | `is_specialization_of_N` <br> `is_specialization_of_N_v` | Is a type a specialization of a class template whose parameters are all values? | none |
 | `<xstd/misc/type_traits/no_unique_address.hpp>` | `XSTD_NO_UNIQUE_ADDRESS` | Portable spelling of `no_unique_address` | none |
@@ -128,24 +130,30 @@ Use `XSTD_NO_UNIQUE_ADDRESS` inside an attribute-specifier. It expands to
 `msvc::no_unique_address` with the MSVC-compatible frontend, which keeps the
 standard spelling layout-neutral, and to `no_unique_address` elsewhere.
 
-`is_specialization_of` answers whether a type is a specialization of a class
-template whose parameters are types, and `specialization_of` is the same question
-where a constraint is what a caller writes:
+`is_specialization_of_T` answers whether a type is a specialization of a class
+template whose parameters are all types, and `specialization_of_T` is the same
+question where a constraint is what a caller writes:
 
 ```cpp
 #include <xstd/misc/concepts.hpp>
+#include <xstd/misc/type_traits.hpp>
 #include <complex>
 
-static_assert(xstd::is_specialization_of_v<std::complex<double>, std::complex>);
-static_assert(xstd::specialization_of<std::complex<double>, std::complex>);
+static_assert(xstd::is_specialization_of_T_v<std::complex<double>, std::complex>);
+static_assert(xstd::specialization_of_T<std::complex<double>, std::complex>);
 ```
 
-Where the template takes values, name the shape it has. A suffix spells the parameter kinds in
-the order the template declares them, `T` for a type and `N` for a value: `specialization_of_N`
-takes one whose parameters are all values, `specialization_of_TN` one taking a type and then
-values, and the unsuffixed `specialization_of` the all-types case that needs no suffix. The
-kinds of a template's parameters are part of its type and no one template template parameter
-binds them all, so there is a concept per shape rather than one that takes any template.
+Name the shape the template has. A suffix spells its parameter kinds in the order it declares
+them, `T` for a type and `N` for a value: `specialization_of_T` takes one whose parameters are
+all types, `specialization_of_N` one whose parameters are all values, and `specialization_of_TN`
+one taking a type and then values. The kinds are part of a template's type and no one template
+template parameter binds them all, so there is a concept per shape rather than one that takes
+any template.
+
+`specialization_of` and `is_specialization_of` are the `_T` pair under the name without a suffix,
+which is the spelling p2098 gives the all-types case. The concept is defined in terms of the
+suffixed one and normalizes to it, so constrained overloads written either way order against
+each other rather than clash.
 
 ```cpp
 #include <xstd/misc/concepts.hpp>
@@ -153,7 +161,7 @@ binds them all, so there is a concept per shape rather than one that takes any t
 #include <bitset>
 #include <vector>
 
-static_assert(xstd::specialization_of<std::vector<int>, std::vector>);        // types only
+static_assert(xstd::specialization_of_T<std::vector<int>, std::vector>);      // types only
 static_assert(xstd::specialization_of_N<std::bitset<8>, std::bitset>);        // values only
 static_assert(xstd::specialization_of_TN<std::array<int, 3>, std::array>);    // a type, then values
 ```
@@ -167,6 +175,9 @@ the concept sees through a `const`: an adaptor over a const owner names `Contain
 no specialization pattern matches that. A reference is a specialization of nothing either way.
 
 ```cpp
+#include <xstd/misc/concepts.hpp>
+#include <vector>
+
 template<xstd::specialization_of<std::vector> Owner>
 class view { Owner* owner; };
 

@@ -3,11 +3,13 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <xstd/misc/concepts/specialization_of.hpp> // specialization_of
-#include <test/constexpr_check.hpp>                 // XSTD_CONSTEXPR_CHECK, XSTD_CONSTEXPR_CHECK_EQUAL
-#include <boost/test/unit_test.hpp>                 // BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_AUTO_TEST_CASE
-#include <complex>                                  // complex
-#include <tuple>                                    // tuple
+#include <xstd/misc/concepts/specialization_of.hpp>   // specialization_of
+#include <xstd/misc/concepts/specialization_of_T.hpp> // specialization_of_T
+#include <test/constexpr_check.hpp>                   // XSTD_CONSTEXPR_CHECK, XSTD_CONSTEXPR_CHECK_EQUAL
+#include <boost/test/unit_test.hpp>                   // BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_AUTO_TEST_CASE
+#include <complex>                                    // complex
+#include <tuple>                                      // tuple
+#include <type_traits>                                // is_trivially_copyable_v
 
 BOOST_AUTO_TEST_SUITE(Misc)
 BOOST_AUTO_TEST_SUITE(Concepts)
@@ -48,6 +50,33 @@ BOOST_AUTO_TEST_CASE(ConstrainsToSpecializationsOfAPrimaryTemplate)
 
         // and it runs; double rather than int, the MSVC STL deprecating the others
         XSTD_CONSTEXPR_CHECK_EQUAL((as_complex(std::complex<double>{1.0, 2.0})), (std::complex<double>{1.0, 2.0}));
+}
+
+// The suffixed spelling under a constraint strictly stronger than the unsuffixed one.
+template<xstd::specialization_of<std::complex> T>
+[[nodiscard]] constexpr auto which(T) noexcept
+        -> int
+{
+        return 1;
+}
+
+template<xstd::specialization_of_T<std::complex> T>
+        requires std::is_trivially_copyable_v<T>
+[[nodiscard]] constexpr auto which(T) noexcept
+        -> int
+{
+        return 2;
+}
+
+// An alias is only an alias if it normalizes to what it names: the two order rather than clash.
+BOOST_AUTO_TEST_CASE(TheUnsuffixedNameIsTheSuffixedOne)
+{
+        XSTD_CONSTEXPR_CHECK((xstd::specialization_of<std::complex<double>, std::complex>));
+        XSTD_CONSTEXPR_CHECK((xstd::specialization_of_T<std::complex<double>, std::complex>));
+        XSTD_CONSTEXPR_CHECK((not xstd::specialization_of<int, std::complex>));
+        XSTD_CONSTEXPR_CHECK((not xstd::specialization_of_T<int, std::complex>));
+
+        XSTD_CONSTEXPR_CHECK_EQUAL(which(std::complex<double>{}), 2);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -6,14 +6,13 @@
 #ifndef XSTD_MISC_CONCEPTS_SPECIALIZATION_OF_HPP
 #define XSTD_MISC_CONCEPTS_SPECIALIZATION_OF_HPP
 
-#include <xstd/misc/type_traits/is_specialization_of.hpp> // is_specialization_of_v
-#include <type_traits>                                    // remove_const_t
+#include <xstd/misc/concepts/specialization_of_T.hpp> // specialization_of_T
 
 namespace xstd {
 
-// The constraint spelling of xstd::is_specialization_of, taking the const an adaptor over a const owner names.
+// The all-types shape under the name it has without a suffix, normalizing to the same constraint.
 template<class T, template<class...> class Primary>
-concept specialization_of = is_specialization_of_v<std::remove_const_t<T>, Primary>;
+concept specialization_of = specialization_of_T<T, Primary>;
 
 } // namespace xstd
 
