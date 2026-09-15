@@ -18,7 +18,7 @@ concept specialization_of_T = is_specialization_of_T_v<std::remove_const_t<T>, P
 template<class T, template<auto, auto...> class Primary>
 concept specialization_of_N = is_specialization_of_N_v<std::remove_const_t<T>, Primary>;
 
-template<class T, template<class, auto, auto...> class Primary>
+template<class T, template<class U, U...> class Primary>
 concept specialization_of_TN = is_specialization_of_TN_v<std::remove_const_t<T>, Primary>;
 
 template<class T, template<auto, class, class...> class Primary>

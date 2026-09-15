@@ -34,14 +34,15 @@ template<class T, template<auto, auto...> class Primary>
 using is_specialization_of_N = std::bool_constant<is_specialization_of_N_v<T, Primary>>;
 
 // Whether T is a specialization of a class template taking a type and then values.
-template<class T, template<class, auto, auto...> class Primary>
+// Spelt <class U, U...> rather than <class, auto...>, which also takes a value typed by the type: std::integer_sequence.
+template<class T, template<class U, U...> class Primary>
 inline constexpr auto is_specialization_of_TN_v = false;
 
 // At least one of each, so that an empty value pack cannot make this match a types-only template.
-template<template<class, auto, auto...> class Primary, class Arg, auto Val, auto... Vals>
+template<template<class U, U...> class Primary, class Arg, auto Val, auto... Vals>
 inline constexpr auto is_specialization_of_TN_v<Primary<Arg, Val, Vals...>, Primary> = true;
 
-template<class T, template<class, auto, auto...> class Primary>
+template<class T, template<class U, U...> class Primary>
 using is_specialization_of_TN = std::bool_constant<is_specialization_of_TN_v<T, Primary>>;
 
 // Whether T is a specialization of a class template taking a value and then types.

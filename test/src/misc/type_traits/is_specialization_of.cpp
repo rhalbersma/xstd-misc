@@ -59,6 +59,10 @@ BOOST_AUTO_TEST_CASE(ATypeThenValues)
         XSTD_CONSTEXPR_CHECK((not xstd::is_specialization_of_TN_v<int, std::array>));
         XSTD_CONSTEXPR_CHECK((not xstd::is_specialization_of_TN_v<std::array<int, 3>, std::span>));
 
+        // a value typed by the type parameter counts, which is what integer_sequence has
+        XSTD_CONSTEXPR_CHECK((xstd::is_specialization_of_TN_v<std::integer_sequence<int, 1, 2>, std::integer_sequence>));
+        XSTD_CONSTEXPR_CHECK((xstd::is_specialization_of_TN_v<std::integral_constant<int, 3>, std::integral_constant>));
+
         // a types-only template belongs to the other shape
         XSTD_CONSTEXPR_CHECK((not xstd::is_specialization_of_TN_v<std::vector<int>, std::array>));
 }

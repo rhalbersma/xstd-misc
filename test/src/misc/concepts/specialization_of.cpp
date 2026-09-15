@@ -12,7 +12,8 @@
 #include <concepts>                                 // integral
 #include <cstddef>                                  // size_t
 #include <ratio>                                    // ratio
-#include <tuple>                                    // tuple
+#include <tuple>                                    // tuple, tuple_element
+#include <utility>                                  // integer_sequence
 #include <type_traits>                              // is_trivially_copyable_v
 #include <vector>                                   // vector
 
@@ -66,6 +67,7 @@ BOOST_AUTO_TEST_CASE(ConstrainsToSpecializationsOfThePrimaryTemplate)
 
         XSTD_CONSTEXPR_CHECK((not xstd::specialization_of_T<int, std::complex>));
         XSTD_CONSTEXPR_CHECK((not xstd::specialization_of_N<std::ratio<1, 2>, std::bitset>));
+        XSTD_CONSTEXPR_CHECK((xstd::specialization_of_TN<std::integer_sequence<int, 1, 2>, std::integer_sequence>));
         XSTD_CONSTEXPR_CHECK((not xstd::specialization_of_TN<std::vector<int>, std::array>));
         XSTD_CONSTEXPR_CHECK((xstd::specialization_of_NT<std::enable_if<true, int>, std::enable_if>));
         XSTD_CONSTEXPR_CHECK((xstd::specialization_of_NT<std::tuple_element<0, std::tuple<int>>, std::tuple_element>));

@@ -44,11 +44,12 @@ The type utilities intentionally remain narrow:
   The three are variations on one question, so they share a header apiece, the traits
   in `<xstd/misc/type_traits/is_specialization_of.hpp>` and the constraints in
   `<xstd/misc/concepts/specialization_of.hpp>`.
-  A class template whose non-type parameter takes its type from an earlier parameter,
-  as `std::integer_sequence<class T, T... Ints>` does, is under none of them: its
-  shape needs a `<class U, U...>` spelling, which `std::array` binds to but does not
-  match, `3` being a `size_t` where `T` deduces `int`. So the two cannot share a name,
-  and the rarer one is left out rather than given a name of its own.
+  `_TN` is spelt `<class U, U...>` rather than `<class, auto...>`, so that it also
+  reaches a template whose value takes its type from the type before it, as
+  `std::integer_sequence<class T, T... Ints>` and `std::integral_constant<class T,
+  T v>` do. The values are still deduced as `auto` in the pattern rather than as `U`,
+  which is what keeps `std::array<int, 3>` matching: `U` deduces `int` there while
+  the `3` is a `size_t`, and a pattern deducing the value as `U` would reject it.
   The suffix spells the parameter kinds in the order the template declares them, `T`
   for a type and `N` for a value, so the all-types shape is `specialization_of_T`.
   `specialization_of` is that one under p2098's unsuffixed spelling, defined in terms
