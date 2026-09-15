@@ -24,6 +24,43 @@ struct compressed_member
 
 static_assert(sizeof(compressed_member) == sizeof(int));
 
+// Two absent members overlap only because their tags make them different types.
+struct two_absent
+{
+        [[XSTD_NO_UNIQUE_ADDRESS]] xstd::conditional_data_member_t<false, int, struct first> one;
+        [[XSTD_NO_UNIQUE_ADDRESS]] xstd::conditional_data_member_t<false, int, struct second> two;
+        int value;
+};
+
+static_assert(sizeof(two_absent) == sizeof(int));
+
+// The same tag twice is the mistake this guards against: one type, so two subobjects of it.
+struct distinct_tags
+{
+        [[XSTD_NO_UNIQUE_ADDRESS]] xstd::empty_member_type<struct here> one;
+        [[XSTD_NO_UNIQUE_ADDRESS]] xstd::empty_member_type<struct there> two;
+};
+
+#if defined(__clang__)
+// -Wpadded fires here and nowhere above, which is the failure mode stated as a diagnostic:
+// the second member of one type cannot share the first's address, so a byte is spent on it.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpadded"
+#endif
+
+struct one_tag_twice
+{
+        [[XSTD_NO_UNIQUE_ADDRESS]] xstd::empty_member_type<struct shared> one;
+        [[XSTD_NO_UNIQUE_ADDRESS]] xstd::empty_member_type<struct shared> two;
+};
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
+static_assert(sizeof(distinct_tags) == 1);
+static_assert(sizeof(one_tag_twice) == 2);
+
 // the tag can be declared in place; both stand in for the same Type, the colliding case
 using member1 = xstd::conditional_data_member_t<false, tag1, struct member1_tag>;
 using member2 = xstd::conditional_data_member_t<false, tag1, struct member2_tag>;
