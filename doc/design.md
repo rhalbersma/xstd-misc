@@ -40,6 +40,9 @@ The type utilities intentionally remain narrow:
   actually has, `std::span` joining `std::array` and `std::tuple` joining
   `std::vector`, so the set does not grow with use. An adaptor over a storage names
   the backend's template directly under whichever of the three its shape calls for.
+  The three are variations on one question, so they share a header apiece, the traits
+  in `<xstd/misc/type_traits/is_specialization_of.hpp>` and the constraints in
+  `<xstd/misc/concepts/specialization_of.hpp>`.
   The suffix spells the parameter kinds in the order the template declares them, `T`
   for a type and `N` for a value, so the all-types shape is `specialization_of_T`.
   `specialization_of` is that one under p2098's unsuffixed spelling, defined in terms

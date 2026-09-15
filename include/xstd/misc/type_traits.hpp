@@ -10,9 +10,6 @@
 #include <xstd/misc/type_traits/empty_member_type.hpp>       // IWYU pragma: export; empty_member_type
 #include <xstd/misc/type_traits/no_unique_address.hpp>       // IWYU pragma: export; XSTD_NO_UNIQUE_ADDRESS
 #include <xstd/misc/type_traits/conditional_data_member.hpp> // IWYU pragma: export; conditional_data_member
-#include <xstd/misc/type_traits/is_specialization_of.hpp>    // IWYU pragma: export; is_specialization_of
-#include <xstd/misc/type_traits/is_specialization_of_T.hpp>  // IWYU pragma: export; is_specialization_of_T
-#include <xstd/misc/type_traits/is_specialization_of_N.hpp>  // IWYU pragma: export; is_specialization_of_N
-#include <xstd/misc/type_traits/is_specialization_of_TN.hpp> // IWYU pragma: export; is_specialization_of_TN
+#include <xstd/misc/type_traits/is_specialization_of.hpp>    // IWYU pragma: export; the is_specialization_of traits, one per parameter shape
 
 #endif // XSTD_MISC_TYPE_TRAITS_HPP

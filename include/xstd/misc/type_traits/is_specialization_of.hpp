@@ -6,9 +6,43 @@
 #ifndef XSTD_MISC_TYPE_TRAITS_IS_SPECIALIZATION_OF_HPP
 #define XSTD_MISC_TYPE_TRAITS_IS_SPECIALIZATION_OF_HPP
 
-#include <xstd/misc/type_traits/is_specialization_of_T.hpp> // is_specialization_of_T, is_specialization_of_T_v
+#include <type_traits> // bool_constant
 
 namespace xstd {
+
+// One per parameter shape, the suffix spelling the kinds in the order a template declares them.
+
+// Whether T is a specialization of a class template whose parameters are all types.
+template<class T, template<class...> class Primary>
+inline constexpr auto is_specialization_of_T_v = false;
+
+template<template<class...> class Primary, class... Args>
+inline constexpr auto is_specialization_of_T_v<Primary<Args...>, Primary> = true;
+
+template<class T, template<class...> class Primary>
+using is_specialization_of_T = std::bool_constant<is_specialization_of_T_v<T, Primary>>;
+
+// Whether T is a specialization of a class template whose parameters are all values.
+template<class T, template<auto, auto...> class Primary>
+inline constexpr auto is_specialization_of_N_v = false;
+
+// At least one value, so that an empty pack cannot make this match where another shape does.
+template<template<auto, auto...> class Primary, auto Val, auto... Vals>
+inline constexpr auto is_specialization_of_N_v<Primary<Val, Vals...>, Primary> = true;
+
+template<class T, template<auto, auto...> class Primary>
+using is_specialization_of_N = std::bool_constant<is_specialization_of_N_v<T, Primary>>;
+
+// Whether T is a specialization of a class template taking a type and then values.
+template<class T, template<class, auto, auto...> class Primary>
+inline constexpr auto is_specialization_of_TN_v = false;
+
+// At least one of each, so that an empty value pack cannot make this match a types-only template.
+template<template<class, auto, auto...> class Primary, class Arg, auto Val, auto... Vals>
+inline constexpr auto is_specialization_of_TN_v<Primary<Arg, Val, Vals...>, Primary> = true;
+
+template<class T, template<class, auto, auto...> class Primary>
+using is_specialization_of_TN = std::bool_constant<is_specialization_of_TN_v<T, Primary>>;
 
 // The all-types shape under the name it has without a suffix.
 template<class T, template<class...> class Primary>

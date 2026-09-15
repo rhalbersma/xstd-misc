@@ -76,18 +76,12 @@ the same `xstd::misc` target.
 
 | Header | Additions | Description | Reference |
 | :----- | :-------- | :---------- | :-------- |
-| `<xstd/misc/concepts/specialization_of_TN.hpp>` | `specialization_of_TN` | Constraint form of `is_specialization_of_TN`, seeing through a `const` owner | none |
-| `<xstd/misc/concepts/specialization_of_N.hpp>` | `specialization_of_N` | Constraint form of `is_specialization_of_N`, seeing through a `const` owner | none |
-| `<xstd/misc/concepts/specialization_of_T.hpp>` | `specialization_of_T` | Constraint form of `is_specialization_of_T`, seeing through a `const` owner | none |
-| `<xstd/misc/concepts/specialization_of.hpp>` | `specialization_of` | `specialization_of_T` under the name without a suffix | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
-| `<xstd/misc/type_traits/is_specialization_of_T.hpp>` | `is_specialization_of_T` <br> `is_specialization_of_T_v` | Is a type a specialization of a class template whose parameters are all types? | none |
-| `<xstd/misc/type_traits/is_specialization_of.hpp>` | `is_specialization_of` <br> `is_specialization_of_v` | `is_specialization_of_T` under the name without a suffix | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
-| `<xstd/misc/type_traits/is_specialization_of_TN.hpp>` | `is_specialization_of_TN` <br> `is_specialization_of_TN_v` | Is a type a specialization of a class template taking a type, then values? | none |
-| `<xstd/misc/type_traits/is_specialization_of_N.hpp>` | `is_specialization_of_N` <br> `is_specialization_of_N_v` | Is a type a specialization of a class template whose parameters are all values? | none |
+| `<xstd/misc/concepts/specialization_of.hpp>` | `specialization_of` | Constraint form of `is_specialization_of`, seeing through a `const` owner | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
+| `<xstd/misc/type_traits/is_specialization_of.hpp>` | `is_specialization_of` | Is a type a specialization of a class template? | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
 | `<xstd/misc/type_traits/no_unique_address.hpp>` | `XSTD_NO_UNIQUE_ADDRESS` | Portable spelling of `no_unique_address` | none |
 | `<xstd/misc/type_traits/empty_member_type.hpp>` | `empty_member_type` | A tagged empty type for a data member that is not there | none |
 | `<xstd/misc/type_traits/empty_base_type.hpp>` | `empty_base_type` | A tagged empty type for a base class that is not there | none |
-| `<xstd/misc/type_traits/conditional_data_member.hpp>` | `conditional_data_member` <br> `conditional_data_member_t` | A conditionally present member | none |
+| `<xstd/misc/type_traits/conditional_data_member.hpp>` | `conditional_data_member` | A conditionally present member | none |
 | `<xstd/misc/utility/to_underlying.hpp>` | `to_underlying` | `std::to_underlying`, plus an `std::integral_constant` overload | [p1682r1](https://wg21.link/p1682r1) (`std::to_underlying`) |
 
 Each directory has an umbrella exporting what is under it -- `<xstd/misc/concepts.hpp>`,

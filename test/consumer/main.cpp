@@ -4,7 +4,6 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <xstd/misc/concepts/specialization_of.hpp>
-#include <xstd/misc/concepts/specialization_of_TN.hpp>
 #include <xstd/misc/type_traits.hpp>
 #include <xstd/misc/utility.hpp>
 #include <array>
