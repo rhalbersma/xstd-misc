@@ -96,7 +96,7 @@ A new paper revision or a change on its tracking issue triggers a review, not an
 
 | Paper | Reviewed wording | Tracking issue | Last reviewed | Relationship |
 |---|---|---|---|---|
-| P1682R1 | [P1682R1](https://wg21.link/P1682R1) | [cplusplus/papers#460](https://github.com/cplusplus/papers/issues/460) | 2026-09-04 | Supplies `std::to_underlying`, which the plain-enum overload delegates to rather than reimplements. xstd adds an overload the paper does not cover: an enum value wrapped in `std::integral_constant`, returned as an `integral_constant` of the underlying type. [doc/ideas.md](doc/ideas.md) is the 2016 sketch behind the paper. |
+| P1682R1 | [P1682R1](https://wg21.link/P1682R1) | [cplusplus/papers#460](https://github.com/cplusplus/papers/issues/460) | 2026-09-04 | Specifies `std::to_underlying`. The plain-enum overload reproduces the cast the paper specifies rather than calling `std::to_underlying`, which is C++23 and would raise the baseline. xstd adds an overload the paper does not cover: an enum value wrapped in `std::integral_constant`, returned as an `integral_constant` of the underlying type. [doc/ideas.md](doc/ideas.md) is the 2016 sketch behind the paper. |
 | P2098R1 | [P2098R1](https://wg21.link/P2098R1) | [cplusplus/papers#812](https://github.com/cplusplus/papers/issues/812) | 2026-09-04 | Supplies the name and the semantics for class templates whose parameters are types. xstd implements that form and its `_v` variable template, and adds the concept spelling `specialization_of`; the standard library has no counterpart to defer to. |
 
 ## License

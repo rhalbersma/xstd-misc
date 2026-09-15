@@ -9,6 +9,7 @@
 >
 > — Lewis Carroll, *Through the Looking-Glass* (1871), "The Walrus and the Carpenter"
 
+[![Project Status: WIP](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
 [![Language](https://img.shields.io/badge/language-C++-blue.svg)](https://isocpp.org/)
 [![Standard](https://img.shields.io/badge/c%2B%2B-20-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B#Standardization)
 [![License](https://img.shields.io/badge/license-Boost-blue.svg)](https://opensource.org/licenses/BSL-1.0)
@@ -72,6 +73,17 @@ target_link_libraries(my_target PRIVATE xstd::misc)
 `find_package(xstd-misc CONFIG REQUIRED)` and `add_subdirectory(external/xstd-misc)` provide
 the same `xstd::misc` target.
 
+To build and install the headers alone, without the test suite and its Boost.Test
+dependency, configure with tests off:
+
+```sh
+cmake --preset no-tests   # or: cmake -S . -B build -DBUILD_TESTING=OFF
+cmake --install build/no-tests --prefix /usr/local
+```
+
+Tests are built only when xstd-misc is the top-level project, so a `FetchContent` or
+`add_subdirectory` consumer never needs Boost.Test.
+
 ## Headers
 
 | Header | Additions | Description | Reference |
@@ -79,8 +91,8 @@ the same `xstd::misc` target.
 | `<xstd/misc/concepts/specialization_of.hpp>` | `specialization_of` | Constraint form of `is_specialization_of`, seeing through a `const` owner | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
 | `<xstd/misc/type_traits/is_specialization_of.hpp>` | `is_specialization_of` | Is a type a specialization of a class template? | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
 | `<xstd/misc/type_traits/no_unique_address.hpp>` | `XSTD_NO_UNIQUE_ADDRESS` | Portable spelling of `no_unique_address` | none |
-| `<xstd/misc/type_traits/empty_member_type.hpp>` | `empty_member_type` | A tagged empty type for a data member that is not there | none |
 | `<xstd/misc/type_traits/empty_base_type.hpp>` | `empty_base_type` | A tagged empty type for a base class that is not there | none |
+| `<xstd/misc/type_traits/empty_member_type.hpp>` | `empty_member_type` | A tagged empty type for a data member that is not there | none |
 | `<xstd/misc/type_traits/conditional_data_member.hpp>` | `conditional_data_member` | A conditionally present member | none |
 | `<xstd/misc/utility/to_underlying.hpp>` | `to_underlying` | `std::to_underlying`, plus an `std::integral_constant` overload | [p1682r1](https://wg21.link/p1682r1) (`std::to_underlying`) |
 

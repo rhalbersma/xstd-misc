@@ -71,6 +71,11 @@ install(
     EXPORT ${PROJECT_NAME}Targets
     FILE_SET HEADERS
 )
+# A consumer who has only the install tree still has the licence it is granted under.
+install(
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE_1_0.txt
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/licenses/${PROJECT_NAME}
+)
 install(
     EXPORT ${PROJECT_NAME}Targets
     NAMESPACE xstd::
