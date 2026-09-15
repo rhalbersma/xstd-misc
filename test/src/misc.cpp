@@ -14,9 +14,7 @@ template<class>
 struct box
 {};
 
-// concepts and type_traits state the same question two ways, and answer it the same way -- up to
-// the const an adaptor over a const owner names, which the constraint sees through and the trait,
-// being the exact question, does not.
+// concepts and type_traits answer alike, up to the const an adaptor over a const owner names.
 template<class T>
 concept agrees = xstd::specialization_of<T, box> == xstd::is_specialization_of<std::remove_const_t<T>, box>::value;
 
@@ -33,13 +31,13 @@ BOOST_AUTO_TEST_CASE(TheConceptAndTheTraitAreOnePredicate)
         static_assert(xstd::specialization_of<box<int>, box>);
         static_assert(not xstd::specialization_of<int, box>);
 
-        // And where they part: the constraint takes the const owner, the trait answers for what is under it.
+        // where they part: the constraint takes the const owner, the trait does not
         static_assert(xstd::specialization_of<box<int> const, box>);
         static_assert(not xstd::is_specialization_of<box<int> const, box>::value);
         BOOST_CHECK(true);
 }
 
-// What the const is for: an adaptor names its owner, and a view over a const one names it const.
+// What the const is for: a view over a const owner names it const.
 template<xstd::specialization_of<box> Owner>
 class view
 {

@@ -3,8 +3,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <xstd/misc/concepts/same_template_as.hpp>
 #include <xstd/misc/concepts/specialization_of.hpp>
+#include <xstd/misc/concepts/specialization_of_TN.hpp>
 #include <xstd/misc/type_traits.hpp>
 #include <xstd/misc/utility.hpp>
 #include <array>
@@ -23,7 +23,7 @@ int main()
 {
         static_assert(xstd::specialization_of<std::complex<double>, std::complex>);
         static_assert(xstd::is_specialization_of_v<std::complex<double>, std::complex>);
-        static_assert(xstd::same_template_as<std::array<int, 3>, std::array<char, 7>>);
+        static_assert(xstd::specialization_of_TN<std::array<int, 3>, std::array>);
         static_assert(decltype(xstd::to_underlying(std::integral_constant<color, color::red>()))::value == 1);
         static_assert(sizeof(storage) == sizeof(int));
 

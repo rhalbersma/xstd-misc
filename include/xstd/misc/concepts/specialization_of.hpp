@@ -11,11 +11,7 @@
 
 namespace xstd {
 
-// The constraint spelling of xstd::is_specialization_of.
-//
-// A view over a const owner names Container const, which no specialization pattern matches, so the
-// const comes off here and nowhere else: a constrained parameter is written for what a caller may
-// name, and the trait stays the exact question. A reference is not a specialization either way.
+// The constraint spelling of xstd::is_specialization_of, taking the const an adaptor over a const owner names.
 template<class T, template<class...> class Primary>
 concept specialization_of = is_specialization_of_v<std::remove_const_t<T>, Primary>;
 

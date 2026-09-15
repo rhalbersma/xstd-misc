@@ -32,7 +32,7 @@ The type utilities intentionally remain narrow:
 
 - `is_specialization_of` and `specialization_of` recognize specializations of
   class templates whose parameters are types.
-- `is_nontype_specialization_of` and `is_mixed_specialization_of`, with their
+- `is_specialization_of_N` and `is_specialization_of_TN`, with their
   constraint spellings, are the same question for the other two parameter shapes a
   class template may have: all values, and a type then values. Three names rather
   than one because the kinds are part of a template's type and no one template
@@ -40,18 +40,9 @@ The type utilities intentionally remain narrow:
   actually has, `std::span` joining `std::array` and `std::tuple` joining
   `std::vector`, so the set does not grow with use. An adaptor over a storage names
   the backend's template directly under whichever of the three its shape calls for.
-- `is_same_template_as` and `same_template_as` ask the same question of a class
-  template of any parameter kinds, at the price of naming it by an example
-  specialization. A template's parameter kinds are part of its type and no one
-  template template parameter binds them all -- `<class...>` takes `std::complex`
-  but not `std::array`, `<auto...>` takes `std::bitset` but neither -- and the
-  parameter list that would, `<class..., auto...>`, is one no template may have,
-  a pack having to come last. So the primary template cannot be a parameter at
-  all, and the kinds move into one partial specialization per shape. Each shape
-  demands the parameter that tells it from the others, a trailing pack deducing
-  to empty otherwise and two shapes then matching the same pair. Universal
-  template parameters would collapse the four into one; until then this is the
-  spelling that gives a caller a single name.
+  The suffix spells the parameter kinds in the order the template declares them, `T`
+  for a type and `N` for a value; `specialization_of` keeps p2098's unsuffixed spelling
+  for the all-types case, which is both the common one and the one that paper is about.
 - `empty_member_type` and `conditional_data_member_t` support optional
   `[[no_unique_address]]` storage, and `empty_base_type` is the same idea for a
   base class. Both tags default to `void`, so `empty_member_type<>` and

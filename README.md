@@ -76,14 +76,12 @@ the same `xstd::misc` target.
 
 | Header | Additions | Description | Reference |
 | :----- | :-------- | :---------- | :-------- |
-| `<xstd/misc/concepts/mixed_specialization_of.hpp>` | `mixed_specialization_of` | Constraint form of `is_mixed_specialization_of`, seeing through a `const` owner | none |
-| `<xstd/misc/concepts/nontype_specialization_of.hpp>` | `nontype_specialization_of` | Constraint form of `is_nontype_specialization_of`, seeing through a `const` owner | none |
-| `<xstd/misc/concepts/same_template_as.hpp>` | `same_template_as` | Constraint form of `is_same_template_as`, seeing through a `const` owner | none |
+| `<xstd/misc/concepts/specialization_of_TN.hpp>` | `specialization_of_TN` | Constraint form of `is_specialization_of_TN`, seeing through a `const` owner | none |
+| `<xstd/misc/concepts/specialization_of_N.hpp>` | `specialization_of_N` | Constraint form of `is_specialization_of_N`, seeing through a `const` owner | none |
 | `<xstd/misc/concepts/specialization_of.hpp>` | `specialization_of` | Constraint form of `is_specialization_of`, seeing through a `const` owner | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
 | `<xstd/misc/type_traits/is_specialization_of.hpp>` | `is_specialization_of` <br> `is_specialization_of_v` | Is a type a specialization of a type-parameter-only class template? | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
-| `<xstd/misc/type_traits/is_same_template_as.hpp>` | `is_same_template_as` <br> `is_same_template_as_v` | Are two types specializations of one class template, whatever its parameter kinds? | none |
-| `<xstd/misc/type_traits/is_mixed_specialization_of.hpp>` | `is_mixed_specialization_of` <br> `is_mixed_specialization_of_v` | Is a type a specialization of a class template taking a type, then values? | none |
-| `<xstd/misc/type_traits/is_nontype_specialization_of.hpp>` | `is_nontype_specialization_of` <br> `is_nontype_specialization_of_v` | Is a type a specialization of a class template whose parameters are all values? | none |
+| `<xstd/misc/type_traits/is_specialization_of_TN.hpp>` | `is_specialization_of_TN` <br> `is_specialization_of_TN_v` | Is a type a specialization of a class template taking a type, then values? | none |
+| `<xstd/misc/type_traits/is_specialization_of_N.hpp>` | `is_specialization_of_N` <br> `is_specialization_of_N_v` | Is a type a specialization of a class template whose parameters are all values? | none |
 | `<xstd/misc/type_traits/no_unique_address.hpp>` | `XSTD_NO_UNIQUE_ADDRESS` | Portable spelling of `no_unique_address` | none |
 | `<xstd/misc/type_traits/empty_member_type.hpp>` | `empty_member_type` | A tagged empty type for a data member that is not there | none |
 | `<xstd/misc/type_traits/empty_base_type.hpp>` | `empty_base_type` | A tagged empty type for a base class that is not there | none |
@@ -142,8 +140,10 @@ static_assert(xstd::is_specialization_of_v<std::complex<double>, std::complex>);
 static_assert(xstd::specialization_of<std::complex<double>, std::complex>);
 ```
 
-Where the template takes values, name the shape it has: `nontype_specialization_of` for one whose
-parameters are all values, `mixed_specialization_of` for one taking a type and then values. The
+Where the template takes values, name the shape it has. A suffix spells the parameter kinds in
+the order the template declares them, `T` for a type and `N` for a value: `specialization_of_N`
+takes one whose parameters are all values, `specialization_of_TN` one taking a type and then
+values, and the unsuffixed `specialization_of` the all-types case that needs no suffix. The
 kinds of a template's parameters are part of its type and no one template template parameter
 binds them all, so there is a concept per shape rather than one that takes any template.
 
@@ -153,9 +153,9 @@ binds them all, so there is a concept per shape rather than one that takes any t
 #include <bitset>
 #include <vector>
 
-static_assert(xstd::specialization_of<std::vector<int>, std::vector>);             // types only
-static_assert(xstd::nontype_specialization_of<std::bitset<8>, std::bitset>);       // values only
-static_assert(xstd::mixed_specialization_of<std::array<int, 3>, std::array>);      // a type, then values
+static_assert(xstd::specialization_of<std::vector<int>, std::vector>);        // types only
+static_assert(xstd::specialization_of_N<std::bitset<8>, std::bitset>);        // values only
+static_assert(xstd::specialization_of_TN<std::array<int, 3>, std::array>);    // a type, then values
 ```
 
 A constrained parameter is no obstacle: an unconstrained template template parameter does not
@@ -174,28 +174,6 @@ using mutable_view = view<std::vector<int>>;        // the owner as it is
 using const_view   = view<std::vector<int> const>;  // and a view over a const one
 ```
 
-Those two name the template itself, which limits them to templates whose parameters
-are all types: `std::array` takes a value, so no template template parameter accepts
-it alongside `std::complex`. `is_same_template_as` and `same_template_as` ask the same
-question of a template of any parameter kinds, by naming an example specialization of
-it rather than the template:
-
-```cpp
-#include <xstd/misc/concepts.hpp>
-#include <array>
-#include <bitset>
-#include <complex>
-#include <vector>
-
-static_assert(xstd::same_template_as<std::array<int, 3>, std::array<char, 7>>);
-static_assert(xstd::same_template_as<std::vector<int>, std::vector<char>>);
-static_assert(xstd::same_template_as<std::bitset<8>, std::bitset<64>>);
-static_assert(xstd::same_template_as<std::complex<double>, std::complex<float>>);
-
-// and as a type-constraint, the constrained type first
-template<xstd::same_template_as<std::array<int, 1>> T>
-constexpr auto first(T const& a) { return a.front(); }
-```
 
 See [the design notes](doc/design.md) for rationale, and
 [CONTRIBUTING.md](CONTRIBUTING.md) to build the library itself.
