@@ -76,8 +76,8 @@ the same `xstd::misc` target.
 
 | Header | Additions | Description | Reference |
 | :----- | :-------- | :---------- | :-------- |
-| `<xstd/misc/concepts/same_template_as.hpp>` | `same_template_as` | Constraint form of `is_same_template_as` | none |
-| `<xstd/misc/concepts/specialization_of.hpp>` | `specialization_of` | Constraint form of `is_specialization_of` | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
+| `<xstd/misc/concepts/same_template_as.hpp>` | `same_template_as` | Constraint form of `is_same_template_as`, seeing through a `const` owner | none |
+| `<xstd/misc/concepts/specialization_of.hpp>` | `specialization_of` | Constraint form of `is_specialization_of`, seeing through a `const` owner | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
 | `<xstd/misc/type_traits/is_specialization_of.hpp>` | `is_specialization_of` <br> `is_specialization_of_v` | Is a type a specialization of a type-parameter-only class template? | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
 | `<xstd/misc/type_traits/is_same_template_as.hpp>` | `is_same_template_as` <br> `is_same_template_as_v` | Are two types specializations of one class template, whatever its parameter kinds? | none |
 | `<xstd/misc/type_traits/no_unique_address.hpp>` | `XSTD_NO_UNIQUE_ADDRESS` | Portable spelling of `no_unique_address` | none |
@@ -136,6 +136,18 @@ where a constraint is what a caller writes:
 
 static_assert(xstd::is_specialization_of_v<std::complex<double>, std::complex>);
 static_assert(xstd::specialization_of<std::complex<double>, std::complex>);
+```
+
+The trait is the exact question and the concept is the one a caller writes, which is why only
+the concept sees through a `const`: an adaptor over a const owner names `Container const`, and
+no specialization pattern matches that. A reference is a specialization of nothing either way.
+
+```cpp
+template<xstd::specialization_of<std::vector> Owner>
+class view { Owner* owner; };
+
+using mutable_view = view<std::vector<int>>;        // the owner as it is
+using const_view   = view<std::vector<int> const>;  // and a view over a const one
 ```
 
 Those two name the template itself, which limits them to templates whose parameters

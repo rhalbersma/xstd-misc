@@ -57,6 +57,15 @@ concept, the `is` is what marks which is which: `is_specialization_of` is the
 trait and `specialization_of` the constraint, as `std::is_integral` stands beside
 `std::integral`.
 
+The two are not quite one predicate, and the difference is deliberate. A trait
+answers exactly: `is_specialization_of_v<std::vector<int> const, std::vector>` is
+false, a const-qualified type being no specialization of anything. A constraint is
+written for what a caller may name, and an adaptor over a const owner names
+`Container const` -- so the concepts strip the const and the traits do not. Only the
+const: a reference is not a specialization under either spelling, and nothing else
+comes off. xstd-bits draws the same line in its own nominal concept, whose comment
+puts it exactly: the const comes off here and nowhere else.
+
 ### Conditional storage
 
 `empty_member_type` carries a tag because two empty members of the same type in

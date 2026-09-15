@@ -38,6 +38,12 @@ BOOST_AUTO_TEST_CASE(ConstrainsToSpecializationsOfOneTemplate)
         XSTD_CONSTEXPR_CHECK((not xstd::same_template_as<int, std::complex<double>>));
         XSTD_CONSTEXPR_CHECK((not xstd::same_template_as<std::array<int, 3>&, std::array<int, 3>>));
 
+        // the const comes off both sides, so the relation holds whichever of them carries it
+        XSTD_CONSTEXPR_CHECK((xstd::same_template_as<std::array<int, 3> const, std::array<char, 7>>));
+        XSTD_CONSTEXPR_CHECK((xstd::same_template_as<std::array<int, 3>, std::array<char, 7> const>));
+        XSTD_CONSTEXPR_CHECK((xstd::same_template_as<std::vector<int> const, std::vector<char> const>));
+        XSTD_CONSTEXPR_CHECK((not xstd::same_template_as<std::vector<int> const, std::array<char, 7>>));
+
         // the relation reads the same either way round
         XSTD_CONSTEXPR_CHECK((xstd::same_template_as<std::array<char, 7>, std::array<int, 3>>));
 

@@ -34,6 +34,14 @@ BOOST_AUTO_TEST_CASE(ConstrainsToSpecializationsOfAPrimaryTemplate)
         XSTD_CONSTEXPR_CHECK((not xstd::specialization_of<std::tuple<int>, std::complex>));
         XSTD_CONSTEXPR_CHECK((not xstd::specialization_of<std::complex<int>&, std::complex>));
 
+        // an adaptor over a const owner names Container const, so the constraint sees through it
+        XSTD_CONSTEXPR_CHECK((xstd::specialization_of<std::complex<int> const, std::complex>));
+        XSTD_CONSTEXPR_CHECK((xstd::specialization_of<std::tuple<int, char> const, std::tuple>));
+        XSTD_CONSTEXPR_CHECK((not xstd::specialization_of<std::tuple<int> const, std::complex>));
+
+        // only the const: a const reference is still a reference, and no specialization
+        XSTD_CONSTEXPR_CHECK((not xstd::specialization_of<std::complex<int> const&, std::complex>));
+
         // used as a type-constraint, it constrains rather than hard-errors
         XSTD_CONSTEXPR_CHECK(has_as_complex<std::complex<double>>);
         XSTD_CONSTEXPR_CHECK(not has_as_complex<int>);

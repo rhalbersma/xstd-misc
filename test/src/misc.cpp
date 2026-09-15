@@ -5,7 +5,8 @@
 
 #include <xstd/misc.hpp>            // the whole misc surface
 #include <boost/test/unit_test.hpp> // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END
-#include <type_traits>              // integral_constant, is_empty_v
+#include <concepts>                 // same_as
+#include <type_traits>              // integral_constant, is_empty_v, remove_const_t
 
 BOOST_AUTO_TEST_SUITE(Misc)
 
@@ -13,9 +14,11 @@ template<class>
 struct box
 {};
 
-// concepts and type_traits state the same question two ways, so they must answer it the same way.
+// concepts and type_traits state the same question two ways, and answer it the same way -- up to
+// the const an adaptor over a const owner names, which the constraint sees through and the trait,
+// being the exact question, does not.
 template<class T>
-concept agrees = xstd::specialization_of<T, box> == xstd::is_specialization_of<T, box>::value;
+concept agrees = xstd::specialization_of<T, box> == xstd::is_specialization_of<std::remove_const_t<T>, box>::value;
 
 BOOST_AUTO_TEST_CASE(TheConceptAndTheTraitAreOnePredicate)
 {
@@ -23,11 +26,31 @@ BOOST_AUTO_TEST_CASE(TheConceptAndTheTraitAreOnePredicate)
         static_assert(agrees<box<box<int>>>);
         static_assert(agrees<int>);
         static_assert(agrees<box<int>&>);
+        static_assert(agrees<box<int> const>);
         static_assert(agrees<void>);
 
         // And they are not both vacuously false: the yes and the no are each reached.
         static_assert(xstd::specialization_of<box<int>, box>);
         static_assert(not xstd::specialization_of<int, box>);
+
+        // And where they part: the constraint takes the const owner, the trait answers for what is under it.
+        static_assert(xstd::specialization_of<box<int> const, box>);
+        static_assert(not xstd::is_specialization_of<box<int> const, box>::value);
+        BOOST_CHECK(true);
+}
+
+// What the const is for: an adaptor names its owner, and a view over a const one names it const.
+template<xstd::specialization_of<box> Owner>
+class view
+{
+        Owner* m_owner;
+};
+
+BOOST_AUTO_TEST_CASE(AnAdaptorTakesAConstOwnerAndAMutableOne)
+{
+        static_assert(std::same_as<view<box<int>>, view<box<int>>>);
+        static_assert(std::same_as<view<box<int> const>, view<box<int> const>>);
+        static_assert(not std::same_as<view<box<int>>, view<box<int> const>>);
         BOOST_CHECK(true);
 }
 
