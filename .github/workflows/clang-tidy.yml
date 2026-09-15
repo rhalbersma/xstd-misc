@@ -29,7 +29,3 @@ jobs:
       # this project's CMake knows.
       self_sufficiency_regex: ${{ github.workspace }}/build/test/header_self_sufficiency/.*
       test_dir: test/src
-      # config/ is generated per platform and not a public header.
-      include_exclude: include/xstd/config/*
-      # The ext/ headers need the library each adapts, which Configure fetches.
-      adapted_dirs: build/_deps/absl_int128-src build/_deps/boost_int128-src/include
