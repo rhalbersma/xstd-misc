@@ -44,6 +44,17 @@ inline constexpr auto is_specialization_of_TN_v<Primary<Arg, Val, Vals...>, Prim
 template<class T, template<class, auto, auto...> class Primary>
 using is_specialization_of_TN = std::bool_constant<is_specialization_of_TN_v<T, Primary>>;
 
+// Whether T is a specialization of a class template taking a value and then types.
+template<class T, template<auto, class, class...> class Primary>
+inline constexpr auto is_specialization_of_NT_v = false;
+
+// At least one of each, so that an empty type pack cannot make this match a values-only template.
+template<template<auto, class, class...> class Primary, auto Val, class Arg, class... Args>
+inline constexpr auto is_specialization_of_NT_v<Primary<Val, Arg, Args...>, Primary> = true;
+
+template<class T, template<auto, class, class...> class Primary>
+using is_specialization_of_NT = std::bool_constant<is_specialization_of_NT_v<T, Primary>>;
+
 // The all-types shape under the name it has without a suffix.
 template<class T, template<class...> class Primary>
 inline constexpr auto is_specialization_of_v = is_specialization_of_T_v<T, Primary>;

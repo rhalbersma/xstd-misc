@@ -139,8 +139,9 @@ static_assert(xstd::specialization_of_T<std::complex<double>, std::complex>);
 
 Name the shape the template has. A suffix spells its parameter kinds in the order it declares
 them, `T` for a type and `N` for a value: `specialization_of_T` takes one whose parameters are
-all types, `specialization_of_N` one whose parameters are all values, and `specialization_of_TN`
-one taking a type and then values. The kinds are part of a template's type and no one template
+all types, `specialization_of_N` one whose parameters are all values, `specialization_of_TN` one
+taking a type and then values, and `specialization_of_NT` one taking a value and then types, as
+`std::enable_if` and `std::tuple_element` do. The kinds are part of a template's type and no one template
 template parameter binds them all, so there is a concept per shape rather than one that takes
 any template.
 

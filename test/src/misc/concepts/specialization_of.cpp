@@ -67,6 +67,9 @@ BOOST_AUTO_TEST_CASE(ConstrainsToSpecializationsOfThePrimaryTemplate)
         XSTD_CONSTEXPR_CHECK((not xstd::specialization_of_T<int, std::complex>));
         XSTD_CONSTEXPR_CHECK((not xstd::specialization_of_N<std::ratio<1, 2>, std::bitset>));
         XSTD_CONSTEXPR_CHECK((not xstd::specialization_of_TN<std::vector<int>, std::array>));
+        XSTD_CONSTEXPR_CHECK((xstd::specialization_of_NT<std::enable_if<true, int>, std::enable_if>));
+        XSTD_CONSTEXPR_CHECK((xstd::specialization_of_NT<std::tuple_element<0, std::tuple<int>>, std::tuple_element>));
+        XSTD_CONSTEXPR_CHECK((not xstd::specialization_of_NT<int, std::enable_if>));
 
         // used as a type-constraint, it constrains rather than hard-errors
         XSTD_CONSTEXPR_CHECK(has_as_complex<std::complex<double>>);
@@ -82,6 +85,7 @@ BOOST_AUTO_TEST_CASE(TheConstraintsTakeAConstOwner)
         XSTD_CONSTEXPR_CHECK((xstd::specialization_of_T<std::vector<int> const, std::vector>));
         XSTD_CONSTEXPR_CHECK((xstd::specialization_of_N<std::bitset<8> const, std::bitset>));
         XSTD_CONSTEXPR_CHECK((xstd::specialization_of_TN<blocks<unsigned, 64> const, blocks>));
+        XSTD_CONSTEXPR_CHECK((xstd::specialization_of_NT<std::enable_if<true, int> const, std::enable_if>));
 
         // only the const: a reference is a specialization of nothing
         XSTD_CONSTEXPR_CHECK((not xstd::specialization_of_T<std::complex<int>&, std::complex>));

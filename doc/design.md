@@ -33,16 +33,22 @@ The type utilities intentionally remain narrow:
 - `is_specialization_of_T` and `specialization_of_T` recognize specializations of
   class templates whose parameters are all types.
 - `is_specialization_of_N` and `is_specialization_of_TN`, with their
-  constraint spellings, are the same question for the other two parameter shapes a
-  class template may have: all values, and a type then values. Three names rather
-  than one because the kinds are part of a template's type and no one template
-  template parameter binds them all; the partition is what the standard library
-  actually has, `std::span` joining `std::array` and `std::tuple` joining
-  `std::vector`, so the set does not grow with use. An adaptor over a storage names
+  constraint spellings, with `_NT`, are the same question for the other parameter
+  shapes a class template may have: all values, a type then values, and a value then
+  types. Four names rather than one because the kinds are part of a template's type
+  and no one template template parameter binds them all; the partition is what the
+  standard library actually has, `std::span` joining `std::array`, `std::tuple`
+  joining `std::vector`, and `std::enable_if`, `std::conditional`,
+  `std::tuple_element` and `std::variant_alternative` filling `_NT`. An adaptor over a storage names
   the backend's template directly under whichever of the three its shape calls for.
   The three are variations on one question, so they share a header apiece, the traits
   in `<xstd/misc/type_traits/is_specialization_of.hpp>` and the constraints in
   `<xstd/misc/concepts/specialization_of.hpp>`.
+  A class template whose non-type parameter takes its type from an earlier parameter,
+  as `std::integer_sequence<class T, T... Ints>` does, is under none of them: its
+  shape needs a `<class U, U...>` spelling, which `std::array` binds to but does not
+  match, `3` being a `size_t` where `T` deduces `int`. So the two cannot share a name,
+  and the rarer one is left out rather than given a name of its own.
   The suffix spells the parameter kinds in the order the template declares them, `T`
   for a type and `N` for a value, so the all-types shape is `specialization_of_T`.
   `specialization_of` is that one under p2098's unsuffixed spelling, defined in terms

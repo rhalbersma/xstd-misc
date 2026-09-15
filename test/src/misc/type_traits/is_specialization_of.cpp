@@ -13,7 +13,9 @@
 #include <cstddef>                                        // size_t
 #include <ratio>                                          // ratio
 #include <span>                                           // span
-#include <tuple>                                          // tuple
+#include <type_traits>                                    // conditional, enable_if, integral_constant
+#include <tuple>                                          // tuple, tuple_element
+#include <variant>                                        // variant, variant_alternative
 #include <vector>                                         // vector
 
 BOOST_AUTO_TEST_SUITE(Misc)
@@ -61,6 +63,17 @@ BOOST_AUTO_TEST_CASE(ATypeThenValues)
         XSTD_CONSTEXPR_CHECK((not xstd::is_specialization_of_TN_v<std::vector<int>, std::array>));
 }
 
+BOOST_AUTO_TEST_CASE(AValueThenTypes)
+{
+        XSTD_CONSTEXPR_CHECK((xstd::is_specialization_of_NT<std::enable_if<true, int>, std::enable_if>::value));
+        XSTD_CONSTEXPR_CHECK((xstd::is_specialization_of_NT_v<std::conditional<true, int, char>, std::conditional>));
+        XSTD_CONSTEXPR_CHECK((xstd::is_specialization_of_NT_v<std::tuple_element<0, std::tuple<int>>, std::tuple_element>));
+        XSTD_CONSTEXPR_CHECK((xstd::is_specialization_of_NT_v<std::variant_alternative<0, std::variant<int>>, std::variant_alternative>));
+
+        XSTD_CONSTEXPR_CHECK((not xstd::is_specialization_of_NT_v<int, std::enable_if>));
+        XSTD_CONSTEXPR_CHECK((not xstd::is_specialization_of_NT_v<std::enable_if<true, int>, std::conditional>));
+}
+
 // An unconstrained template template parameter does not consider its argument's constraints.
 BOOST_AUTO_TEST_CASE(AConstrainedParameterIsNoObstacle)
 {
@@ -75,6 +88,7 @@ BOOST_AUTO_TEST_CASE(TheTraitsAreExact)
         XSTD_CONSTEXPR_CHECK((not xstd::is_specialization_of_T_v<std::complex<int> const, std::complex>));
         XSTD_CONSTEXPR_CHECK((not xstd::is_specialization_of_N_v<std::bitset<8> const, std::bitset>));
         XSTD_CONSTEXPR_CHECK((not xstd::is_specialization_of_TN_v<std::array<int, 3> const, std::array>));
+        XSTD_CONSTEXPR_CHECK((not xstd::is_specialization_of_NT_v<std::enable_if<true, int> const, std::enable_if>));
 
         XSTD_CONSTEXPR_CHECK((not xstd::is_specialization_of_T_v<std::complex<int>&, std::complex>));
         XSTD_CONSTEXPR_CHECK((not xstd::is_specialization_of_N_v<std::bitset<8>&, std::bitset>));
