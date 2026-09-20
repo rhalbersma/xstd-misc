@@ -18,7 +18,8 @@ struct storage
         int present;
 };
 
-int main()
+auto main()
+        -> int
 {
         static_assert(xstd::specialization_of<std::complex<double>, std::complex>);
         static_assert(xstd::is_specialization_of_v<std::complex<double>, std::complex>);
