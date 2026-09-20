@@ -33,8 +33,7 @@ inline constexpr auto is_specialization_of_N_v<Primary<Val, Vals...>, Primary> =
 template<class T, template<auto, auto...> class Primary>
 using is_specialization_of_N = std::bool_constant<is_specialization_of_N_v<T, Primary>>;
 
-// Whether T is a specialization of a class template taking a type and then values.
-// Spelt <class U, U...> rather than <class, auto...>, which also takes a value typed by the type: std::integer_sequence.
+// A class template taking a type then values, spelt <class U, U...>: <class, auto...> admits std::integer_sequence too.
 template<class T, template<class U, U...> class Primary>
 inline constexpr auto is_specialization_of_TN_v = false;
 

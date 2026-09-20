@@ -16,11 +16,11 @@ template<class Enum>
 [[nodiscard]] constexpr auto to_underlying(Enum value) noexcept
         -> std::underlying_type_t<Enum>
 {
-        // NOLINTNEXTLINE(bugprone-non-zero-enum-to-bool-conversion): a bool-underlying enum value-initializes to false, so the cast is not always true.
+        // NOLINTNEXTLINE(bugprone-non-zero-enum-to-bool-conversion): a bool-underlying enum can be false
         return static_cast<std::underlying_type_t<Enum>>(value);
 }
 
-// Preserves constantness for an integral_constant-wrapped enum; qualified, so no enum namespace supplies its own by ADL.
+// Keeps constantness for an integral_constant-wrapped enum; qualified, so no enum namespace supplies its own by ADL.
 template<class Enum, Enum N>
         requires std::is_enum_v<Enum>
 [[nodiscard]] constexpr auto to_underlying(std::integral_constant<Enum, N>) noexcept

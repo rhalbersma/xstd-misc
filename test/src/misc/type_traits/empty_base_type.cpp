@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(ItHasNoComparisonAndHandsNoneToADerivedClass)
         XSTD_CONSTEXPR_CHECK(not three_way<empty>);
         XSTD_CONSTEXPR_CHECK(not lt<empty>);
 
-        // The contrast that makes them two types: empty_member_type hands its comparison down, answering equal for every pair.
+        // What makes them two types: empty_member_type hands its comparison down, answering equal for every pair.
         XSTD_CONSTEXPR_CHECK(not three_way<over_base>);
         XSTD_CONSTEXPR_CHECK(three_way<over_member>);
 }
