@@ -134,6 +134,39 @@ A new paper revision or a change on its tracking issue triggers a review, not an
 | P1682R1 | [P1682R1](https://wg21.link/P1682R1) | [cplusplus/papers#460](https://github.com/cplusplus/papers/issues/460) | 2026-09-04 | Specifies `std::to_underlying`. The plain-enum overload reproduces the cast the paper specifies rather than calling `std::to_underlying`, which is C++23 and would raise the baseline. xstd adds an overload the paper does not cover: an enum value wrapped in `std::integral_constant`, returned as an `integral_constant` of the underlying type. [doc/ideas.md](doc/ideas.md) is the 2016 sketch behind the paper. |
 | P2098R1 | [P2098R1](https://wg21.link/P2098R1) | [cplusplus/papers#812](https://github.com/cplusplus/papers/issues/812) | 2026-09-04 | Supplies the name and the semantics for class templates whose parameters are types. xstd implements that form and its `_v` variable template, and adds the concept spelling `specialization_of`; the standard library has no counterpart to defer to. |
 
+## Required status checks
+
+The names to tick under branch protection, exactly as GitHub reports them:
+
+| Check | Covers |
+| :--- | :--- |
+| `actionlint / actionlint` | workflow syntax |
+| `apple_clang / all` | Xcode 16.4 and 26.6, Debug and Release |
+| `clang / all` | Clang 22, 23, 24-SVN with libstdc++ |
+| `clang_cl / all` | clang-cl on VS 2022, 2026, 2026-Preview |
+| `clang_format / clang-format` | `clang-format --dry-run --Werror` against [`.clang-format`](.clang-format) |
+| `clang_libcxx / all` | Clang 22, 23, 24-SVN with libc++ |
+| `clang_tidy / all` | clang-tidy on all three rungs |
+| `codeql / Analyze` | `security-extended` |
+| `consumption / Consume` | the three CMake consumption models |
+| `coverage / gcovr` | 100% of lines and branches |
+| `gcc / all` | GCC 15, 16, 17-SVN |
+| `mingw / all` | MinGW 15 and 16 |
+| `msvc / all` | cl on VS 2022, 2026 and 2026-Preview |
+| `msvc_analyze / all` | `/analyze` on the same three rungs |
+| `sanitizers / all` | all fifteen sanitizer legs |
+
+Codecov posts two more, `codecov/project` and `codecov/patch`, which carry the same 100% bar for the whole
+tree and for the diff.
+
+The [Scorecard workflow](.github/workflows/scorecard.yml) cannot be required: it runs on pushes to `main` and
+on a schedule, never on a pull request.
+
+Each ladder ends in an `all` job that is red unless every one of its legs succeeded, and that gate is what
+branch protection requires: a leg name changes whenever a rung moves, the gate name does not. This table is
+[xstd-bits](https://github.com/rhalbersma/xstd-bits/blob/main/CONTRIBUTING.md)' as well, less the C++26 legs
+it alone carries, the three repositories holding one bar between them.
+
 ## License
 
 By contributing, you agree that your contributions will be licensed under the [Boost Software License, Version 1.0](LICENSE_1_0.txt), the same license that covers the rest of this repository.
