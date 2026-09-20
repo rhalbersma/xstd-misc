@@ -36,9 +36,7 @@ static_assert(sizeof(two_absent) == sizeof(int));
 
 // The same tag twice is the mistake this guards against: one type, so two subobjects of it.
 #ifdef __clang__
-// Both of these exist to be measured, and a class holding nothing but empty members pads:
-// to a byte where they overlap, and past it where they may not. -Wpadded reports that, and
-// which of the two it reports depends on the ABI, so it is off for the pair.
+// -Wpadded is off for this pair: a class of only empty members pads, and which padding it reports depends on the ABI.
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wpadded"
 #endif

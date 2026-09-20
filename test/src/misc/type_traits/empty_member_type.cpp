@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(DifferentTagsGiveDistinctTypes)
         XSTD_CONSTEXPR_CHECK((not std::same_as<empty1, empty2>));
 }
 
-// Why this is the MEMBER half: a member's hidden friends do not reach the enclosing class by ADL, a base's do reach the derived one.
+// The MEMBER half: a member's hidden friends do not reach the enclosing class by ADL; a base's reach the derived one.
 namespace {
 
 template<class T>

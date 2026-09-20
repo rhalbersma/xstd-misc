@@ -12,7 +12,7 @@
 
 namespace xstd {
 
-// An absent data member, safely comparable where empty_base_type is not: a member's hidden friends do not reach the enclosing class. Tagged, to keep two distinct in a layout.
+// An absent data member, safely comparable: its hidden friends never reach the enclosing class. Tagged to stay apart.
 template<class Tag = void>
 struct empty_member_type
 {
