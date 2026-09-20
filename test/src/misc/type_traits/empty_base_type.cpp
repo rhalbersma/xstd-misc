@@ -83,6 +83,7 @@ struct over_base : xstd::empty_base_type<struct b>
 {
         int* p;
 };
+
 struct over_member : xstd::empty_member_type<struct m>
 {
         int* p;

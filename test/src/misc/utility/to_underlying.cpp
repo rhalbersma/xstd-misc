@@ -18,11 +18,16 @@ enum class e3 : char {};
 enum class e4 : unsigned char {};
 enum class e5 : unsigned {};
 
-template<e1 N> using e1_ = std::integral_constant<e1, N>;
-template<e2 N> using e2_ = std::integral_constant<e2, N>;
-template<e3 N> using e3_ = std::integral_constant<e3, N>;
-template<e4 N> using e4_ = std::integral_constant<e4, N>;
-template<e5 N> using e5_ = std::integral_constant<e5, N>;
+template<e1 N>
+using e1_ = std::integral_constant<e1, N>;
+template<e2 N>
+using e2_ = std::integral_constant<e2, N>;
+template<e3 N>
+using e3_ = std::integral_constant<e3, N>;
+template<e4 N>
+using e4_ = std::integral_constant<e4, N>;
+template<e5 N>
+using e5_ = std::integral_constant<e5, N>;
 
 BOOST_AUTO_TEST_CASE(YieldsTheUnderlyingValue)
 {
