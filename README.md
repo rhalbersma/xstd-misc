@@ -44,63 +44,8 @@ it on its own. It relies on the [C++20](https://wg21.link/N4861) standard and
 targets the draft [C++29](https://wg21.link/std) standard library. All public
 APIs are in namespace `xstd`.
 
-## Requirements
+## Usage
 
-- A conforming [C++20](https://wg21.link/N4861) compiler
-- CMake 3.28 or later when using the supplied CMake project
-- No third-party runtime or library dependencies
-
-Earliest toolchains known to compile the library: GCC 10, Clang 11, MSVC 19.29
-(VS 2019 16.11). CI only covers the versions in the table below; the floors were
-verified by hand.
-
-## Add xstd-misc to a project
-
-The usual approach is CMake's `FetchContent`:
-
-```cmake
-include(FetchContent)
-FetchContent_Declare(
-    xstd-misc
-    GIT_REPOSITORY https://github.com/rhalbersma/xstd-misc.git
-    GIT_TAG main # Prefer a release tag for reproducible builds.
-)
-FetchContent_MakeAvailable(xstd-misc)
-
-target_link_libraries(my_target PRIVATE xstd::misc)
-```
-
-`find_package(xstd-misc CONFIG REQUIRED)` and `add_subdirectory(external/xstd-misc)` provide
-the same `xstd::misc` target.
-
-To build and install the headers alone, without the test suite and its Boost.Test
-dependency, configure with tests off:
-
-```sh
-cmake --preset no-tests   # or: cmake -S . -B build -DBUILD_TESTING=OFF
-cmake --install build/no-tests --prefix /usr/local
-```
-
-Tests are built only when xstd-misc is the top-level project, so a `FetchContent` or
-`add_subdirectory` consumer never needs Boost.Test.
-
-## Headers
-
-| Header | Additions | Description | Reference |
-| :----- | :-------- | :---------- | :-------- |
-| `<xstd/misc/concepts/specialization_of.hpp>` | `specialization_of` | Constraint form of `is_specialization_of`, seeing through a `const` owner | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
-| `<xstd/misc/type_traits/is_specialization_of.hpp>` | `is_specialization_of` | Is a type a specialization of a class template? | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
-| `<xstd/misc/type_traits/no_unique_address.hpp>` | `XSTD_NO_UNIQUE_ADDRESS` | Portable spelling of `no_unique_address` | none |
-| `<xstd/misc/type_traits/empty_base_type.hpp>` | `empty_base_type` | A tagged empty type for a base class that is not there | none |
-| `<xstd/misc/type_traits/empty_member_type.hpp>` | `empty_member_type` | A tagged empty type for a data member that is not there | none |
-| `<xstd/misc/type_traits/conditional_data_member.hpp>` | `conditional_data_member` | A conditionally present member | none |
-| `<xstd/misc/utility/to_underlying.hpp>` | `to_underlying` | `std::to_underlying`, plus an `std::integral_constant` overload | [p1682r1](https://wg21.link/p1682r1) (`std::to_underlying`) |
-
-Each directory has an umbrella exporting what is under it -- `<xstd/misc/concepts.hpp>`,
-`<xstd/misc/type_traits.hpp>`, `<xstd/misc/utility.hpp>` -- and `<xstd/misc.hpp>` exports
-the three, so one include brings the whole surface.
-
-## Examples
 
 `to_underlying` is one spelling over both forms of an enum value: it forwards a
 plain one to the standard's, and preserves a wrapped one at the type level.
@@ -196,7 +141,67 @@ using const_view   = view<std::vector<int> const>;  // and a view over a const o
 See [the design notes](doc/design.md) for rationale, and
 [CONTRIBUTING.md](CONTRIBUTING.md) to build the library itself.
 
+## Headers
+
+
+| Header | Additions | Description | Reference |
+| :----- | :-------- | :---------- | :-------- |
+| `<xstd/misc/concepts/specialization_of.hpp>` | `specialization_of` | Constraint form of `is_specialization_of`, seeing through a `const` owner | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
+| `<xstd/misc/type_traits/is_specialization_of.hpp>` | `is_specialization_of` | Is a type a specialization of a class template? | [p2098r1](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2098r1.pdf) (relationship documented) |
+| `<xstd/misc/type_traits/no_unique_address.hpp>` | `XSTD_NO_UNIQUE_ADDRESS` | Portable spelling of `no_unique_address` | none |
+| `<xstd/misc/type_traits/empty_base_type.hpp>` | `empty_base_type` | A tagged empty type for a base class that is not there | none |
+| `<xstd/misc/type_traits/empty_member_type.hpp>` | `empty_member_type` | A tagged empty type for a data member that is not there | none |
+| `<xstd/misc/type_traits/conditional_data_member.hpp>` | `conditional_data_member` | A conditionally present member | none |
+| `<xstd/misc/utility/to_underlying.hpp>` | `to_underlying` | `std::to_underlying`, plus an `std::integral_constant` overload | [p1682r1](https://wg21.link/p1682r1) (`std::to_underlying`) |
+
+Each directory has an umbrella exporting what is under it -- `<xstd/misc/concepts.hpp>`,
+`<xstd/misc/type_traits.hpp>`, `<xstd/misc/utility.hpp>` -- and `<xstd/misc.hpp>` exports
+the three, so one include brings the whole surface.
+
+## Requirements
+
+
+- A conforming [C++20](https://wg21.link/N4861) compiler
+- CMake 3.28 or later when using the supplied CMake project
+- No third-party runtime or library dependencies
+
+Earliest toolchains known to compile the library: GCC 10, Clang 11, MSVC 19.29
+(VS 2019 16.11). CI only covers the versions in the table below; the floors were
+verified by hand.
+
+## Installation
+
+
+The usual approach is CMake's `FetchContent`:
+
+```cmake
+include(FetchContent)
+FetchContent_Declare(
+    xstd-misc
+    GIT_REPOSITORY https://github.com/rhalbersma/xstd-misc.git
+    GIT_TAG main # Prefer a release tag for reproducible builds.
+)
+FetchContent_MakeAvailable(xstd-misc)
+
+target_link_libraries(my_target PRIVATE xstd::misc)
+```
+
+`find_package(xstd-misc CONFIG REQUIRED)` and `add_subdirectory(external/xstd-misc)` provide
+the same `xstd::misc` target.
+
+To build and install the headers alone, without the test suite and its Boost.Test
+dependency, configure with tests off:
+
+```sh
+cmake --preset no-tests   # or: cmake -S . -B build -DBUILD_TESTING=OFF
+cmake --install build/no-tests --prefix /usr/local
+```
+
+Tests are built only when xstd-misc is the top-level project, so a `FetchContent` or
+`add_subdirectory` consumer never needs Boost.Test.
+
 ## Continuous Integration
+
 
 We continuously test the stable, qualification, and development branches of the
 major [C++20](https://wg21.link/N4861) toolchains (compilers and standard
@@ -214,11 +219,13 @@ libraries) in both Debug and Release mode:
 
 ## Acknowledgements
 
+
 We acknowledge Walter E. Brown for discussing the idea for `std::to_underlying`
 and JeanHeyd Meneide for drafting it into an actual proposal and shepherding
 [P1682](https://wg21.link/p1682) through the C++ standardization process.
 
 ## License
+
 
 <pre>
          Copyright Rein Halbersma 2014-2026.
