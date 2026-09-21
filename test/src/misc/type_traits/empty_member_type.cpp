@@ -116,6 +116,7 @@ struct as_member
         [[XSTD_NO_UNIQUE_ADDRESS]] xstd::empty_member_type<struct m> e;
         int* p;
 };
+
 struct as_base : xstd::empty_member_type<struct b>
 {
         int* p;
