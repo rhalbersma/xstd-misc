@@ -30,32 +30,20 @@ need no third-party dependencies.
 
 The type utilities intentionally remain narrow:
 
-- `is_specialization_of_T` and `specialization_of_T` recognize specializations of
-  class templates whose parameters are all types.
-- `is_specialization_of_N` and `is_specialization_of_TN`, with their
-  constraint spellings, with `_NT`, are the same question for the other parameter
-  shapes a class template may have: all values, a type then values, and a value then
-  types. Four names rather than one because the kinds are part of a template's type
-  and no one template template parameter binds them all; the partition is what the
-  standard library actually has, `std::span` joining `std::array`, `std::tuple`
-  joining `std::vector`, and `std::enable_if`, `std::conditional`,
-  `std::tuple_element` and `std::variant_alternative` filling `_NT`. An adaptor over a storage names
-  the backend's template directly under whichever of the three its shape calls for.
-  The three are variations on one question, so they share a header apiece, the traits
-  in `<xstd/misc/type_traits/is_specialization_of.hpp>` and the constraints in
-  `<xstd/misc/concepts/specialization_of.hpp>`.
-  `_TN` is spelt `<class U, U...>` rather than `<class, auto...>`, so that it also
-  reaches a template whose value takes its type from the type before it, as
-  `std::integer_sequence<class T, T... Ints>` and `std::integral_constant<class T,
-  T v>` do. The values are still deduced as `auto` in the pattern rather than as `U`,
-  which is what keeps `std::array<int, 3>` matching: `U` deduces `int` there while
-  the `3` is a `size_t`, and a pattern deducing the value as `U` would reject it.
-  The suffix spells the parameter kinds in the order the template declares them, `T`
-  for a type and `N` for a value, so the all-types shape is `specialization_of_T`.
-  `specialization_of` is that one under p2098's unsuffixed spelling, defined in terms
-  of it rather than beside it: a concept cannot be aliased with `using`, but one
-  defined as another normalizes to the same constraint, so the two spellings subsume
-  each other and constrained overloads written either way order rather than clash.
+- `is_specialization_of` and `specialization_of` recognize specializations of
+  class templates whose parameters are all types, under p2098's spelling. Only that
+  shape is offered. The kinds are part of a template's type and no one template
+  template parameter binds them all, so every other shape needs its own name, and
+  the one consumer that had a template with a value parameter is better served by a
+  two-line trait of its own than by a family of suffixed names it uses one of. The
+  trait is the exact question; the concept strips a `const`, because an adaptor over
+  a const owner names `Container const`.
+- `simple_allocator` and `container_compatible_range` are the standard's
+  exposition-only *simple-allocator* ([allocator.requirements.general]) and
+  *container-compatible-range* ([container.intro.reqmts]), spelled out word for word
+  so that a container outside the standard library can constrain its allocator
+  arguments and `from_range` constructors exactly as the standard's containers are
+  specified to.
 - `empty_member_type` and `conditional_data_member_t` support optional
   `[[no_unique_address]]` storage, and `empty_base_type` is the same idea for a
   base class. Both tags default to `void`, so `empty_member_type<>` and

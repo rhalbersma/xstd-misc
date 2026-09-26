@@ -6,6 +6,8 @@
 #ifndef XSTD_MISC_CONCEPTS_HPP
 #define XSTD_MISC_CONCEPTS_HPP
 
-#include <xstd/misc/concepts/specialization_of.hpp> // IWYU pragma: export; the specialization_of constraints, one per parameter shape
+#include <xstd/misc/concepts/container_compatible_range.hpp> // IWYU pragma: export; container_compatible_range
+#include <xstd/misc/concepts/simple_allocator.hpp>           // IWYU pragma: export; simple_allocator
+#include <xstd/misc/concepts/specialization_of.hpp>          // IWYU pragma: export; specialization_of
 
 #endif // XSTD_MISC_CONCEPTS_HPP
