@@ -81,8 +81,8 @@ Use `XSTD_NO_UNIQUE_ADDRESS` inside an attribute-specifier. It expands to
 `msvc::no_unique_address` with the MSVC-compatible frontend, which keeps the
 standard spelling layout-neutral, and to `no_unique_address` elsewhere.
 
-`is_specialization_of_T` answers whether a type is a specialization of a class
-template whose parameters are all types, and `specialization_of_T` is the same
+`is_specialization_of` answers whether a type is a specialization of a class
+template whose parameters are all types, and `specialization_of` is the same
 question where a constraint is what a caller writes:
 
 ```cpp
@@ -90,37 +90,18 @@ question where a constraint is what a caller writes:
 #include <xstd/misc/type_traits.hpp>
 #include <complex>
 
-static_assert(xstd::is_specialization_of_T_v<std::complex<double>, std::complex>);
-static_assert(xstd::specialization_of_T<std::complex<double>, std::complex>);
+static_assert(xstd::is_specialization_of_v<std::complex<double>, std::complex>);
+static_assert(xstd::specialization_of<std::complex<double>, std::complex>);
 ```
 
-Name the shape the template has. A suffix spells its parameter kinds in the order it declares
-them, `T` for a type and `N` for a value: `specialization_of_T` takes one whose parameters are
-all types, `specialization_of_N` one whose parameters are all values, `specialization_of_TN` one
-taking a type and then values, and `specialization_of_NT` one taking a value and then types, as
-`std::enable_if` and `std::tuple_element` do. The kinds are part of a template's type and no one template
-template parameter binds them all, so there is a concept per shape rather than one that takes
-any template.
-
-`specialization_of` and `is_specialization_of` are the `_T` pair under the name without a suffix,
-which is the spelling p2098 gives the all-types case. The concept is defined in terms of the
-suffixed one and normalizes to it, so constrained overloads written either way order against
-each other rather than clash.
-
-```cpp
-#include <xstd/misc/concepts.hpp>
-#include <array>
-#include <bitset>
-#include <vector>
-
-static_assert(xstd::specialization_of_T<std::vector<int>, std::vector>);      // types only
-static_assert(xstd::specialization_of_N<std::bitset<8>, std::bitset>);        // values only
-static_assert(xstd::specialization_of_TN<std::array<int, 3>, std::array>);    // a type, then values
-```
+Only the all-types shape is offered, the one p2098 names. A template with a value parameter,
+such as `std::array`, is not matched: the kinds are part of a template's type and no template
+template parameter binds them all, so a caller with such a template writes its own two-line
+trait over it.
 
 A constrained parameter is no obstacle: an unconstrained template template parameter does not
-consider the constraints on its argument, so a `template<contiguous_range Blocks, size_t N>`
-storage binds where a `template<class, size_t>` one does.
+consider the constraints on its argument, so a `template<std::integral Block>` storage binds
+where a `template<class>` one does.
 
 The trait is the exact question and the concept is the one a caller writes, which is why only
 the concept sees through a `const`: an adaptor over a const owner names `Container const`, and
@@ -137,6 +118,20 @@ using mutable_view = view<std::vector<int>>;        // the owner as it is
 using const_view   = view<std::vector<int> const>;  // and a view over a const one
 ```
 
+
+`simple_allocator` and `container_compatible_range` are the standard's exposition-only
+*simple-allocator* ([allocator.requirements.general]) and *container-compatible-range*
+([container.intro.reqmts]), word for word, for a container that constrains its allocator
+arguments and `from_range` constructors as the standard's do.
+
+```cpp
+#include <xstd/misc/concepts.hpp>
+#include <memory>
+#include <vector>
+
+static_assert(xstd::simple_allocator<std::allocator<int>>);
+static_assert(xstd::container_compatible_range<std::vector<int>, long>);
+```
 
 See [the design notes](doc/design.md) for rationale, and
 [CONTRIBUTING.md](CONTRIBUTING.md) to build the library itself.

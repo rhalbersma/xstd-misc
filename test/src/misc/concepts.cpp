@@ -3,7 +3,9 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <xstd/misc/concepts.hpp>   // specialization_of, specialization_of_N, specialization_of_TN
+#include <xstd/misc/concepts.hpp>   // container_compatible_range, simple_allocator, specialization_of
+#include <memory>                   // allocator
+#include <vector>                   // vector
 #include <boost/test/unit_test.hpp> // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END
 
 BOOST_AUTO_TEST_SUITE(Misc)
@@ -18,6 +20,8 @@ BOOST_AUTO_TEST_CASE(ReExportsTheWholeDirectory)
 {
         static_assert(xstd::specialization_of<box<int>, box>);
         static_assert(xstd::specialization_of<box<int> const, box>);
+        static_assert(xstd::simple_allocator<std::allocator<int>>);
+        static_assert(xstd::container_compatible_range<std::vector<int>, long>);
         BOOST_CHECK(true);
 }
 
