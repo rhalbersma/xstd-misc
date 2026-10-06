@@ -32,7 +32,7 @@ public:
                 , m_idx(idx)
         {}
 
-        [[nodiscard]] constexpr explicit(false) operator T() const noexcept
+        [[nodiscard]] constexpr explicit(false) operator T() const noexcept // NOLINT(misc-explicit-constructor)
         {
                 return m_range[m_idx];
         }
@@ -94,7 +94,7 @@ struct wrapper
 {
         shade value;
 
-        [[nodiscard]] constexpr explicit(false) operator shade() const noexcept
+        [[nodiscard]] constexpr explicit(false) operator shade() const noexcept // NOLINT(misc-explicit-constructor)
         {
                 return value;
         }
@@ -105,7 +105,7 @@ struct one_way_reference
 {
         shade const* ptr;
 
-        [[nodiscard]] constexpr explicit(false) operator shade() const noexcept
+        [[nodiscard]] constexpr explicit(false) operator shade() const noexcept // NOLINT(misc-explicit-constructor)
         {
                 return *ptr;
         }
