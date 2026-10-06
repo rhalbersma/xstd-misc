@@ -35,9 +35,9 @@ layout mirrors `<concepts>`, `<type_traits>` and `<utility>`. It adds two pairs
 of a concept and a trait for recognizing a specialization of a class template --
 one naming the template, one naming an example of it -- tagged empty
 types that keep a place in a class layout, a data member present only when a
-condition holds, a portable spelling of `[[no_unique_address]]`, and
-`to_underlying` over both a plain enum and one wrapped in
-`std::integral_constant`.
+condition holds, a portable spelling of `[[no_unique_address]]`, a pair of
+concepts recognizing proxy iterators and proxy references, and `to_underlying`
+over a plain enum, one wrapped in `std::integral_constant`, and a proxy for one.
 
 Nothing here needs more than the standard library itself, so a project can take
 it on its own. It relies on the [C++20](https://wg21.link/N4861) standard and
@@ -59,6 +59,31 @@ enum class color : unsigned { red = 1 };
 static_assert(xstd::to_underlying(color::red) == 1u);
 static_assert(decltype(xstd::to_underlying(std::integral_constant<color, color::red>()))::value == 1u);
 ```
+
+A proxy reference stands in for a value it converts to, as a packed container's
+element does, and that conversion is one a deduced parameter never considers.
+`proxy_iterator` recognizes an iterator whose reference is such a class prvalue,
+and `proxy_reference` a proxy closed under `&` and `*`, whose address is that
+iterator and so names the value it stands for. `to_underlying` reads through the
+second:
+
+```cpp
+#include <xstd/misc/concepts.hpp>
+#include <xstd/misc/utility.hpp>
+#include <vector>
+
+static_assert(xstd::proxy_iterator<std::vector<bool>::iterator>);
+
+for (auto key : set_of_enums) {
+    auto n = xstd::to_underlying(key); // key is the set's proxy, not the enum
+}
+```
+
+Whether `std::vector<bool>::reference` and `std::bitset<N>::reference` are proxy
+references depends on the standard library: libc++ 22 gives them an `&` that leads
+to an iterator, and libstdc++ gives them none. `std::vector<bool>`'s iterator is a
+proxy iterator on both. A concept cannot name itself, even through another, so the two are
+layered one way: a proxy iterator need not yield a proxy reference.
 
 `empty_member_type` and `conditional_data_member_t` give a member that is present only
 under a condition, and `XSTD_NO_UNIQUE_ADDRESS` costs it nothing when it is not.

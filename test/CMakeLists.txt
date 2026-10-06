@@ -42,6 +42,8 @@ set(cxx_compile_options_warnings
         -Wno-global-constructors            # triggered by Boost.Test
         -Wno-used-but-marked-unused         # triggered by Boost.Test
         -Wno-c2y-extensions                 # triggered by Boost.Test's use of __COUNTER__
+        -Wno-lifetime-safety-intra-tu-suggestions             # Clang 23+; suggests [[clang::lifetimebound]], which GCC would reject as unknown
+        -Wno-lifetime-safety-intra-tu-constructor-suggestions # ditto, for constructors
     >
     $<$<CXX_COMPILER_ID:GNU>:
         -Wall
