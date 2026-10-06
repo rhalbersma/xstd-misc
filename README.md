@@ -79,9 +79,10 @@ for (auto key : set_of_enums) {
 }
 ```
 
-`std::vector<bool>::reference` and `std::bitset<N>::reference` have no `&` of their
-own, so neither is a proxy reference, though the former's iterator is a proxy
-iterator. A concept cannot name itself, even through another, so the two are
+Whether `std::vector<bool>::reference` and `std::bitset<N>::reference` are proxy
+references depends on the standard library: libc++ 22 gives them an `&` that leads
+to an iterator, and libstdc++ gives them none. `std::vector<bool>`'s iterator is a
+proxy iterator on both. A concept cannot name itself, even through another, so the two are
 layered one way: a proxy iterator need not yield a proxy reference.
 
 `empty_member_type` and `conditional_data_member_t` give a member that is present only

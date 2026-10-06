@@ -23,7 +23,7 @@ BOOST_AUTO_TEST_CASE(ReExportsTheWholeDirectory)
         static_assert(xstd::simple_allocator<std::allocator<int>>);
         static_assert(xstd::container_compatible_range<std::vector<int>, long>);
         static_assert(xstd::proxy_iterator<std::vector<bool>::iterator>);
-        static_assert(not xstd::proxy_reference<std::vector<bool>::reference>);
+        static_assert(not xstd::proxy_reference<bool>);
         BOOST_CHECK(true);
 }
 

@@ -26,13 +26,23 @@ BOOST_AUTO_TEST_CASE(AProxyClosedUnderAddressAndDereferenceIsOne)
         BOOST_CHECK(true);
 }
 
+// Whether a type declares an operator& of its own, which each standard library decides for its bit references.
+template<class R>
+constexpr bool declares_address_of = requires (R& ref) { ref.operator&(); };
+
+// A bit reference is one wherever its library gives it an operator&, as libc++ 22 does and libstdc++ does not.
+BOOST_AUTO_TEST_CASE(ALibraryBitReferenceIsOneWhereItsAddressRoundTrips)
+{
+        static_assert(xstd::proxy_reference<std::vector<bool>::reference> == declares_address_of<std::vector<bool>::reference>);
+        static_assert(xstd::proxy_reference<std::bitset<8>::reference> == declares_address_of<std::bitset<8>::reference>);
+        BOOST_CHECK(true);
+}
+
 // Converting is not enough: with no way back from the address, the value type has no name to be read from.
 BOOST_AUTO_TEST_CASE(AConversionWithoutTheRoundTripIsNone)
 {
         static_assert(not xstd::proxy_reference<test::wrapper>);
         static_assert(not xstd::proxy_reference<test::one_way_reference>);
-        static_assert(not xstd::proxy_reference<std::vector<bool>::reference>);
-        static_assert(not xstd::proxy_reference<std::bitset<8>::reference>);
         static_assert(not xstd::proxy_reference<std::atomic<test::shade>>);
         static_assert(not xstd::proxy_reference<std::integral_constant<test::shade, test::shade::dark>>);
         static_assert(not xstd::proxy_reference<test::shade>);
