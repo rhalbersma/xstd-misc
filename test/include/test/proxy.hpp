@@ -100,6 +100,51 @@ struct wrapper
         }
 };
 
+// An iterator whose reference converts to the value but keeps the built-in address: a semi-iterator and no more.
+class value_iterator
+{
+        std::span<shade const> m_range;
+        std::size_t m_idx{};
+
+public:
+        using value_type      = shade;
+        using difference_type = std::ptrdiff_t;
+
+        [[nodiscard]] value_iterator() = default;
+
+        [[nodiscard]] constexpr value_iterator(std::span<shade const> range, std::size_t idx) noexcept
+                : m_range(range)
+                , m_idx(idx)
+        {}
+
+        [[nodiscard]] friend constexpr auto operator==(value_iterator lhs, value_iterator rhs) noexcept
+                -> bool
+        {
+                return lhs.m_idx == rhs.m_idx;
+        }
+
+        [[nodiscard]] constexpr auto operator*() const noexcept
+                -> wrapper
+        {
+                return wrapper{m_range[m_idx]};
+        }
+
+        constexpr auto operator++() noexcept
+                -> value_iterator&
+        {
+                ++m_idx;
+                return *this;
+        }
+
+        constexpr auto operator++(int) noexcept
+                -> value_iterator
+        {
+                auto nrv = *this;
+                ++*this;
+                return nrv;
+        }
+};
+
 // Its address is an iterator, but one that dereferences to the value rather than back to the proxy.
 struct one_way_reference
 {

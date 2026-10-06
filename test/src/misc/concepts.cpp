@@ -3,7 +3,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <xstd/misc/concepts.hpp>   // container_compatible_range, proxy_iterator, proxy_reference, simple_allocator, specialization_of
+#include <xstd/misc/concepts.hpp>   // container_compatible_range, proxy_iterator, proxy_reference, proxy_semi_iterator, proxy_semi_reference, simple_allocator, specialization_of
 #include <memory>                   // allocator
 #include <vector>                   // vector
 #include <boost/test/unit_test.hpp> // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END
@@ -22,7 +22,9 @@ BOOST_AUTO_TEST_CASE(ReExportsTheWholeDirectory)
         static_assert(xstd::specialization_of<box<int> const, box>);
         static_assert(xstd::simple_allocator<std::allocator<int>>);
         static_assert(xstd::container_compatible_range<std::vector<int>, long>);
-        static_assert(xstd::proxy_iterator<std::vector<bool>::iterator>);
+        static_assert(xstd::proxy_semi_iterator<std::vector<bool>::iterator>);
+        static_assert(xstd::proxy_semi_reference<std::vector<bool>::reference, bool>);
+        static_assert(not xstd::proxy_iterator<int*>);
         static_assert(not xstd::proxy_reference<bool>);
         BOOST_CHECK(true);
 }

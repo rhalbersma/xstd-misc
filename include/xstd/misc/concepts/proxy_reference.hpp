@@ -6,18 +6,17 @@
 #ifndef XSTD_MISC_CONCEPTS_PROXY_REFERENCE_HPP
 #define XSTD_MISC_CONCEPTS_PROXY_REFERENCE_HPP
 
-#include <xstd/misc/concepts/proxy_iterator.hpp> // proxy_iterator
-#include <concepts>                              // same_as
-#include <iterator>                              // iter_reference_t
-#include <type_traits>                           // is_class_v
-#include <utility>                               // declval
+#include <xstd/misc/concepts/proxy_semi_iterator.hpp> // proxy_semi_iterator
+#include <concepts>                                   // same_as
+#include <iterator>                                   // iter_reference_t
+#include <utility>                                    // declval
 
 namespace xstd {
 
-// A proxy closed under & and *: its address is a proxy iterator that dereferences back to it, naming its value type.
+// Closed under & and *: its address is a semi-iterator dereferencing back to it, which names the value it stands for.
 template<class R>
-concept proxy_reference = std::is_class_v<R> and requires (R& ref) {
-        { &ref } -> proxy_iterator;
+concept proxy_reference = requires (R& ref) {
+        { &ref } -> proxy_semi_iterator;
 } and std::same_as<std::iter_reference_t<decltype(&std::declval<R&>())>, R>;
 
 } // namespace xstd

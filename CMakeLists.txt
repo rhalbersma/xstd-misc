@@ -49,6 +49,8 @@ target_sources(
         include/xstd/misc/concepts/container_compatible_range.hpp
         include/xstd/misc/concepts/proxy_iterator.hpp
         include/xstd/misc/concepts/proxy_reference.hpp
+        include/xstd/misc/concepts/proxy_semi_iterator.hpp
+        include/xstd/misc/concepts/proxy_semi_reference.hpp
         include/xstd/misc/concepts/simple_allocator.hpp
         include/xstd/misc/concepts/specialization_of.hpp
         include/xstd/misc/type_traits.hpp
