@@ -7,6 +7,8 @@
 #define XSTD_MISC_CONCEPTS_HPP
 
 #include <xstd/misc/concepts/container_compatible_range.hpp> // IWYU pragma: export; container_compatible_range
+#include <xstd/misc/concepts/proxy_iterator.hpp>             // IWYU pragma: export; proxy_iterator
+#include <xstd/misc/concepts/proxy_reference.hpp>            // IWYU pragma: export; proxy_reference
 #include <xstd/misc/concepts/simple_allocator.hpp>           // IWYU pragma: export; simple_allocator
 #include <xstd/misc/concepts/specialization_of.hpp>          // IWYU pragma: export; specialization_of
 

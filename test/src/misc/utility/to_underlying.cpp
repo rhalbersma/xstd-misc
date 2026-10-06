@@ -5,8 +5,11 @@
 
 #include <xstd/misc/utility/to_underlying.hpp> // to_underlying
 #include <test/constexpr_check.hpp>            // XSTD_CONSTEXPR_CHECK, XSTD_CONSTEXPR_CHECK_EQUAL
+#include <test/proxy.hpp>                      // element_iterator, element_reference, one_way_reference, shade, wrapper
 #include <boost/test/unit_test.hpp>            // BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_AUTO_TEST_CASE
-#include <type_traits>                         // integral_constant
+#include <array>                               // array
+#include <concepts>                            // same_as
+#include <type_traits>                         // integral_constant, underlying_type_t
 
 BOOST_AUTO_TEST_SUITE(Misc)
 BOOST_AUTO_TEST_SUITE(Utility)
@@ -55,6 +58,26 @@ BOOST_AUTO_TEST_CASE(IsConstrainedToEnumerations)
         // the constraint precedes the return type, so a non-enum is a substitution failure
         XSTD_CONSTEXPR_CHECK((not has_to_underlying<std::integral_constant<int, 0>>));
         XSTD_CONSTEXPR_CHECK(not has_to_underlying<double>);
+}
+
+constexpr auto shades = std::array{test::shade::light, test::shade::dark};
+
+// Through a proxy closed under & and *, the value is the enumerator the proxy converts to.
+BOOST_AUTO_TEST_CASE(ReadsThroughAProxyForAnEnumeration)
+{
+        static_assert(std::same_as<decltype(xstd::to_underlying(*test::element_iterator<test::shade>(shades, 0))), std::underlying_type_t<test::shade>>);
+        static_assert(noexcept(xstd::to_underlying(*test::element_iterator<test::shade>(shades, 0))));
+        XSTD_CONSTEXPR_CHECK_EQUAL(xstd::to_underlying(*test::element_iterator<test::shade>(shades, 0)), static_cast<unsigned char>(1));
+        XSTD_CONSTEXPR_CHECK_EQUAL(xstd::to_underlying(*++test::element_iterator<test::shade>(shades, 0)), static_cast<unsigned char>(2));
+}
+
+// A proxy for a non-enumeration, and a type that converts without the round trip, have no underlying value to give.
+BOOST_AUTO_TEST_CASE(IsConstrainedToProxiesForEnumerations)
+{
+        XSTD_CONSTEXPR_CHECK(has_to_underlying<test::element_reference<test::shade>>);
+        XSTD_CONSTEXPR_CHECK(not has_to_underlying<test::element_reference<bool>>);
+        XSTD_CONSTEXPR_CHECK(not has_to_underlying<test::wrapper>);
+        XSTD_CONSTEXPR_CHECK(not has_to_underlying<test::one_way_reference>);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
