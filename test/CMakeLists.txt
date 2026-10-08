@@ -60,6 +60,17 @@ set(cxx_compile_options_warnings
     >
 )
 
+# COFF caps an object at 65,279 sections, which a test instantiated over every Hash2 algorithm exceeds (MSVC's C1128).
+# clang-cl needs no flag: LLVM switches to the big-object format by itself once the count calls for it.
+set(cxx_compile_options_big_obj
+    $<$<CXX_COMPILER_ID:MSVC>:
+        /bigobj
+    >
+    $<$<AND:$<CXX_COMPILER_ID:GNU>,$<PLATFORM_ID:Windows>>:
+        -Wa$<COMMA>-mbig-obj
+    >
+)
+
 target_compile_definitions(
     ${project_id}_test_options INTERFACE
     ${cxx_compile_definitions}
@@ -67,6 +78,7 @@ target_compile_definitions(
 target_compile_options(
     ${project_id}_test_options INTERFACE
     ${cxx_compile_options_warnings}
+    ${cxx_compile_options_big_obj}
     $<$<AND:$<BOOL:${${project_option_prefix}_WARNINGS_AS_ERRORS}>,$<CXX_COMPILER_ID:MSVC>>:/WX>
     $<$<AND:$<BOOL:${${project_option_prefix}_WARNINGS_AS_ERRORS}>,$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>>:-Werror>
 )
