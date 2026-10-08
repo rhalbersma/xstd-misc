@@ -38,8 +38,11 @@ types that keep a place in a class layout, a data member present only when a
 condition holds, a portable spelling of `[[no_unique_address]]`, four
 concepts recognizing proxy iterators and proxy references, and `to_underlying`
 over a plain enum, one wrapped in `std::integral_constant`, and a proxy for one.
+Under `ext/boost/`, it adds `hash`, a hasher for an unordered container that runs
+a [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) algorithm of
+the caller's choosing, seeded per container.
 
-Nothing here needs more than the standard library itself, so a project can take
+Nothing outside `ext/` needs more than the standard library itself, so a project can take
 it on its own. It relies on the [C++20](https://wg21.link/N4861) standard and
 targets the draft [C++29](https://wg21.link/std) standard library. All public
 APIs are in namespace `xstd`.
@@ -170,6 +173,27 @@ static_assert(xstd::simple_allocator<std::allocator<int>>);
 static_assert(xstd::container_compatible_range<std::vector<int>, long>);
 ```
 
+`hash<T, H>` hashes a `T` through `hash_append` with the Boost.Hash2 algorithm `H`, holding
+a seeded prototype of `H` and copying it on every call. The default is `long_hash`, xxHash at
+the width of `std::size_t`; `short_hash` is FNV-1a at the same width, for keys of a word or two.
+For keys an adversary chooses, name SipHash and seed it per container, as Hash2 advises:
+
+```cpp
+#include <xstd/misc/ext/boost/hash2.hpp> // needs Boost.Hash2: link Boost::hash2
+#include <boost/hash2/siphash.hpp>
+#include <cstdint>
+#include <string>
+#include <unordered_set>
+
+using hasher = xstd::hash<std::string, boost::hash2::siphash_64>;
+
+auto const seed = std::uint64_t{/* drawn at random, per container */};
+auto names      = std::unordered_set<std::string, hasher>(0, hasher(seed));
+```
+
+The constructors are those of `H`: none, a `std::uint64_t` seed, or a byte sequence
+`(unsigned char const*, std::size_t)`, each present where `H` has it.
+
 See [the design notes](doc/design.md) for rationale, and
 [CONTRIBUTING.md](CONTRIBUTING.md) to build the library itself.
 
@@ -185,17 +209,22 @@ See [the design notes](doc/design.md) for rationale, and
 | `<xstd/misc/type_traits/empty_member_type.hpp>` | `empty_member_type` | A tagged empty type for a data member that is not there | none |
 | `<xstd/misc/type_traits/conditional_data_member.hpp>` | `conditional_data_member` | A conditionally present member | none |
 | `<xstd/misc/utility/to_underlying.hpp>` | `to_underlying` | `std::to_underlying`, plus an `std::integral_constant` overload | [p1682r1](https://wg21.link/p1682r1) (`std::to_underlying`) |
+| `<xstd/misc/ext/boost/hash2.hpp>` | `hash` <br> `short_hash` <br> `long_hash` | A hasher running a seeded Boost.Hash2 algorithm, for an unordered container <br> FNV-1a at the width of `std::size_t` <br> xxHash at the width of `std::size_t`, and the default | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) <br> none <br> none |
 
 Each directory has an umbrella exporting what is under it -- `<xstd/misc/concepts.hpp>`,
 `<xstd/misc/type_traits.hpp>`, `<xstd/misc/utility.hpp>` -- and `<xstd/misc.hpp>` exports
-the three, so one include brings the whole surface.
+the three, so one include brings the whole surface. `ext/` is the exception: its umbrella
+`<xstd/misc/ext/boost.hpp>` needs Boost.Hash2 on the include path, so nothing above it
+exports it, and an adapted library is asked for by name.
 
 ## Requirements
 
 
 - A conforming [C++20](https://wg21.link/N4861) compiler
 - CMake 3.28 or later when using the supplied CMake project
-- No third-party runtime or library dependencies
+- No third-party runtime or library dependencies, except for a header under `ext/`:
+  `<xstd/misc/ext/boost/hash2.hpp>` needs [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/),
+  which the `xstd::misc` target does not link, so a consumer including it links `Boost::hash2`
 
 Earliest toolchains known to compile the library: GCC 10, Clang 11, MSVC 19.29
 (VS 2019 16.11). CI only covers the versions in the table below; the floors were

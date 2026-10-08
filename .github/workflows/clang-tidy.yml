@@ -29,3 +29,9 @@ jobs:
       # this project's CMake knows.
       self_sufficiency_regex: ${{ github.workspace }}/build/test/header_self_sufficiency/.*
       test_dir: test/src
+      # The ext/ headers need the library each adapts, which the manifest's test
+      # feature installs: once beside the manifest, by the install step, and
+      # again under the build tree, by the toolchain file. An absent one is skipped.
+      adapted_dirs: >-
+        vcpkg_installed/x64-linux/include
+        build/vcpkg_installed/x64-linux/include

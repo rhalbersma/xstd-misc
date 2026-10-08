@@ -8,7 +8,8 @@ facilities suggested by existing practice that can be implemented portably, with
 a standard-library interface. What is here is what the domain libraries kept
 reaching for and none of them owns. The baseline is [C++20](https://wg21.link/N4861),
 and may move once a later standard is common across the tested toolchains. Consumers
-need no third-party dependencies.
+need no third-party dependencies, unless they include a header under `ext/`, which
+adapts the one library it names.
 
 ## Principles
 
@@ -22,7 +23,9 @@ need no third-party dependencies.
   enforces this over every public header rather than trusting it.
 - **Stay modular and dependency-free.** Linking `xstd::misc` adds include paths
   and the [C++20](https://wg21.link/N4861) requirement, but no runtime library or
-  transitive package.
+  transitive package. A header that cannot keep this, because what it adds is an
+  adapter over a third-party library, goes under `ext/` and is asked for by name;
+  see [`hash`](#hash).
 
 ## API shape
 
@@ -151,14 +154,71 @@ value-initialized one converts to `false`, so it is not. The suppression sits on
 that line rather than in `.clang-tidy`, so it reaches a consumer linting their
 own code -- their configuration is not ours to fix.
 
+### `hash`
+
+`xstd::hash<T, H>` is the hasher the
+[Boost.Hash2 documentation](https://www.boost.org/doc/libs/release/libs/hash2/)
+sketches for an unordered container: it holds a prototype of the algorithm `H`, seeded
+once, and copies it on every call, so that `hash_append` of the key starts from the same
+state each time and a `const` call operator mutates nothing. Hash2 separates *what* a type
+hashes, its `tag_invoke` hook, from *which algorithm* hashes it; this is the piece that
+lets a user choose the algorithm per container, and seed it per container.
+
+**Where it lives.** `<functional>`, which holds `std::hash`, would be the mirrored
+directory, but every mirrored directory is exported by `<xstd/misc.hpp>`, and a hasher
+over Boost.Hash2 there would make Boost.Hash2 a dependency of every consumer of that
+umbrella. It goes under `ext/boost/` instead, the layout xstd-ints uses for its adapters
+(after Boost.Hana's `boost/hana/ext/`): one directory per adapted library, one header per
+adapted upstream library, an umbrella `<xstd/misc/ext/boost.hpp>` and none above it. Nothing
+else includes them, so `xstd::misc` stays dependency-free and the CMake target links nothing;
+a consumer who includes `<xstd/misc/ext/boost/hash2.hpp>` links `Boost::hash2` themselves, as
+an xstd-ints consumer of `<xstd/ints/ext/boost/int128.hpp>` links `Boost::int128`. The
+installed package config therefore calls no `find_dependency` for it. The vcpkg manifest
+carries a `hash2` feature for a consumer who wants vcpkg to resolve it, and the `test`
+feature installs it with Boost.Unordered for the suite. `xstd::hash`, `xstd::short_hash`
+and `xstd::long_hash` name nothing in xstd-ints or xstd-bits, which share the namespace.
+
+**The default algorithm.** The two aliases are chosen by `sizeof(std::size_t)`, never by
+the key: a 32-bit algorithm on a 64-bit platform leaves `size_t` half its entropy, and a
+64-bit one on a 32-bit CPU emulates its multiplies. `short_hash` is FNV-1a and `long_hash`
+is xxHash, and the default `H` is `long_hash`. How many bytes a key appends is the key
+type's to say -- a string, a range, a bit container -- so this library cannot assume they
+are few. FNV-1a spends a multiply on every byte and mixes weakly, so its cost grows with
+the key and its low bits are poor for a table that takes them; xxHash consumes the input
+a word per lane with a constant finalization, so its worst case is a fixed overhead on a
+key of a few bytes. A caller who knows the keys are a word or two names `short_hash`. The
+default is not SipHash either: a default-constructed hasher is unseeded, and keyed
+resistance without a key buys nothing. Hash2's own advice for keys an adversary chooses is
+`siphash_64` with a seed drawn per container, which is a choice the caller makes and
+spells out.
+
+**The seeded constructors.** Every algorithm in Boost.Hash2 1.92 has a constructor from
+`std::uint64_t` and one from `(unsigned char const*, std::size_t)`, but not in one form:
+the legacy `murmur3_32`, `murmur3_128` and `spooky2_128` reach them through defaulted
+arguments, and an algorithm written outside Hash2 may have neither. Each is therefore
+constrained on `std::constructible_from<H, ...>`, so that `std::is_constructible_v`
+answers truthfully for every `H` and an algorithm without a seed is still a hasher, only
+not a seeded one. The `std::uint64_t` constructor is `explicit`, as Hash2's are, so an
+integer never becomes a hasher by conversion.
+
+**`constexpr`, `noexcept`.** All three constructors and the call operator are `constexpr`.
+The constructors are constant expressions for every algorithm outside `legacy/`, which the
+tests assert. The call operator is not yet one for any algorithm: Hash2's
+`get_integral_result`, which folds a result into `size_t`, is not `constexpr` as of 1.92.
+The specifier costs nothing in a template and takes effect as soon as Hash2's does;
+reimplementing the fold here to evaluate it now would fork Hash2's mapping, which a hasher
+built on Hash2 must not. Nothing is `noexcept`: Hash2 declares no exception specification
+on its algorithms, and the `hash_append` of `T` is the user's own code, so a written
+guarantee would be a promise about code this header does not see.
+
 ## Boost and include-cleaner
 
 `misc-include-cleaner` is not asked about `boost/.*` at all, in the root
 `.clang-tidy` and so in the test tree that inherits it. No Boost library ships
 IWYU pragmas -- Boost.Hana has none across 450 headers -- and Boost.Test's macros
 expand through private implementation headers, so the check reports that nothing
-provides the names the tests write. The library itself includes no Boost; this is
-about the test tree, and about any project that lints its own sources while using
+provides the names the tests write. Outside `ext/`, the library includes no Boost; this is
+about the test tree, about the adapters there, and about any project that lints its own sources while using
 Boost. No library can supply the line on their behalf: the option belongs to the
 linter, and CMake carries no usage requirement that could propagate one.
 

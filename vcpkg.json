@@ -8,10 +8,18 @@
     "test"
   ],
   "features": {
+    "hash2": {
+      "description": "Hash with Boost.Hash2 through <xstd/misc/ext/boost/hash2.hpp>",
+      "dependencies": [
+        "boost-hash2"
+      ]
+    },
     "test": {
       "description": "Build the Boost.Test-based unit tests",
       "dependencies": [
-        "boost-test"
+        "boost-hash2",
+        "boost-test",
+        "boost-unordered"
       ]
     }
   }
