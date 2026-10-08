@@ -30,13 +30,14 @@ Match the surrounding code's style by eye where `.clang-format` doesn't have an 
 
 Keep a focused test source for each public function, concept, and trait, mirroring its header path under `test/src/`. A source matching an umbrella header (for example, `concepts.cpp`, `type_traits.cpp`, or `utility.cpp`) tests only identities that span several focused facilities.
 
-The library itself has no dependencies. Its test suite has a few, and none of those are needed to *use* xstd-misc:
+The library itself has no dependencies, outside the adapters under `include/xstd/misc/ext/`, each of which needs the library it names. Its test suite has a few, and none of those are needed to *use* xstd-misc:
 
 | Tool | Needed for | Notes |
 | :--- | :--------- | :---- |
 | A conforming C++20 compiler | everything | Same requirement as the library; see the table in [README.md](README.md) for the versions under CI |
 | [CMake](https://cmake.org/) 3.28+ | configuring and building | `cmake_minimum_required` in [`CMakeLists.txt`](CMakeLists.txt); CTest ships with it |
 | [Boost.Test](https://www.boost.org/doc/libs/release/libs/test/) 1.70+ | the unit tests under `test/src/` | The floor the CMake project asks for, shared with the other xstd repositories; declared in the checked-in [`vcpkg.json`](vcpkg.json) manifest, the `*-vcpkg` presets pick it up from a `VCPKG_ROOT`-configured vcpkg, or install it with your system package manager |
+| [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) 1.88+ and [Boost.Unordered](https://www.boost.org/doc/libs/release/libs/unordered/) | the tests of `<xstd/misc/ext/boost/hash2.hpp>` | Found quietly: without Boost.Hash2 those tests compile to a placeholder and the header's own self-sufficiency unit is not generated, so CI installs both through the [`vcpkg.json`](vcpkg.json) `test` feature |
 | [gcovr](https://gcovr.com/) | reproducing the coverage gate | Only for the workflow below; `pip install gcovr` |
 | `clang-tidy` and `run-clang-tidy` | reproducing the clang-tidy gate | Only for the workflow below |
 | `clang-format` | the formatting gate | Run `clang-format -i` on changed files before pushing |
