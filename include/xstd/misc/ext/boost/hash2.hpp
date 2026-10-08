@@ -30,9 +30,10 @@ class hash
 public:
         [[nodiscard]] hash() = default;
 
-        [[nodiscard]] constexpr explicit hash(std::uint64_t seed)
+        // Not seed, which MSVC's C4459 flags here wherever a consumer declares a seed at namespace scope.
+        [[nodiscard]] constexpr explicit hash(std::uint64_t s)
                 requires std::constructible_from<H, std::uint64_t>
-                : m_prototype(seed)
+                : m_prototype(s)
         {}
 
         [[nodiscard]] constexpr hash(unsigned char const* p, std::size_t n)
