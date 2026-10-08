@@ -8,30 +8,34 @@
 #include <array>                    // array
 #include <concepts>                 // same_as
 #include <cstddef>                  // size_t
-#include <cstdint>                  // uint64_t
+#include <cstdint>                  // int64_t, uint64_t
+#include <functional>               // equal_to
 #include <initializer_list>         // initializer_list
 #include <string>                   // string
 #include <tuple>                    // tuple, tuple_cat
-#include <type_traits>              // is_constructible_v, is_convertible_v
+#include <type_traits>              // is_constructible_v, is_convertible_v, is_integral_v
 #include <unordered_set>            // unordered_set
-#include <utility>                  // declval
+#include <utility>                  // declval, pair
+#include <vector>                   // vector
 
 // Reached the way a consumer reaches it: the probe here, the adapter behind it.
 #if __has_include(<boost/hash2/hash_append.hpp>)
 #define TEST_HAS_BOOST_HASH2
-#include <xstd/misc/ext/boost/hash2.hpp>  // hash, long_hash, short_hash
-#include <boost/hash2/blake2.hpp>         // blake2b_512, blake2s_256, hmac_blake2b_512, hmac_blake2s_256
-#include <boost/hash2/fnv1a.hpp>          // fnv1a_32, fnv1a_64
-#include <boost/hash2/legacy/murmur3.hpp> // murmur3_128, murmur3_32
-#include <boost/hash2/legacy/spooky2.hpp> // spooky2_128
-#include <boost/hash2/md5.hpp>            // hmac_md5_128, md5_128
-#include <boost/hash2/ripemd.hpp>         // hmac_ripemd_128, hmac_ripemd_160, ripemd_128, ripemd_160
-#include <boost/hash2/sha1.hpp>           // hmac_sha1_160, sha1_160
-#include <boost/hash2/sha2.hpp>           // hmac_sha2_224, hmac_sha2_256, hmac_sha2_384, hmac_sha2_512, hmac_sha2_512_224, hmac_sha2_512_256, sha2_224, sha2_256, sha2_384, sha2_512, sha2_512_224, sha2_512_256
-#include <boost/hash2/sha3.hpp>           // hmac_sha3_224, hmac_sha3_256, hmac_sha3_384, hmac_sha3_512, sha3_224, sha3_256, sha3_384, sha3_512, shake_128, shake_256
-#include <boost/hash2/siphash.hpp>        // siphash_32, siphash_64
-#include <boost/hash2/xxh3.hpp>           // xxh3_128
-#include <boost/hash2/xxhash.hpp>         // xxhash_32, xxhash_64
+#include <xstd/misc/ext/boost/hash2.hpp>       // hash_algorithm, hasher, long_hash, short_hash
+#include <boost/hash2/blake2.hpp>              // blake2b_512, blake2s_256, hmac_blake2b_512, hmac_blake2s_256
+#include <boost/hash2/fnv1a.hpp>               // fnv1a_32, fnv1a_64
+#include <boost/hash2/get_integral_result.hpp> // get_integral_result
+#include <boost/hash2/hash_append.hpp>         // hash_append
+#include <boost/hash2/legacy/murmur3.hpp>      // murmur3_128, murmur3_32
+#include <boost/hash2/legacy/spooky2.hpp>      // spooky2_128
+#include <boost/hash2/md5.hpp>                 // hmac_md5_128, md5_128
+#include <boost/hash2/ripemd.hpp>              // hmac_ripemd_128, hmac_ripemd_160, ripemd_128, ripemd_160
+#include <boost/hash2/sha1.hpp>                // hmac_sha1_160, sha1_160
+#include <boost/hash2/sha2.hpp>                // hmac_sha2_224, hmac_sha2_256, hmac_sha2_384, hmac_sha2_512, hmac_sha2_512_224, hmac_sha2_512_256, sha2_224, sha2_256, sha2_384, sha2_512, sha2_512_224, sha2_512_256
+#include <boost/hash2/sha3.hpp>                // hmac_sha3_224, hmac_sha3_256, hmac_sha3_384, hmac_sha3_512, sha3_224, sha3_256, sha3_384, sha3_512, shake_128, shake_256
+#include <boost/hash2/siphash.hpp>             // siphash_32, siphash_64
+#include <boost/hash2/xxh3.hpp>                // xxh3_128
+#include <boost/hash2/xxhash.hpp>              // xxhash_32, xxhash_64
 #endif
 
 #if __has_include(<boost/unordered/unordered_flat_set.hpp>)
@@ -80,13 +84,24 @@ constexpr auto seed       = std::uint64_t{0x9e37'79b9'7f4a'7c15};
 constexpr auto other_seed = std::uint64_t{0xc2b2'ae3d'27d4'eb4f};
 constexpr auto key        = std::array<unsigned char, 16>{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
-// Counts the bytes appended and nothing more, with neither seeded constructor a Hash2 algorithm has.
-class unseedable
+// What a user writes to Hash2's requirements and no further: no block_size, which only HMAC asks for.
+template<class Result = std::size_t>
+class counting_algorithm
 {
-        std::uint64_t m_count = 0;
+        std::size_t m_count = 0;
 
 public:
-        using result_type = std::uint64_t;
+        using result_type = Result;
+
+        [[nodiscard]] counting_algorithm() = default;
+
+        [[nodiscard]] constexpr explicit counting_algorithm(std::uint64_t s)
+                : m_count(static_cast<std::size_t>(s))
+        {}
+
+        [[nodiscard]] constexpr counting_algorithm(unsigned char const*, std::size_t n)
+                : m_count(n)
+        {}
 
         constexpr auto update(void const*, std::size_t n)
                 -> void
@@ -97,9 +112,85 @@ public:
         [[nodiscard]] constexpr auto result() const
                 -> result_type
         {
-                return m_count;
+                if constexpr (std::is_integral_v<result_type>) {
+                        return static_cast<result_type>(m_count);
+                } else {
+                        return result_type{};
+                }
         }
 };
+
+// The block size HMAC reads, declared as Hash2 declares it.
+class blocked_algorithm : public counting_algorithm<>
+{
+public:
+        static constexpr std::size_t block_size = 64;
+
+        using counting_algorithm::counting_algorithm;
+};
+
+// Each of the rest breaks one requirement the counting algorithm meets.
+class int_blocked_algorithm : public counting_algorithm<>
+{
+public:
+        static constexpr int block_size = 64;
+
+        using counting_algorithm::counting_algorithm;
+};
+
+class without_update : public counting_algorithm<>
+{
+public:
+        using counting_algorithm::counting_algorithm;
+
+        // NOLINTNEXTLINE(bugprone-derived-method-shadowing-base-method): the hiding is the point
+        auto update(void const*, std::size_t) -> void = delete;
+};
+
+class without_result : public counting_algorithm<>
+{
+public:
+        using counting_algorithm::counting_algorithm;
+
+        // NOLINTNEXTLINE(bugprone-derived-method-shadowing-base-method): the hiding is the point
+        [[nodiscard]] auto result() const -> result_type = delete;
+};
+
+class without_integer_seed : public counting_algorithm<>
+{
+public:
+        using counting_algorithm::counting_algorithm;
+
+        [[nodiscard]] without_integer_seed() = default;
+
+        explicit without_integer_seed(std::uint64_t) = delete;
+};
+
+class without_byte_seed : public counting_algorithm<>
+{
+public:
+        using counting_algorithm::counting_algorithm;
+
+        [[nodiscard]] without_byte_seed() = default;
+
+        without_byte_seed(unsigned char const*, std::size_t) = delete;
+};
+
+// Whether a hasher over H can be named at all, rather than failing to compile.
+template<class H>
+concept hasher_argument = requires { typename xstd::hasher<H>; };
+
+template<class Hash>
+concept transparent = requires { typename Hash::is_transparent; };
+
+// What Hash2 makes of a key, with no hasher in between.
+template<class H, class T>
+auto hash2_of(H algorithm, T const& v)
+        -> std::size_t
+{
+        boost::hash2::hash_append(algorithm, {}, v);
+        return boost::hash2::get_integral_result<std::size_t>(algorithm);
+}
 
 } // namespace
 
@@ -112,6 +203,45 @@ BOOST_AUTO_TEST_SUITE(Hash2)
 
 #ifdef TEST_HAS_BOOST_HASH2
 
+BOOST_AUTO_TEST_CASE_TEMPLATE(EveryHash2AlgorithmIsAHashAlgorithm, H, algorithms)
+{
+        XSTD_CONSTEXPR_CHECK(xstd::hash_algorithm<H>);
+}
+
+BOOST_AUTO_TEST_CASE(AUserWrittenAlgorithmIsAHashAlgorithm)
+{
+        XSTD_CONSTEXPR_CHECK(xstd::hash_algorithm<counting_algorithm<>>);
+        XSTD_CONSTEXPR_CHECK(xstd::hash_algorithm<counting_algorithm<unsigned char>>);
+        XSTD_CONSTEXPR_CHECK((xstd::hash_algorithm<counting_algorithm<std::array<unsigned char, 16>>>));
+        XSTD_CONSTEXPR_CHECK(xstd::hash_algorithm<blocked_algorithm>);
+}
+
+BOOST_AUTO_TEST_CASE(ANonAlgorithmIsNotAHashAlgorithm)
+{
+        XSTD_CONSTEXPR_CHECK(not xstd::hash_algorithm<int>);
+        XSTD_CONSTEXPR_CHECK(not xstd::hash_algorithm<without_update>);
+        XSTD_CONSTEXPR_CHECK(not xstd::hash_algorithm<without_result>);
+        XSTD_CONSTEXPR_CHECK(not xstd::hash_algorithm<without_integer_seed>);
+        XSTD_CONSTEXPR_CHECK(not xstd::hash_algorithm<without_byte_seed>);
+        XSTD_CONSTEXPR_CHECK(not xstd::hash_algorithm<int_blocked_algorithm>);
+}
+
+// Neither is a hash algorithm, yet Hash2 runs each: what it lacks is a requirement, not the means to hash.
+BOOST_AUTO_TEST_CASE(AnUnseedableAlgorithmStillHashes)
+{
+        BOOST_CHECK_EQUAL(hash2_of(without_integer_seed(), 42), sizeof(int));
+        BOOST_CHECK_EQUAL(hash2_of(without_byte_seed(), 42), sizeof(int));
+}
+
+// An unsigned integer other than bool, or an array of unsigned char whose size is fixed.
+BOOST_AUTO_TEST_CASE(TheResultTypeIsOneHash2Allows)
+{
+        XSTD_CONSTEXPR_CHECK(not xstd::hash_algorithm<counting_algorithm<bool>>);
+        XSTD_CONSTEXPR_CHECK(not xstd::hash_algorithm<counting_algorithm<int>>);
+        XSTD_CONSTEXPR_CHECK((not xstd::hash_algorithm<counting_algorithm<std::array<char, 16>>>));
+        XSTD_CONSTEXPR_CHECK(not xstd::hash_algorithm<counting_algorithm<std::vector<unsigned char>>>);
+}
+
 // The width of std::size_t picks each pair's member, so the result fills a size_t whatever the platform.
 BOOST_AUTO_TEST_CASE(TheAliasesMatchTheWidthOfSizeT)
 {
@@ -123,20 +253,54 @@ BOOST_AUTO_TEST_CASE(TheAliasesMatchTheWidthOfSizeT)
 
 BOOST_AUTO_TEST_CASE(TheDefaultAlgorithmIsLongHash)
 {
-        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<int>, xstd::hash<int, xstd::long_hash>>));
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hasher<>, xstd::hasher<xstd::long_hash>>));
 }
 
-// No integer converts to a seed by accident, and an algorithm without a seed declines one rather than failing inside.
-BOOST_AUTO_TEST_CASE(SeedingFollowsTheAlgorithm)
+// A hasher names its algorithm, and only something that is one.
+BOOST_AUTO_TEST_CASE(TheAlgorithmIsAHashAlgorithm)
 {
-        XSTD_CONSTEXPR_CHECK((std::is_constructible_v<xstd::hash<int>, std::uint64_t>));
-        XSTD_CONSTEXPR_CHECK((not std::is_convertible_v<std::uint64_t, xstd::hash<int>>));
-        XSTD_CONSTEXPR_CHECK((std::is_constructible_v<xstd::hash<int>, unsigned char const*, std::size_t>));
+        XSTD_CONSTEXPR_CHECK(hasher_argument<xstd::long_hash>);
+        XSTD_CONSTEXPR_CHECK(hasher_argument<counting_algorithm<>>);
+        XSTD_CONSTEXPR_CHECK(not hasher_argument<int>);
+        XSTD_CONSTEXPR_CHECK(not hasher_argument<std::string>);
+        XSTD_CONSTEXPR_CHECK(not hasher_argument<without_update>);
+        XSTD_CONSTEXPR_CHECK(not hasher_argument<counting_algorithm<bool>>);
+}
 
-        XSTD_CONSTEXPR_CHECK((std::is_default_constructible_v<xstd::hash<int, unseedable>>));
-        XSTD_CONSTEXPR_CHECK((not std::is_constructible_v<xstd::hash<int, unseedable>, std::uint64_t>));
-        XSTD_CONSTEXPR_CHECK((not std::is_constructible_v<xstd::hash<int, unseedable>, unsigned char const*, std::size_t>));
-        BOOST_CHECK_EQUAL((xstd::hash<int, unseedable>()(42)), sizeof(int));
+// No integer converts to a seed by accident, and a user-written algorithm runs as Hash2's own do.
+BOOST_AUTO_TEST_CASE(SeedsAreExplicit)
+{
+        XSTD_CONSTEXPR_CHECK((std::is_constructible_v<xstd::hasher<>, std::uint64_t>));
+        XSTD_CONSTEXPR_CHECK((not std::is_convertible_v<std::uint64_t, xstd::hasher<>>));
+        XSTD_CONSTEXPR_CHECK((std::is_constructible_v<xstd::hasher<>, unsigned char const*, std::size_t>));
+
+        auto const counter = xstd::hasher<counting_algorithm<>>();
+        BOOST_CHECK_EQUAL(counter(42), sizeof(int));
+}
+
+// One hasher, no key type of its own: each call hashes its argument as Hash2 would.
+BOOST_AUTO_TEST_CASE_TEMPLATE(OneHasherHashesKeysOfEveryType, H, algorithms)
+{
+        auto const h       = xstd::hasher<H>(seed);
+        auto const word    = std::string("word");
+        auto const numbers = std::vector<int>{1, 2, 3};
+        auto const entry   = std::pair<int, std::string>(42, "word");
+
+        BOOST_CHECK_EQUAL(h(42), hash2_of(H(seed), 42));
+        BOOST_CHECK_EQUAL(h(2.5), hash2_of(H(seed), 2.5));
+        BOOST_CHECK_EQUAL(h(word), hash2_of(H(seed), word));
+        BOOST_CHECK_EQUAL(h(numbers), hash2_of(H(seed), numbers));
+        BOOST_CHECK_EQUAL(h(entry), hash2_of(H(seed), entry));
+}
+
+// 42 and std::int64_t{42} compare equal but append four bytes and eight, so a lookup by one would miss the other.
+BOOST_AUTO_TEST_CASE(IsNotTransparent)
+{
+        XSTD_CONSTEXPR_CHECK(transparent<std::equal_to<>>);
+        XSTD_CONSTEXPR_CHECK(not transparent<xstd::hasher<>>);
+
+        auto const h = xstd::hasher<>();
+        BOOST_CHECK_NE(h(42), h(std::int64_t{42}));
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(EqualValuesHashEqual, H, algorithms)
@@ -145,7 +309,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(EqualValuesHashEqual, H, algorithms)
         auto built         = std::string("the quick");
         built += " brown fox";
 
-        for (auto const& h : {xstd::hash<std::string, H>(), xstd::hash<std::string, H>(seed), xstd::hash<std::string, H>(key.data(), key.size())}) {
+        for (auto const& h : {xstd::hasher<H>(), xstd::hasher<H>(seed), xstd::hasher<H>(key.data(), key.size())}) {
                 BOOST_CHECK_EQUAL(h(literal), h(built));
         }
 }
@@ -153,7 +317,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(EqualValuesHashEqual, H, algorithms)
 // The prototype is copied, not consumed: a second call, or a copy of the hasher, starts where the first did.
 BOOST_AUTO_TEST_CASE_TEMPLATE(EachCallStartsFromThePrototype, H, algorithms)
 {
-        auto const h    = xstd::hash<int, H>(seed);
+        auto const h    = xstd::hasher<H>(seed);
         auto const copy = h;
 
         BOOST_CHECK_EQUAL(h(42), h(42));
@@ -162,12 +326,17 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(EachCallStartsFromThePrototype, H, algorithms)
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(SeedsChangeTheResult, H, algorithms)
 {
-        auto const unseeded = xstd::hash<int, H>()(42);
-        auto const seeded   = xstd::hash<int, H>(seed)(42);
-        auto const keyed    = xstd::hash<int, H>(key.data(), key.size())(42);
+        auto const unseeded_hasher = xstd::hasher<H>();
+        auto const seeded_hasher   = xstd::hasher<H>(seed);
+        auto const reseeded_hasher = xstd::hasher<H>(other_seed);
+        auto const keyed_hasher    = xstd::hasher<H>(key.data(), key.size());
+
+        auto const unseeded = unseeded_hasher(42);
+        auto const seeded   = seeded_hasher(42);
+        auto const keyed    = keyed_hasher(42);
 
         BOOST_CHECK_NE(seeded, unseeded);
-        BOOST_CHECK_NE(seeded, (xstd::hash<int, H>(other_seed)(42)));
+        BOOST_CHECK_NE(seeded, reseeded_hasher(42));
         BOOST_CHECK_NE(keyed, unseeded);
         BOOST_CHECK_NE(keyed, seeded);
 }
@@ -175,9 +344,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(SeedsChangeTheResult, H, algorithms)
 // Each constructor is a constant expression; the call is not, as Hash2 1.92 has no constexpr get_integral_result.
 BOOST_AUTO_TEST_CASE_TEMPLATE(IsConstructibleInConstantExpressions, H, constexpr_algorithms)
 {
-        [[maybe_unused]] constexpr auto unseeded = xstd::hash<int, H>();
-        [[maybe_unused]] constexpr auto seeded   = xstd::hash<int, H>(seed);
-        [[maybe_unused]] constexpr auto keyed    = xstd::hash<int, H>(key.data(), key.size());
+        [[maybe_unused]] constexpr auto unseeded = xstd::hasher<H>();
+        [[maybe_unused]] constexpr auto seeded   = xstd::hasher<H>(seed);
+        [[maybe_unused]] constexpr auto keyed    = xstd::hasher<H>(key.data(), key.size());
 
         BOOST_CHECK(true); // silence Boost.Test's "test case did not check any assertions"
 }
@@ -185,32 +354,42 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(IsConstructibleInConstantExpressions, H, constexpr
 // Hash2's advice for keys an adversary chooses: SipHash, seeded per container.
 BOOST_AUTO_TEST_CASE(SeedsAStdUnorderedSet)
 {
-        using hasher = xstd::hash<std::string, boost::hash2::siphash_64>;
+        using siphasher = xstd::hasher<boost::hash2::siphash_64>;
 
-        auto s = std::unordered_set<std::string, hasher>(0, hasher(seed));
+        auto s = std::unordered_set<std::string, siphasher>(0, siphasher(seed));
         s.insert({"one", "two", "three"});
+
+        auto const two      = std::string("two");
+        auto const used     = s.hash_function();
+        auto const seeded   = siphasher(seed);
+        auto const unseeded = siphasher();
 
         BOOST_CHECK_EQUAL(s.size(), std::size_t{3});
         BOOST_CHECK(s.contains("two"));
         BOOST_CHECK(not s.contains("four"));
-        BOOST_CHECK_EQUAL(s.hash_function()("two"), hasher(seed)("two"));
-        BOOST_CHECK_NE(s.hash_function()("two"), hasher()("two"));
+        BOOST_CHECK_EQUAL(used(two), seeded(two));
+        BOOST_CHECK_NE(used(two), unseeded(two));
 }
 
 #ifdef TEST_HAS_BOOST_UNORDERED
 
 BOOST_AUTO_TEST_CASE(SeedsABoostUnorderedFlatSet)
 {
-        using hasher = xstd::hash<std::string, boost::hash2::siphash_64>;
+        using siphasher = xstd::hasher<boost::hash2::siphash_64>;
 
-        auto s = boost::unordered_flat_set<std::string, hasher>(0, hasher(seed));
+        auto s = boost::unordered_flat_set<std::string, siphasher>(0, siphasher(seed));
         s.insert({"one", "two", "three"});
+
+        auto const two      = std::string("two");
+        auto const used     = s.hash_function();
+        auto const seeded   = siphasher(seed);
+        auto const unseeded = siphasher();
 
         BOOST_CHECK_EQUAL(s.size(), std::size_t{3});
         BOOST_CHECK(s.contains("two"));
         BOOST_CHECK(not s.contains("four"));
-        BOOST_CHECK_EQUAL(s.hash_function()("two"), hasher(seed)("two"));
-        BOOST_CHECK_NE(s.hash_function()("two"), hasher()("two"));
+        BOOST_CHECK_EQUAL(used(two), seeded(two));
+        BOOST_CHECK_NE(used(two), unseeded(two));
 }
 
 #endif

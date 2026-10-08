@@ -38,9 +38,10 @@ types that keep a place in a class layout, a data member present only when a
 condition holds, a portable spelling of `[[no_unique_address]]`, four
 concepts recognizing proxy iterators and proxy references, and `to_underlying`
 over a plain enum, one wrapped in `std::integral_constant`, and a proxy for one.
-Under `ext/boost/`, it adds `hash`, a hasher for an unordered container that runs
+Under `ext/boost/`, it adds `hasher`, a hasher for an unordered container that runs
 a [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) algorithm of
-the caller's choosing, seeded per container.
+the caller's choosing, seeded per container, and `hash_algorithm`, the concept that
+algorithm satisfies.
 
 Nothing outside `ext/` needs more than the standard library itself, so a project can take
 it on its own. It relies on the [C++20](https://wg21.link/N4861) standard and
@@ -173,9 +174,9 @@ static_assert(xstd::simple_allocator<std::allocator<int>>);
 static_assert(xstd::container_compatible_range<std::vector<int>, long>);
 ```
 
-`hash<T, H>` hashes a `T` through `hash_append` with the Boost.Hash2 algorithm `H`, holding
-a seeded prototype of `H` and copying it on every call. The default is `long_hash`, xxHash at
-the width of `std::size_t`; `short_hash` is FNV-1a at the same width, for keys of a word or two.
+`hasher<H>` hashes a key of any type through `hash_append` with the Boost.Hash2 algorithm `H`,
+holding a seeded prototype of `H` and copying it on every call. The default is `long_hash`, xxHash
+at the width of `std::size_t`; `short_hash` is FNV-1a at the same width, for keys of a word or two.
 For keys an adversary chooses, name SipHash and seed it per container, as Hash2 advises:
 
 ```cpp
@@ -185,14 +186,24 @@ For keys an adversary chooses, name SipHash and seed it per container, as Hash2 
 #include <string>
 #include <unordered_set>
 
-using hasher = xstd::hash<std::string, boost::hash2::siphash_64>;
+using siphasher = xstd::hasher<boost::hash2::siphash_64>;
 
 auto const seed = std::uint64_t{/* drawn at random, per container */};
-auto names      = std::unordered_set<std::string, hasher>(0, hasher(seed));
+auto names      = std::unordered_set<std::string, siphasher>(0, siphasher(seed));
 ```
 
-The constructors are those of `H`: none, a `std::uint64_t` seed, or a byte sequence
-`(unsigned char const*, std::size_t)`, each present where `H` has it.
+The constructors are the three every Hash2 algorithm has: none, a `std::uint64_t` seed, and a
+byte sequence `(unsigned char const*, std::size_t)`. The key type is the call's, not the
+hasher's, so one hasher serves keys of any type; it is not transparent, as equal values of
+different types, such as `42` and `std::int64_t{42}`, need not hash equal.
+
+`H` is any type satisfying `hash_algorithm`, Boost.Hash2's documented requirements as a concept,
+so an algorithm written outside Hash2 is checked where it is named:
+
+```cpp
+static_assert(xstd::hash_algorithm<boost::hash2::siphash_64>);
+static_assert(not xstd::hash_algorithm<int>);
+```
 
 See [the design notes](doc/design.md) for rationale, and
 [CONTRIBUTING.md](CONTRIBUTING.md) to build the library itself.
@@ -209,7 +220,7 @@ See [the design notes](doc/design.md) for rationale, and
 | `<xstd/misc/type_traits/empty_member_type.hpp>` | `empty_member_type` | A tagged empty type for a data member that is not there | none |
 | `<xstd/misc/type_traits/conditional_data_member.hpp>` | `conditional_data_member` | A conditionally present member | none |
 | `<xstd/misc/utility/to_underlying.hpp>` | `to_underlying` | `std::to_underlying`, plus an `std::integral_constant` overload | [p1682r1](https://wg21.link/p1682r1) (`std::to_underlying`) |
-| `<xstd/misc/ext/boost/hash2.hpp>` | `hash` <br> `short_hash` <br> `long_hash` | A hasher running a seeded Boost.Hash2 algorithm, for an unordered container <br> FNV-1a at the width of `std::size_t` <br> xxHash at the width of `std::size_t`, and the default | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) <br> none <br> none |
+| `<xstd/misc/ext/boost/hash2.hpp>` | `hash_algorithm` <br> `hasher` <br> `short_hash` <br> `long_hash` | A Boost.Hash2 hash algorithm, to its documented requirements <br> A hasher running a seeded Boost.Hash2 algorithm, for an unordered container <br> FNV-1a at the width of `std::size_t` <br> xxHash at the width of `std::size_t`, and the default | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) <br> [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) <br> none <br> none |
 
 Each directory has an umbrella exporting what is under it -- `<xstd/misc/concepts.hpp>`,
 `<xstd/misc/type_traits.hpp>`, `<xstd/misc/utility.hpp>` -- and `<xstd/misc.hpp>` exports
