@@ -175,8 +175,9 @@ static_assert(xstd::container_compatible_range<std::vector<int>, long>);
 ```
 
 `hasher<H>` hashes a key of any type through `hash_append` with the Boost.Hash2 algorithm `H`,
-holding a seeded prototype of `H` and copying it on every call. The default is `long_hash`, xxHash
-at the width of `std::size_t`; `short_hash` is FNV-1a at the same width, for keys of a word or two.
+holding a seeded prototype of `H` and copying it on every call. The default is `boost::hash2::xxhash_64`
+on every platform: it avalanches at any key length, where FNV-1a leaves the low bits a masked table takes blind
+to the high bits of the last byte.
 For keys an adversary chooses, name SipHash and seed it per container, as Hash2 advises:
 
 ```cpp
@@ -220,7 +221,7 @@ See [the design notes](doc/design.md) for rationale, and
 | `<xstd/misc/type_traits/empty_member_type.hpp>` | `empty_member_type` | A tagged empty type for a data member that is not there | none |
 | `<xstd/misc/type_traits/conditional_data_member.hpp>` | `conditional_data_member` | A conditionally present member | none |
 | `<xstd/misc/utility/to_underlying.hpp>` | `to_underlying` | `std::to_underlying`, plus an `std::integral_constant` overload | [p1682r1](https://wg21.link/p1682r1) (`std::to_underlying`) |
-| `<xstd/misc/ext/boost/hash2.hpp>` | `hash_algorithm` <br> `hasher` <br> `short_hash` <br> `long_hash` | A Boost.Hash2 hash algorithm, to its documented requirements <br> A hasher running a seeded Boost.Hash2 algorithm, for an unordered container <br> FNV-1a at the width of `std::size_t` <br> xxHash at the width of `std::size_t`, and the default | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) <br> [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) <br> none <br> none |
+| `<xstd/misc/ext/boost/hash2.hpp>` | `hash_algorithm` <br> `hasher` | A Boost.Hash2 hash algorithm, to its documented requirements <br> A hasher running a seeded Boost.Hash2 algorithm, xxHash64 by default, for an unordered container | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) <br> [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) |
 
 Each directory has an umbrella exporting what is under it -- `<xstd/misc/concepts.hpp>`,
 `<xstd/misc/type_traits.hpp>`, `<xstd/misc/utility.hpp>` -- and `<xstd/misc.hpp>` exports

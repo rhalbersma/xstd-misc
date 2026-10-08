@@ -8,7 +8,7 @@
 #include <array>                    // array
 #include <concepts>                 // same_as
 #include <cstddef>                  // size_t
-#include <cstdint>                  // int64_t, uint64_t
+#include <cstdint>                  // int64_t, uint64_t, uint8_t
 #include <functional>               // equal_to
 #include <initializer_list>         // initializer_list
 #include <string>                   // string
@@ -21,7 +21,7 @@
 // Reached the way a consumer reaches it: the probe here, the adapter behind it.
 #if __has_include(<boost/hash2/hash_append.hpp>)
 #define TEST_HAS_BOOST_HASH2
-#include <xstd/misc/ext/boost/hash2.hpp>       // hash_algorithm, hasher, long_hash, short_hash
+#include <xstd/misc/ext/boost/hash2.hpp>       // hash_algorithm, hasher
 #include <boost/hash2/blake2.hpp>              // blake2b_512, blake2s_256, hmac_blake2b_512, hmac_blake2s_256
 #include <boost/hash2/fnv1a.hpp>               // fnv1a_32, fnv1a_64
 #include <boost/hash2/get_integral_result.hpp> // get_integral_result
@@ -242,24 +242,25 @@ BOOST_AUTO_TEST_CASE(TheResultTypeIsOneHash2Allows)
         XSTD_CONSTEXPR_CHECK(not xstd::hash_algorithm<counting_algorithm<std::vector<unsigned char>>>);
 }
 
-// The width of std::size_t picks each pair's member, so the result fills a size_t whatever the platform.
-BOOST_AUTO_TEST_CASE(TheAliasesMatchTheWidthOfSizeT)
+BOOST_AUTO_TEST_CASE(TheDefaultAlgorithmIsXxhash64)
 {
-        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::short_hash, boost::hash2::fnv1a_32> or std::same_as<xstd::short_hash, boost::hash2::fnv1a_64>));
-        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::long_hash, boost::hash2::xxhash_32> or std::same_as<xstd::long_hash, boost::hash2::xxhash_64>));
-        XSTD_CONSTEXPR_CHECK(sizeof(xstd::short_hash::result_type) == sizeof(std::size_t));
-        XSTD_CONSTEXPR_CHECK(sizeof(xstd::long_hash::result_type) == sizeof(std::size_t));
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hasher<>, xstd::hasher<boost::hash2::xxhash_64>>));
 }
 
-BOOST_AUTO_TEST_CASE(TheDefaultAlgorithmIsLongHash)
+// A table that masks the low bits sees FNV-1a ignore a key's top bit; the default sees it.
+BOOST_AUTO_TEST_CASE(TheDefaultLetsTheTopBitReachTheLowBits)
 {
-        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hasher<>, xstd::hasher<xstd::long_hash>>));
+        constexpr auto low_bits = std::size_t{0x7F};
+        auto const fnv1a        = xstd::hasher<boost::hash2::fnv1a_64>();
+        auto const by_default   = xstd::hasher<>();
+        BOOST_CHECK_EQUAL(fnv1a(std::uint8_t{0x00}) & low_bits, fnv1a(std::uint8_t{0x80}) & low_bits);
+        BOOST_CHECK_NE(by_default(std::uint8_t{0x00}) & low_bits, by_default(std::uint8_t{0x80}) & low_bits);
 }
 
 // A hasher names its algorithm, and only something that is one.
 BOOST_AUTO_TEST_CASE(TheAlgorithmIsAHashAlgorithm)
 {
-        XSTD_CONSTEXPR_CHECK(hasher_argument<xstd::long_hash>);
+        XSTD_CONSTEXPR_CHECK(hasher_argument<boost::hash2::xxhash_64>);
         XSTD_CONSTEXPR_CHECK(hasher_argument<counting_algorithm<>>);
         XSTD_CONSTEXPR_CHECK(not hasher_argument<int>);
         XSTD_CONSTEXPR_CHECK(not hasher_argument<std::string>);
