@@ -175,9 +175,8 @@ a consumer who includes `<xstd/misc/ext/boost/hash2.hpp>` links `Boost::hash2` t
 an xstd-ints consumer of `<xstd/ints/ext/boost/int128.hpp>` links `Boost::int128`. The
 installed package config therefore calls no `find_dependency` for it. The vcpkg manifest
 carries a `hash2` feature for a consumer who wants vcpkg to resolve it, and the `test`
-feature installs it with Boost.Unordered for the suite. `xstd::hasher`, `xstd::hash_algorithm`,
-`xstd::short_hash` and `xstd::long_hash` name nothing in xstd-ints or xstd-bits, which share
-the namespace. `hash_algorithm` sits in the same header rather than under `concepts/`, which
+feature installs it with Boost.Unordered for the suite. `xstd::hasher` and
+`xstd::hash_algorithm` name nothing in xstd-ints or xstd-bits, which share the namespace. `hash_algorithm` sits in the same header rather than under `concepts/`, which
 `<xstd/misc.hpp>` exports: it names Hash2's `has_constant_size`, so it carries the dependency
 the hasher does.
 
@@ -239,16 +238,22 @@ The concept does not ask for what `get_integral_result`, which folds a result in
 No algorithm in Hash2 has a shorter one, and an algorithm that did would satisfy Hash2's
 contract and still fail in Hash2's own fold.
 
-**The default algorithm.** The two aliases are chosen by `sizeof(std::size_t)`, never by
-the key: a 32-bit algorithm on a 64-bit platform leaves `size_t` half its entropy, and a
-64-bit one on a 32-bit CPU emulates its multiplies. `short_hash` is FNV-1a and `long_hash`
-is xxHash, and the default `H` is `long_hash`. How many bytes a key appends is the key
-type's to say -- a string, a range, a bit container -- so this library cannot assume they
-are few. FNV-1a spends a multiply on every byte and mixes weakly, so its cost grows with
-the key and its low bits are poor for a table that takes them; xxHash consumes the input
-a word per lane with a constant finalization, so its worst case is a fixed overhead on a
-key of a few bytes. A caller who knows the keys are a word or two names `short_hash`. The
-default is not SipHash either: a default-constructed hasher is unseeded, and keyed
+**The default algorithm.** The default `H` is `boost::hash2::xxhash_64`, on every platform
+and for every key, and the library names no other. Easy to use and hard to misuse rules out
+a default that is biased: FNV-1a multiplies after each byte, and a multiply only carries
+upward, so the high bits of the last byte never reach the low bits of the result. A table
+that takes the low bits as they come -- a power-of-two bucket count with no mixing of its
+own -- then sees keys differing only in those bits collide. The standard containers' prime
+bucket counts and Boost.Unordered's post-mix hide this, which is what makes it easy to
+miss. Measured over 24-byte keys, FNV-1a has input/output bit pairs that never flip
+together, where xxHash is at the sampling noise. FNV-1a is faster on a key of about a word,
+by a few nanoseconds, and slower once keys reach a few words; xxHash consumes the input a word per lane with a constant finalization, so its
+worst case is a fixed overhead on a key of a few bytes. There is no second alias for short
+keys: a choice between a fast default and a safe one is the misuse this rules out, and a
+caller who wants FNV-1a names `boost::hash2::fnv1a_64`. One algorithm on every platform
+also makes the value the same on 32- and 64-bit targets, `get_integral_result` folding it
+into a narrower `size_t`; the cost is that a 32-bit CPU emulates xxHash's 64-bit
+multiplies. The default is not SipHash either: a default-constructed hasher is unseeded, and keyed
 resistance without a key buys nothing. Hash2's own advice for keys an adversary chooses is
 `siphash_64` with a seed drawn per container, which is a choice the caller makes and
 spells out.

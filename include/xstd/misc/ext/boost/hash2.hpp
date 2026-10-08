@@ -6,16 +6,15 @@
 #ifndef XSTD_MISC_EXT_BOOST_HASH2_HPP
 #define XSTD_MISC_EXT_BOOST_HASH2_HPP
 
-#include <boost/hash2/fnv1a.hpp>               // fnv1a_32, fnv1a_64
 #include <boost/hash2/get_integral_result.hpp> // get_integral_result
 #include <boost/hash2/has_constant_size.hpp>   // has_constant_size
 #include <boost/hash2/hash_append.hpp>         // hash_append
-#include <boost/hash2/xxhash.hpp>              // xxhash_32, xxhash_64
+#include <boost/hash2/xxhash.hpp>              // xxhash_64
 #include <concepts>                            // constructible_from, same_as, semiregular, unsigned_integral
 #include <cstddef>                             // size_t
 #include <cstdint>                             // uint64_t
 #include <ranges>                              // contiguous_range, range_value_t
-#include <type_traits>                         // conditional_t, remove_cv_t
+#include <type_traits>                         // remove_cv_t
 
 namespace xstd {
 
@@ -34,12 +33,8 @@ concept hash_algorithm =
          (boost::hash2::has_constant_size<typename H::result_type>::value and std::ranges::contiguous_range<typename H::result_type> and std::same_as<std::ranges::range_value_t<typename H::result_type>, unsigned char>)) and
         (not requires { H::block_size; } or std::same_as<std::remove_cv_t<decltype(H::block_size)>, std::size_t>);
 
-// Chosen by the width of std::size_t, never by the key: the result fills it, and the CPU multiplies at it.
-using short_hash = std::conditional_t<sizeof(std::size_t) == sizeof(std::uint64_t), boost::hash2::fnv1a_64, boost::hash2::fnv1a_32>;
-using long_hash  = std::conditional_t<sizeof(std::size_t) == sizeof(std::uint64_t), boost::hash2::xxhash_64, boost::hash2::xxhash_32>;
-
-// How many bytes a key appends is the key's to say, so the default's cost per byte holds at any length.
-template<hash_algorithm H = long_hash>
+// xxHash avalanches at any key length; FNV-1a never lets the last byte's high bits reach the low result bits.
+template<hash_algorithm H = boost::hash2::xxhash_64>
 class hasher
 {
         H m_prototype{};
