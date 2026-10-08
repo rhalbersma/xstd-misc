@@ -25,7 +25,7 @@ adapts the one library it names.
   and the [C++20](https://wg21.link/N4861) requirement, but no runtime library or
   transitive package. A header that cannot keep this, because what it adds is an
   adapter over a third-party library, goes under `ext/` and is asked for by name;
-  see [`hash`](#hash).
+  see [`hasher`](#hasher).
 
 ## API shape
 
@@ -154,9 +154,9 @@ value-initialized one converts to `false`, so it is not. The suppression sits on
 that line rather than in `.clang-tidy`, so it reaches a consumer linting their
 own code -- their configuration is not ours to fix.
 
-### `hash`
+### `hasher`
 
-`xstd::hash<T, H>` is the hasher the
+`xstd::hasher<H>` is the hasher the
 [Boost.Hash2 documentation](https://www.boost.org/doc/libs/release/libs/hash2/)
 sketches for an unordered container: it holds a prototype of the algorithm `H`, seeded
 once, and copies it on every call, so that `hash_append` of the key starts from the same
@@ -175,8 +175,69 @@ a consumer who includes `<xstd/misc/ext/boost/hash2.hpp>` links `Boost::hash2` t
 an xstd-ints consumer of `<xstd/ints/ext/boost/int128.hpp>` links `Boost::int128`. The
 installed package config therefore calls no `find_dependency` for it. The vcpkg manifest
 carries a `hash2` feature for a consumer who wants vcpkg to resolve it, and the `test`
-feature installs it with Boost.Unordered for the suite. `xstd::hash`, `xstd::short_hash`
-and `xstd::long_hash` name nothing in xstd-ints or xstd-bits, which share the namespace.
+feature installs it with Boost.Unordered for the suite. `xstd::hasher`, `xstd::hash_algorithm`,
+`xstd::short_hash` and `xstd::long_hash` name nothing in xstd-ints or xstd-bits, which share
+the namespace. `hash_algorithm` sits in the same header rather than under `concepts/`, which
+`<xstd/misc.hpp>` exports: it names Hash2's `has_constant_size`, so it carries the dependency
+the hasher does.
+
+**No key type.** The key is a parameter of the call, not of the class, as with the
+standard's transparent function objects: one `hasher<H>` serves an `int` key, a string key
+and a key of a user's own type, each hashed as `hash_append` hashes it. `std::hash<T>` fixes
+its key because a specialization per key is its customization point; Hash2's is
+`tag_invoke`, which the call reaches for whatever it is given, so a key type on the class
+would only make one hasher type per key for the same seeded algorithm.
+
+**Not transparent.** A hasher without a key type looks like one that could serve
+heterogeneous lookup, but it declares no `is_transparent`. Heterogeneous lookup needs equal
+values to hash equal across their types, and `hash_append` hashes a value in the bytes of
+its own type: `42` appends four bytes and `std::int64_t{42}` eight, so they compare equal
+and hash apart, and a lookup by one would miss a key stored as the other. A container over
+a `hasher` therefore converts a lookup argument to its key type first, as it would for
+`std::hash`.
+
+**The call is unconstrained.** A requires-expression that `hash_append(h, {}, v)` is
+well-formed would read as a constraint and check nothing: Hash2 declares `hash_append` with
+a `void` return and no constraint for every `T`, and rejects a key it cannot hash inside its
+body, where overload resolution among its own `detail` functions fails. Spelling those
+`detail` functions in a constraint would bind this header to Hash2's internals, and
+reproducing their conditions would fork Hash2's dispatch, which a hasher built on Hash2 must
+not. A key Hash2 cannot hash is therefore rejected where Hash2 rejects it, at the call's
+instantiation; the constraint belongs in Hash2, and the call operator can take it up once
+`hash_append` has it.
+
+**`hash_algorithm`.** The algorithm parameter is constrained by a public concept, because a
+user has a reason to name it: to check that an algorithm they wrote conforms, and to
+constrain their own templates on one. It states Boost.Hash2 1.92's documented requirements
+for a hash algorithm, and only those, since a concept stricter or looser than Hash2's own
+contract would mislead the user it answers:
+
+- `std::semiregular`, for the default constructor, copy construction and copy assignment;
+- a constructor from a `std::uint64_t` seed;
+- a constructor from a byte seed `(unsigned char const*, std::size_t)`;
+- `update(void const*, std::size_t)` on a non-`const` object;
+- `result()` on a non-`const` object, returning `result_type`;
+- `result_type` an unsigned integer type other than `bool`, or an array-like type of
+  `unsigned char` whose size is fixed at compile time, as Hash2's `has_constant_size` reports;
+- `block_size`, where it is declared at all, of type `std::size_t`.
+
+Three of those lines are drawn where the documentation is ambiguous. The byte seed is
+documented as `(void const*, std::size_t)` in the synopsis and as "a seed sequence of
+`unsigned char` values" in the prose. The legacy `murmur3_32`, `murmur3_128` and
+`spooky2_128` have only the `unsigned char const*` form, which every other algorithm also
+has, and a `void const*` constructor accepts an `unsigned char const*` argument, so the
+concept asks for that one. `block_size` is optional, required only of an algorithm passed to
+`hmac`, so an algorithm without one satisfies the concept, and one that declares it must
+declare it as the documentation does. `update`'s return type and the `explicit` on the seed
+constructor are left free: Hash2 reads neither, so requiring them would reject an algorithm
+Hash2 runs. Since every algorithm has both seeded constructors, so does every `hasher`, with
+no constraint of its own; the `std::uint64_t` one is `explicit`, as Hash2's are, so an
+integer never becomes a hasher by conversion.
+
+The concept does not ask for what `get_integral_result`, which folds a result into
+`std::size_t`, asks of an array-like result beyond Hash2's requirements: at least eight bytes.
+No algorithm in Hash2 has a shorter one, and an algorithm that did would satisfy Hash2's
+contract and still fail in Hash2's own fold.
 
 **The default algorithm.** The two aliases are chosen by `sizeof(std::size_t)`, never by
 the key: a 32-bit algorithm on a 64-bit platform leaves `size_t` half its entropy, and a
@@ -192,23 +253,14 @@ resistance without a key buys nothing. Hash2's own advice for keys an adversary 
 `siphash_64` with a seed drawn per container, which is a choice the caller makes and
 spells out.
 
-**The seeded constructors.** Every algorithm in Boost.Hash2 1.92 has a constructor from
-`std::uint64_t` and one from `(unsigned char const*, std::size_t)`, but not in one form:
-the legacy `murmur3_32`, `murmur3_128` and `spooky2_128` reach them through defaulted
-arguments, and an algorithm written outside Hash2 may have neither. Each is therefore
-constrained on `std::constructible_from<H, ...>`, so that `std::is_constructible_v`
-answers truthfully for every `H` and an algorithm without a seed is still a hasher, only
-not a seeded one. The `std::uint64_t` constructor is `explicit`, as Hash2's are, so an
-integer never becomes a hasher by conversion.
-
 **`constexpr`, `noexcept`.** All three constructors and the call operator are `constexpr`.
 The constructors are constant expressions for every algorithm outside `legacy/`, which the
 tests assert. The call operator is not yet one for any algorithm: Hash2's
-`get_integral_result`, which folds a result into `size_t`, is not `constexpr` as of 1.92.
+`get_integral_result` is not `constexpr` as of 1.92.
 The specifier costs nothing in a template and takes effect as soon as Hash2's does;
 reimplementing the fold here to evaluate it now would fork Hash2's mapping, which a hasher
 built on Hash2 must not. Nothing is `noexcept`: Hash2 declares no exception specification
-on its algorithms, and the `hash_append` of `T` is the user's own code, so a written
+on its algorithms, and the `hash_append` of a key is the user's own code, so a written
 guarantee would be a promise about code this header does not see.
 
 ## Boost and include-cleaner

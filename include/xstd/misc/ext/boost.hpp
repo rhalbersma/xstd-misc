@@ -7,6 +7,6 @@
 #define XSTD_MISC_EXT_BOOST_HPP
 
 // Boost's adapters, and no umbrella above this one: an adapted library is asked for by name.
-#include <xstd/misc/ext/boost/hash2.hpp> // IWYU pragma: export; hash, long_hash, short_hash
+#include <xstd/misc/ext/boost/hash2.hpp> // IWYU pragma: export; hash_algorithm, hasher, long_hash, short_hash
 
 #endif // XSTD_MISC_EXT_BOOST_HPP
