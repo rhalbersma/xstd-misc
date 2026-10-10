@@ -29,8 +29,10 @@ concept hash_algorithm =
                 h.update(p, n);
                 { h.result() } -> std::same_as<typename H::result_type>;
         } and
+        // std::unsigned_integral admits bool, a one-bit result that Hash2 does not take.
         ((std::unsigned_integral<typename H::result_type> and not std::same_as<typename H::result_type, bool>) or
          (boost::hash2::has_constant_size<typename H::result_type>::value and std::ranges::contiguous_range<typename H::result_type> and std::same_as<std::ranges::range_value_t<typename H::result_type>, unsigned char>)) and
+        // Hash2 documents block_size as std::size_t, so an int one, the spelling that comes to hand, is turned away.
         (not requires { H::block_size; } or std::same_as<std::remove_cv_t<decltype(H::block_size)>, std::size_t>);
 
 // xxHash avalanches at any key length; FNV-1a never lets the last byte's high bits reach the low result bits.

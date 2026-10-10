@@ -9,11 +9,11 @@
 #include <concepts>                 // same_as
 #include <cstddef>                  // size_t
 #include <cstdint>                  // int64_t, uint64_t, uint8_t
-#include <functional>               // equal_to
+#include <functional>               // equal_to, hash
 #include <initializer_list>         // initializer_list
 #include <string>                   // string
 #include <tuple>                    // tuple, tuple_cat
-#include <type_traits>              // is_constructible_v, is_convertible_v, is_integral_v
+#include <type_traits>              // is_constructible_v, is_convertible_v
 #include <unordered_set>            // unordered_set
 #include <utility>                  // declval, pair
 #include <vector>                   // vector
@@ -23,6 +23,7 @@
 #define TEST_HAS_BOOST_HASH2
 #include <xstd/misc/ext/boost/hash2.hpp>       // hash_algorithm, hasher
 #include <boost/hash2/blake2.hpp>              // blake2b_512, blake2s_256, hmac_blake2b_512, hmac_blake2s_256
+#include <boost/hash2/digest.hpp>              // digest
 #include <boost/hash2/fnv1a.hpp>               // fnv1a_32, fnv1a_64
 #include <boost/hash2/get_integral_result.hpp> // get_integral_result
 #include <boost/hash2/hash_append.hpp>         // hash_append
@@ -84,97 +85,8 @@ constexpr auto seed       = std::uint64_t{0x9e37'79b9'7f4a'7c15};
 constexpr auto other_seed = std::uint64_t{0xc2b2'ae3d'27d4'eb4f};
 constexpr auto key        = std::array<unsigned char, 16>{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
-// What a user writes to Hash2's requirements and no further: no block_size, which only HMAC asks for.
-template<class Result = std::size_t>
-class counting_algorithm
-{
-        std::size_t m_count = 0;
-
-public:
-        using result_type = Result;
-
-        [[nodiscard]] counting_algorithm() = default;
-
-        [[nodiscard]] constexpr explicit counting_algorithm(std::uint64_t s)
-                : m_count(static_cast<std::size_t>(s))
-        {}
-
-        [[nodiscard]] constexpr counting_algorithm(unsigned char const*, std::size_t n)
-                : m_count(n)
-        {}
-
-        constexpr auto update(void const*, std::size_t n)
-                -> void
-        {
-                m_count += n;
-        }
-
-        [[nodiscard]] constexpr auto result() const
-                -> result_type
-        {
-                if constexpr (std::is_integral_v<result_type>) {
-                        return static_cast<result_type>(m_count);
-                } else {
-                        return result_type{};
-                }
-        }
-};
-
-// The block size HMAC reads, declared as Hash2 declares it.
-class blocked_algorithm : public counting_algorithm<>
-{
-public:
-        static constexpr std::size_t block_size = 64;
-
-        using counting_algorithm::counting_algorithm;
-};
-
-// Each of the rest breaks one requirement the counting algorithm meets.
-class int_blocked_algorithm : public counting_algorithm<>
-{
-public:
-        static constexpr int block_size = 64;
-
-        using counting_algorithm::counting_algorithm;
-};
-
-class without_update : public counting_algorithm<>
-{
-public:
-        using counting_algorithm::counting_algorithm;
-
-        // NOLINTNEXTLINE(bugprone-derived-method-shadowing-base-method): the hiding is the point
-        auto update(void const*, std::size_t) -> void = delete;
-};
-
-class without_result : public counting_algorithm<>
-{
-public:
-        using counting_algorithm::counting_algorithm;
-
-        // NOLINTNEXTLINE(bugprone-derived-method-shadowing-base-method): the hiding is the point
-        [[nodiscard]] auto result() const -> result_type = delete;
-};
-
-class without_integer_seed : public counting_algorithm<>
-{
-public:
-        using counting_algorithm::counting_algorithm;
-
-        [[nodiscard]] without_integer_seed() = default;
-
-        explicit without_integer_seed(std::uint64_t) = delete;
-};
-
-class without_byte_seed : public counting_algorithm<>
-{
-public:
-        using counting_algorithm::counting_algorithm;
-
-        [[nodiscard]] without_byte_seed() = default;
-
-        without_byte_seed(unsigned char const*, std::size_t) = delete;
-};
+template<class H>
+concept has_block_size = requires { H::block_size; };
 
 // Whether a hasher over H can be named at all, rather than failing to compile.
 template<class H>
@@ -208,38 +120,25 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(EveryHash2AlgorithmIsAHashAlgorithm, H, algorithms
         XSTD_CONSTEXPR_CHECK(xstd::hash_algorithm<H>);
 }
 
-BOOST_AUTO_TEST_CASE(AUserWrittenAlgorithmIsAHashAlgorithm)
+// An unsigned integer or a fixed-size byte array for a result, a block size or none: Hash2 has each form.
+BOOST_AUTO_TEST_CASE(EachFormHash2TakesIsAHashAlgorithm)
 {
-        XSTD_CONSTEXPR_CHECK(xstd::hash_algorithm<counting_algorithm<>>);
-        XSTD_CONSTEXPR_CHECK(xstd::hash_algorithm<counting_algorithm<unsigned char>>);
-        XSTD_CONSTEXPR_CHECK((xstd::hash_algorithm<counting_algorithm<std::array<unsigned char, 16>>>));
-        XSTD_CONSTEXPR_CHECK(xstd::hash_algorithm<blocked_algorithm>);
+        XSTD_CONSTEXPR_CHECK((std::same_as<boost::hash2::fnv1a_32::result_type, std::uint32_t>));
+        XSTD_CONSTEXPR_CHECK((std::same_as<boost::hash2::md5_128::result_type, boost::hash2::digest<16>>));
+        XSTD_CONSTEXPR_CHECK((std::same_as<boost::hash2::murmur3_128::result_type, std::array<unsigned char, 16>>));
+        XSTD_CONSTEXPR_CHECK(not has_block_size<boost::hash2::fnv1a_32>);
+        XSTD_CONSTEXPR_CHECK(has_block_size<boost::hash2::md5_128>);
+
+        XSTD_CONSTEXPR_CHECK(xstd::hash_algorithm<boost::hash2::fnv1a_32>);
+        XSTD_CONSTEXPR_CHECK(xstd::hash_algorithm<boost::hash2::md5_128>);
+        XSTD_CONSTEXPR_CHECK(xstd::hash_algorithm<boost::hash2::murmur3_128>);
 }
 
-BOOST_AUTO_TEST_CASE(ANonAlgorithmIsNotAHashAlgorithm)
+// A hasher is the mistake to expect: each hashes a key, and xstd::hasher even takes both seeds, yet neither updates.
+BOOST_AUTO_TEST_CASE(AHasherIsNotAHashAlgorithm)
 {
-        XSTD_CONSTEXPR_CHECK(not xstd::hash_algorithm<int>);
-        XSTD_CONSTEXPR_CHECK(not xstd::hash_algorithm<without_update>);
-        XSTD_CONSTEXPR_CHECK(not xstd::hash_algorithm<without_result>);
-        XSTD_CONSTEXPR_CHECK(not xstd::hash_algorithm<without_integer_seed>);
-        XSTD_CONSTEXPR_CHECK(not xstd::hash_algorithm<without_byte_seed>);
-        XSTD_CONSTEXPR_CHECK(not xstd::hash_algorithm<int_blocked_algorithm>);
-}
-
-// Neither is a hash algorithm, yet Hash2 runs each: what it lacks is a requirement, not the means to hash.
-BOOST_AUTO_TEST_CASE(AnUnseedableAlgorithmStillHashes)
-{
-        BOOST_CHECK_EQUAL(hash2_of(without_integer_seed(), 42), sizeof(int));
-        BOOST_CHECK_EQUAL(hash2_of(without_byte_seed(), 42), sizeof(int));
-}
-
-// An unsigned integer other than bool, or an array of unsigned char whose size is fixed.
-BOOST_AUTO_TEST_CASE(TheResultTypeIsOneHash2Allows)
-{
-        XSTD_CONSTEXPR_CHECK(not xstd::hash_algorithm<counting_algorithm<bool>>);
-        XSTD_CONSTEXPR_CHECK(not xstd::hash_algorithm<counting_algorithm<int>>);
-        XSTD_CONSTEXPR_CHECK((not xstd::hash_algorithm<counting_algorithm<std::array<char, 16>>>));
-        XSTD_CONSTEXPR_CHECK(not xstd::hash_algorithm<counting_algorithm<std::vector<unsigned char>>>);
+        XSTD_CONSTEXPR_CHECK(not xstd::hash_algorithm<std::hash<int>>);
+        XSTD_CONSTEXPR_CHECK(not xstd::hash_algorithm<xstd::hasher<>>);
 }
 
 BOOST_AUTO_TEST_CASE(TheDefaultAlgorithmIsXxhash64)
@@ -261,22 +160,16 @@ BOOST_AUTO_TEST_CASE(TheDefaultLetsTheTopBitReachTheLowBits)
 BOOST_AUTO_TEST_CASE(TheAlgorithmIsAHashAlgorithm)
 {
         XSTD_CONSTEXPR_CHECK(hasher_argument<boost::hash2::xxhash_64>);
-        XSTD_CONSTEXPR_CHECK(hasher_argument<counting_algorithm<>>);
-        XSTD_CONSTEXPR_CHECK(not hasher_argument<int>);
-        XSTD_CONSTEXPR_CHECK(not hasher_argument<std::string>);
-        XSTD_CONSTEXPR_CHECK(not hasher_argument<without_update>);
-        XSTD_CONSTEXPR_CHECK(not hasher_argument<counting_algorithm<bool>>);
+        XSTD_CONSTEXPR_CHECK(not hasher_argument<std::hash<int>>);
+        XSTD_CONSTEXPR_CHECK(not hasher_argument<xstd::hasher<>>);
 }
 
-// No integer converts to a seed by accident, and a user-written algorithm runs as Hash2's own do.
+// No integer converts to a seed by accident.
 BOOST_AUTO_TEST_CASE(SeedsAreExplicit)
 {
         XSTD_CONSTEXPR_CHECK((std::is_constructible_v<xstd::hasher<>, std::uint64_t>));
         XSTD_CONSTEXPR_CHECK((not std::is_convertible_v<std::uint64_t, xstd::hasher<>>));
         XSTD_CONSTEXPR_CHECK((std::is_constructible_v<xstd::hasher<>, unsigned char const*, std::size_t>));
-
-        auto const counter = xstd::hasher<counting_algorithm<>>();
-        BOOST_CHECK_EQUAL(counter(42), sizeof(int));
 }
 
 // One hasher, no key type of its own: each call hashes its argument as Hash2 would.

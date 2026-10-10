@@ -132,6 +132,24 @@ the code that uses it, and no user spells it. Follow the standard's practice wit
 - **A constraint becomes a public concept when users have a reason to name it.** A public concept carries
   semantics: do not promote one to keep a `detail` name out of a signature, and do not merge two to save a name.
 
+## Tests: Murphy, not Machiavelli
+
+Easy to use and hard to misuse holds in the tests too. Test a concept, and any other functionality, against the
+cases users will meet and the pitfalls they will fall into, never against a construction built to break a clause.
+
+- **Existing types only:** the standard library's, Boost's, Abseil's, and those of this library and its sibling xstd
+  libraries. A test defines no type merely to satisfy or violate a concept.
+- **Positives are real models:** the types users will pass, such as Boost.Hash2's own algorithms for
+  `hash_algorithm`.
+- **Negatives are the mistakes users will make:** a near-miss a reader would expect to qualify, such as
+  `std::hash<int>` or `xstd::hasher<>` for `hash_algorithm`, each a hasher where an algorithm is asked for. A type
+  that is plainly not one, such as `int`, proves nothing and is left out.
+- **An unexpected clause names its pitfall.** A clause in a concept or a function's constraint that a reader would
+  not expect carries a one-line comment naming the real-world mistake it guards against, and a near-miss test shows
+  an existing type it turns away. Where no existing type makes that mistake, the definition alone states the clause.
+
+A fixture that runs a component over a user-shaped argument probes no concept, and stays.
+
 ## Checking your work
 
 Compile with the **stable rung** of [README.md](README.md)'s matrix, never with whatever `g++` or `clang++`
