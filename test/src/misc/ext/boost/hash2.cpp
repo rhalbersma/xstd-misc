@@ -11,6 +11,7 @@
 #include <cstdint>                  // int64_t, uint64_t, uint8_t
 #include <functional>               // equal_to, hash
 #include <initializer_list>         // initializer_list
+#include <limits>                   // numeric_limits
 #include <string>                   // string
 #include <tuple>                    // tuple, tuple_cat
 #include <type_traits>              // is_constructible_v, is_convertible_v
@@ -152,7 +153,10 @@ BOOST_AUTO_TEST_CASE(TheDefaultLetsTheTopBitReachTheLowBits)
         constexpr auto low_bits = std::size_t{0x7F};
         auto const fnv1a        = xstd::hasher<boost::hash2::fnv1a_64>();
         auto const by_default   = xstd::hasher<>();
-        BOOST_CHECK_EQUAL(fnv1a(std::uint8_t{0x00}) & low_bits, fnv1a(std::uint8_t{0x80}) & low_bits);
+        // Narrowing a 64-bit digest to a 32-bit size_t multiplies and keeps the high half, which hides the flaw there.
+        if constexpr (std::numeric_limits<std::size_t>::digits >= 64) {
+                BOOST_CHECK_EQUAL(fnv1a(std::uint8_t{0x00}) & low_bits, fnv1a(std::uint8_t{0x80}) & low_bits);
+        }
         BOOST_CHECK_NE(by_default(std::uint8_t{0x00}) & low_bits, by_default(std::uint8_t{0x80}) & low_bits);
 }
 
