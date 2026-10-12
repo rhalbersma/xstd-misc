@@ -205,7 +205,8 @@ algorithm's whole `result_type` where `hasher` narrows it to `std::size_t`: a fi
 stands in for a key, such as a transposition table's, is as wide on a 32-bit target as on a
 64-bit one. The default is `boost::hash2::xxh3_128`, whose result is a 16-byte `digest<16>`: a
 fingerprint stands in for its key, so its default is wide enough that two keys colliding is never
-the likeliest bug, at any table size. Name `xxhash_64` for a 64-bit one:
+the likeliest bug, at any table size, and [xxHash](https://github.com/Cyan4973/xxHash) recommends
+XXH3's 128-bit variant where a 128-bit hash is required. Name `xxhash_64` for a 64-bit one:
 
 ```cpp
 #include <xstd/misc/ext/boost/hash2.hpp> // needs Boost.Hash2: link Boost::hash2
