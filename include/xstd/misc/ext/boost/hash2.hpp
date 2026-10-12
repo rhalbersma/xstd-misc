@@ -9,6 +9,7 @@
 #include <boost/hash2/get_integral_result.hpp> // get_integral_result
 #include <boost/hash2/has_constant_size.hpp>   // has_constant_size
 #include <boost/hash2/hash_append.hpp>         // hash_append
+#include <boost/hash2/xxh3.hpp>                // xxh3_128
 #include <boost/hash2/xxhash.hpp>              // xxhash_64
 #include <concepts>                            // constructible_from, same_as, semiregular, unsigned_integral
 #include <cstddef>                             // size_t
@@ -63,6 +64,37 @@ public:
                 auto h = m_prototype;
                 boost::hash2::hash_append(h, {}, v);
                 return boost::hash2::get_integral_result<std::size_t>(h);
+        }
+};
+
+// A key's fingerprint: the algorithm's whole result on every target, where a hasher narrows it to std::size_t.
+template<hash_algorithm H = boost::hash2::xxh3_128>
+class digester
+{
+        H m_prototype{};
+
+public:
+        using result_type = H::result_type;
+
+        [[nodiscard]] digester() = default;
+
+        // Not seed, which MSVC's C4459 flags here wherever a consumer declares a seed at namespace scope.
+        [[nodiscard]] constexpr explicit digester(std::uint64_t s)
+                : m_prototype(s)
+        {}
+
+        [[nodiscard]] constexpr digester(unsigned char const* p, std::size_t n)
+                : m_prototype(p, n)
+        {}
+
+        // Neither constrained nor noexcept: Hash2 declares hash_append void for every T, and it runs the user's code.
+        template<class T>
+        [[nodiscard]] constexpr auto operator()(T const& v) const
+                -> result_type
+        {
+                auto h = m_prototype;
+                boost::hash2::hash_append(h, {}, v);
+                return h.result();
         }
 };
 
