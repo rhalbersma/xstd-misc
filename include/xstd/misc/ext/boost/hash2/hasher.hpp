@@ -26,10 +26,17 @@ public:
 
         [[nodiscard]] hasher() = default;
 
-        // Not seed, which MSVC's C4459 flags here wherever a consumer declares a seed at namespace scope.
-        [[nodiscard]] constexpr explicit hasher(std::uint64_t s)
-                : m_prototype(s)
+        // MSVC checks C4459 as it instantiates the template, so any namespace-scope seed a consumer declares trips it.
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4459)
+#endif
+        [[nodiscard]] constexpr explicit hasher(std::uint64_t seed)
+                : m_prototype(seed)
         {}
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
         [[nodiscard]] constexpr hasher(unsigned char const* p, std::size_t n)
                 : m_prototype(p, n)

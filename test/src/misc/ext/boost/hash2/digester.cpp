@@ -22,6 +22,17 @@
 #include <boost/hash2/xxh3.hpp>                   // xxh3_128
 #endif
 
+#ifdef TEST_HAS_BOOST_HASH2
+
+namespace {
+
+// Never read: a namespace-scope seed as a consumer may declare one, which the seeded constructor must compile beside.
+[[maybe_unused]] constexpr auto seed = std::uint64_t{7};
+
+} // namespace
+
+#endif
+
 BOOST_AUTO_TEST_SUITE(Misc)
 BOOST_AUTO_TEST_SUITE(Ext)
 BOOST_AUTO_TEST_SUITE(Boost)
