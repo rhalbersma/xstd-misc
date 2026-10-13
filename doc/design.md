@@ -169,14 +169,16 @@ directory, but every mirrored directory is exported by `<xstd/misc.hpp>`, and a 
 over Boost.Hash2 there would make Boost.Hash2 a dependency of every consumer of that
 umbrella. It goes under `ext/boost/` instead, the layout xstd-ints uses for its adapters
 (after Boost.Hana's `boost/hana/ext/`): one directory per adapted library, one header per
-adapted upstream library, an umbrella `<xstd/misc/ext/boost.hpp>` and none above it. Nothing
-else includes them, so `xstd::misc` stays dependency-free and the CMake target links nothing;
-a consumer who includes `<xstd/misc/ext/boost/hash2.hpp>` links `Boost::hash2` themselves, as
-an xstd-ints consumer of `<xstd/ints/ext/boost/int128.hpp>` links `Boost::int128`. The
-installed package config therefore calls no `find_dependency` for it. The vcpkg manifest
-carries a `hash2` feature for a consumer who wants vcpkg to resolve it, and the `test`
+adapted upstream library, an umbrella `<xstd/misc/ext/boost.hpp>` and none above it. The
+Hash2 one, `<xstd/misc/ext/boost/hash2.hpp>`, is itself the umbrella of a directory holding one
+header per name, as `concepts/` and `type_traits/` do, so a consumer that needs only the
+concept does not pull in xxHash and XXH3. Nothing else includes them, so `xstd::misc` stays
+dependency-free and the CMake target links nothing; a consumer who includes any of them links
+`Boost::hash2` themselves, as an xstd-ints consumer of `<xstd/ints/ext/boost/int128.hpp>`
+links `Boost::int128`. The installed package config therefore calls no `find_dependency` for
+it. The vcpkg manifest carries a `hash2` feature for a consumer who wants vcpkg to resolve it, and the `test`
 feature installs it with Boost.Unordered for the suite. `xstd::hasher` and
-`xstd::hash_algorithm` name nothing in xstd-ints or xstd-bits, which share the namespace. `hash_algorithm` sits in the same header rather than under `concepts/`, which
+`xstd::hash_algorithm` name nothing in xstd-ints or xstd-bits, which share the namespace. `hash_algorithm` sits beside the hasher under `ext/boost/hash2/` rather than under `concepts/`, which
 `<xstd/misc.hpp>` exports: it names Hash2's `has_constant_size`, so it carries the dependency
 the hasher does.
 

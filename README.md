@@ -14,13 +14,13 @@
 [![Standard](https://img.shields.io/badge/c%2B%2B-20-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B#Standardization)
 [![License](https://img.shields.io/badge/license-Boost-blue.svg)](https://opensource.org/licenses/BSL-1.0)
 [![GCC](https://github.com/rhalbersma/xstd-misc/actions/workflows/gcc.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/gcc.yml)
-[![Emscripten](https://github.com/rhalbersma/xstd-misc/actions/workflows/emscripten.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/emscripten.yml)
 [![MinGW](https://github.com/rhalbersma/xstd-misc/actions/workflows/mingw.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/mingw.yml)
 [![Clang](https://github.com/rhalbersma/xstd-misc/actions/workflows/clang.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/clang.yml)
 [![Clang-libc++](https://github.com/rhalbersma/xstd-misc/actions/workflows/clang-libc%2B%2B.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/clang-libc%2B%2B.yml)
 [![Apple Clang](https://github.com/rhalbersma/xstd-misc/actions/workflows/apple-clang.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/apple-clang.yml)
 [![Clang-CL](https://github.com/rhalbersma/xstd-misc/actions/workflows/clang-cl.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/clang-cl.yml)
 [![MSVC](https://github.com/rhalbersma/xstd-misc/actions/workflows/msvc.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/msvc.yml)
+[![Emscripten](https://github.com/rhalbersma/xstd-misc/actions/workflows/emscripten.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/emscripten.yml)
 [![Coverage](https://codecov.io/gh/rhalbersma/xstd-misc/branch/main/graph/badge.svg)](https://codecov.io/gh/rhalbersma/xstd-misc)
 [![Consumption](https://github.com/rhalbersma/xstd-misc/actions/workflows/consumption.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/consumption.yml)
 [![Sanitizers](https://github.com/rhalbersma/xstd-misc/actions/workflows/sanitizers.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/sanitizers.yml)
@@ -242,7 +242,10 @@ See [the design notes](doc/design.md) for rationale, and
 | `<xstd/misc/type_traits/empty_member_type.hpp>` | `empty_member_type` | A tagged empty type for a data member that is not there | none |
 | `<xstd/misc/type_traits/conditional_data_member.hpp>` | `conditional_data_member` | A conditionally present member | none |
 | `<xstd/misc/utility/to_underlying.hpp>` | `to_underlying` | `std::to_underlying`, plus an `std::integral_constant` overload | [p1682r1](https://wg21.link/p1682r1) (`std::to_underlying`) |
-| `<xstd/misc/ext/boost/hash2.hpp>` | `digester` <br> `hash_algorithm` <br> `hasher` | A key's fingerprint at the algorithm's own width, from a seeded Boost.Hash2 algorithm, XXH3-128 by default <br> A Boost.Hash2 hash algorithm, to its documented requirements <br> A hasher running a seeded Boost.Hash2 algorithm, xxHash64 by default, for an unordered container | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) <br> [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) <br> [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) |
+| `<xstd/misc/ext/boost/hash2/hash_algorithm.hpp>` | `hash_algorithm` | A Boost.Hash2 hash algorithm, to its documented requirements | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) |
+| `<xstd/misc/ext/boost/hash2/hasher.hpp>` | `hasher` | A hasher running a seeded Boost.Hash2 algorithm, xxHash64 by default, for an unordered container | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) |
+| `<xstd/misc/ext/boost/hash2/digester.hpp>` | `digester` | A key's fingerprint at the algorithm's own width, from a seeded Boost.Hash2 algorithm, XXH3-128 by default | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) |
+| `<xstd/misc/ext/boost/hash2.hpp>` | `digester` <br> `hash_algorithm` <br> `hasher` | The three above, through one include | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) |
 
 Each directory has an umbrella exporting what is under it -- `<xstd/misc/concepts.hpp>`,
 `<xstd/misc/type_traits.hpp>`, `<xstd/misc/utility.hpp>` -- and `<xstd/misc.hpp>` exports
@@ -255,9 +258,10 @@ exports it, and an adapted library is asked for by name.
 
 - A conforming [C++20](https://wg21.link/N4861) compiler
 - CMake 3.28 or later when using the supplied CMake project
-- No third-party runtime or library dependencies, except for a header under `ext/`:
-  `<xstd/misc/ext/boost/hash2.hpp>` needs [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/),
-  which the `xstd::misc` target does not link, so a consumer including it links `Boost::hash2`
+- No third-party runtime or library dependencies, except for the headers under `ext/`:
+  each header under `xstd/misc/ext/boost/hash2/`, and its umbrella `<xstd/misc/ext/boost/hash2.hpp>`,
+  needs [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/), which the `xstd::misc`
+  target does not link, so a consumer including one links `Boost::hash2`
 
 Earliest toolchains known to compile the library: GCC 10, Clang 11, MSVC 19.29
 (VS 2019 16.11). CI only covers the versions in the table below; the floors were
@@ -310,12 +314,12 @@ libraries) in both Debug and Release mode:
 | macOS    | Apple Clang | libc++          | 17.0.0 (Xcode 16.4)       | 21.0.0 (Xcode 26.6)       | —                              | [![Apple Clang](https://github.com/rhalbersma/xstd-misc/actions/workflows/apple-clang.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/apple-clang.yml) |
 | Windows  | Clang-CL   | MSVC             | 19.1.5 (VS 2022)          | 20.1.8 (VS 2026)          | 20.1.8 (VS 2026-Preview)       | [![Clang-CL](https://github.com/rhalbersma/xstd-misc/actions/workflows/clang-cl.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/clang-cl.yml) |
 | Windows  | MSVC       | MSVC             | 2022 (17.11+)             | 2026                      | 2026-Preview                   | [![MSVC](https://github.com/rhalbersma/xstd-misc/actions/workflows/msvc.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/msvc.yml) |
+| Web      | Emscripten | libc++           | 6.0.12                    | —                         | —                              | [![Emscripten](https://github.com/rhalbersma/xstd-misc/actions/workflows/emscripten.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/emscripten.yml) |
 
-Two more legs build for 32-bit targets, on the stable rung in Debug: i686 with GCC `-m32`, where
-`size_t` is 32 bits and there is no `__int128`, in the GCC workflow; and wasm32 with Emscripten,
-run under node, where `size_t` is 32 bits but 64-bit integers keep their 8-byte alignment.
-
-[![Emscripten](https://github.com/rhalbersma/xstd-misc/actions/workflows/emscripten.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/emscripten.yml)
+The `Web` row runs one Emscripten release on the stable rung, in Debug: wasm32 under node,
+where `size_t` is 32 bits but 64-bit integers keep their 8-byte alignment. The GCC workflow
+adds the other 32-bit leg, i686 with GCC `-m32`, where `size_t` is 32 bits and there is no
+`__int128`.
 
 ## Acknowledgements
 

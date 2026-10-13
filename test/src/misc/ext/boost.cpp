@@ -8,7 +8,7 @@
 // Reached the way a consumer reaches it: the probe here, the adapter behind the umbrella.
 #if __has_include(<boost/hash2/hash_append.hpp>)
 #define TEST_HAS_BOOST_HASH2
-#include <xstd/misc/ext/boost.hpp> // hash_algorithm, hasher
+#include <xstd/misc/ext/boost.hpp> // digester, hash_algorithm, hasher
 #endif
 
 BOOST_AUTO_TEST_SUITE(Misc)
@@ -19,11 +19,14 @@ BOOST_AUTO_TEST_SUITE(Boost)
 BOOST_AUTO_TEST_CASE(ReExportsTheWholeDirectory)
 {
 #ifdef TEST_HAS_BOOST_HASH2
-        auto const default_hasher = xstd::hasher<>();
-        auto const seeded_hasher  = xstd::hasher<>(1);
+        auto const default_hasher   = xstd::hasher<>();
+        auto const seeded_hasher    = xstd::hasher<>(1);
+        auto const default_digester = xstd::digester<boost::hash2::xxhash_64>();
+        auto const seeded_digester  = xstd::digester<boost::hash2::xxhash_64>(1);
 
         BOOST_CHECK(xstd::hash_algorithm<boost::hash2::xxhash_64>);
         BOOST_CHECK_NE(seeded_hasher(42), default_hasher(42));
+        BOOST_CHECK_NE(seeded_digester(42), default_digester(42));
 #else
         BOOST_CHECK(true);
 #endif
