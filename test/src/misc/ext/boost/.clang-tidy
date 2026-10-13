@@ -1,0 +1,14 @@
+#          Copyright Rein Halbersma 2026.
+# Distributed under the Boost Software License, Version 1.0.
+#    (See accompanying file LICENSE_1_0.txt or copy at
+#          http://www.boost.org/LICENSE_1_0.txt)
+
+---
+# The Boost adapter tests, extending test/.clang-tidy by one check.
+# clang-analyzer-security.ArrayBound reaches Boost.Hash2's xxh3 through xstd::digester with the copied state
+# unknown, and reports xxh3_128_digest_1to3's buffer_[n_ - 1] as out of bounds on the n_ < 4 branch, where
+# the index is 0 to 2 of a 256-byte buffer. The report lands inside Boost, where no NOLINT can reach it, and
+# clang-tidy keeps it because the analyzer's path runs through this directory.
+InheritParentConfig: true
+Checks: >
+  -clang-analyzer-security.ArrayBound

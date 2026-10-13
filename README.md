@@ -41,7 +41,8 @@ concepts recognizing proxy iterators and proxy references, and `to_underlying`
 over a plain enum, one wrapped in `std::integral_constant`, and a proxy for one.
 Under `ext/boost/`, it adds `hasher`, a hasher for an unordered container that runs
 a [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) algorithm of
-the caller's choosing, seeded per container, and `hash_algorithm`, the concept that
+the caller's choosing, seeded per container; `digester`, which runs one for a key's
+fingerprint at the algorithm's own width; and `hash_algorithm`, the concept that
 algorithm satisfies.
 
 Nothing outside `ext/` needs more than the standard library itself, so a project can take
@@ -199,6 +200,25 @@ byte sequence `(unsigned char const*, std::size_t)`. The key type is the call's,
 hasher's, so one hasher serves keys of any type; it is not transparent, as equal values of
 different types, such as `42` and `std::int64_t{42}`, need not hash equal.
 
+`digester<H>` runs the same seeded prototype over the same `hash_append`, but returns the
+algorithm's whole `result_type` where `hasher` narrows it to `std::size_t`: a fingerprint that
+stands in for a key, such as a transposition table's, is as wide on a 32-bit target as on a
+64-bit one. The default is `boost::hash2::xxh3_128`, whose result is a 16-byte `digest<16>`: a
+fingerprint stands in for its key, so its default is wide enough that two keys colliding is never
+the likeliest bug, at any table size, and [xxHash](https://github.com/Cyan4973/xxHash) recommends
+XXH3's 128-bit variant where a 128-bit hash is required. Name `xxhash_64` for a 64-bit one:
+
+```cpp
+#include <xstd/misc/ext/boost/hash2.hpp> // needs Boost.Hash2: link Boost::hash2
+#include <boost/hash2/xxhash.hpp>
+#include <cstdint>
+#include <string>
+
+auto const fingerprint = xstd::digester<>(std::uint64_t{/* fixed, so fingerprints persist */});
+auto const position    = fingerprint(std::string("r1/p1/..."));             // boost::hash2::digest<16>
+auto const key64       = xstd::digester<boost::hash2::xxhash_64>()(42);      // std::uint64_t everywhere
+```
+
 `H` is any type satisfying `hash_algorithm`, Boost.Hash2's documented requirements as a concept,
 so an algorithm written outside Hash2 is checked where it is named:
 
@@ -222,7 +242,7 @@ See [the design notes](doc/design.md) for rationale, and
 | `<xstd/misc/type_traits/empty_member_type.hpp>` | `empty_member_type` | A tagged empty type for a data member that is not there | none |
 | `<xstd/misc/type_traits/conditional_data_member.hpp>` | `conditional_data_member` | A conditionally present member | none |
 | `<xstd/misc/utility/to_underlying.hpp>` | `to_underlying` | `std::to_underlying`, plus an `std::integral_constant` overload | [p1682r1](https://wg21.link/p1682r1) (`std::to_underlying`) |
-| `<xstd/misc/ext/boost/hash2.hpp>` | `hash_algorithm` <br> `hasher` | A Boost.Hash2 hash algorithm, to its documented requirements <br> A hasher running a seeded Boost.Hash2 algorithm, xxHash64 by default, for an unordered container | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) <br> [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) |
+| `<xstd/misc/ext/boost/hash2.hpp>` | `digester` <br> `hash_algorithm` <br> `hasher` | A key's fingerprint at the algorithm's own width, from a seeded Boost.Hash2 algorithm, XXH3-128 by default <br> A Boost.Hash2 hash algorithm, to its documented requirements <br> A hasher running a seeded Boost.Hash2 algorithm, xxHash64 by default, for an unordered container | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) <br> [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) <br> [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) |
 
 Each directory has an umbrella exporting what is under it -- `<xstd/misc/concepts.hpp>`,
 `<xstd/misc/type_traits.hpp>`, `<xstd/misc/utility.hpp>` -- and `<xstd/misc.hpp>` exports

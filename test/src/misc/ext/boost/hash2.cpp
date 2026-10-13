@@ -14,7 +14,7 @@
 #include <limits>                   // numeric_limits
 #include <string>                   // string
 #include <tuple>                    // tuple, tuple_cat
-#include <type_traits>              // is_constructible_v, is_convertible_v
+#include <type_traits>              // conditional_t, is_constructible_v, is_convertible_v
 #include <unordered_set>            // unordered_set
 #include <utility>                  // declval, pair
 #include <vector>                   // vector
@@ -22,7 +22,7 @@
 // Reached the way a consumer reaches it: the probe here, the adapter behind it.
 #if __has_include(<boost/hash2/hash_append.hpp>)
 #define TEST_HAS_BOOST_HASH2
-#include <xstd/misc/ext/boost/hash2.hpp>       // hash_algorithm, hasher
+#include <xstd/misc/ext/boost/hash2.hpp>       // digester, hash_algorithm, hasher
 #include <boost/hash2/blake2.hpp>              // blake2b_512, blake2s_256, hmac_blake2b_512, hmac_blake2s_256
 #include <boost/hash2/digest.hpp>              // digest
 #include <boost/hash2/fnv1a.hpp>               // fnv1a_32, fnv1a_64
@@ -174,6 +174,47 @@ BOOST_AUTO_TEST_CASE(SeedsAreExplicit)
         XSTD_CONSTEXPR_CHECK((std::is_constructible_v<xstd::hasher<>, std::uint64_t>));
         XSTD_CONSTEXPR_CHECK((not std::is_convertible_v<std::uint64_t, xstd::hasher<>>));
         XSTD_CONSTEXPR_CHECK((std::is_constructible_v<xstd::hasher<>, unsigned char const*, std::size_t>));
+        XSTD_CONSTEXPR_CHECK((std::is_constructible_v<xstd::digester<>, std::uint64_t>));
+        XSTD_CONSTEXPR_CHECK((not std::is_convertible_v<std::uint64_t, xstd::digester<>>));
+        XSTD_CONSTEXPR_CHECK((std::is_constructible_v<xstd::digester<>, unsigned char const*, std::size_t>));
+}
+
+// A fingerprint is as wide as its algorithm makes it, the same on every target, where a hasher's is std::size_t.
+BOOST_AUTO_TEST_CASE(ADigestIsTheAlgorithmsWholeResult)
+{
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::digester<>, xstd::digester<boost::hash2::xxh3_128>>));
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::digester<>::result_type, boost::hash2::digest<16>>));
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::digester<boost::hash2::fnv1a_64>::result_type, std::uint64_t>));
+        XSTD_CONSTEXPR_CHECK((std::same_as<decltype(xstd::digester<boost::hash2::fnv1a_64>()(42)), std::uint64_t>));
+}
+
+// The digest is what Hash2 gives for the key appended to the seeded algorithm, and seeds tell digests apart.
+BOOST_AUTO_TEST_CASE(ADigestIsWhatHash2Gives)
+{
+        auto const by_hand = [](std::uint64_t s, auto const& v) -> boost::hash2::digest<16> {
+                auto h = boost::hash2::xxh3_128(s);
+                boost::hash2::hash_append(h, {}, v);
+                return h.result();
+        };
+        auto const pair_key = std::pair{std::string("piece"), 42};
+        BOOST_CHECK(xstd::digester<>(7)(pair_key) == by_hand(7, pair_key));
+        BOOST_CHECK(xstd::digester<>(7)(std::string("piece")) == by_hand(7, std::string("piece")));
+        BOOST_CHECK(xstd::digester<>(7)(pair_key) != xstd::digester<>(8)(pair_key));
+}
+
+// Where the digest is as wide as std::size_t, the hasher returns it unchanged; elsewhere Hash2 narrows or widens it.
+BOOST_AUTO_TEST_CASE(AHasherIsTheDigestAtTheWidthOfSizeT)
+{
+        using fnv1a_word      = std::conditional_t<sizeof(std::size_t) == sizeof(std::uint64_t), boost::hash2::fnv1a_64, boost::hash2::fnv1a_32>;
+        auto const string_key = std::string("piece");
+        BOOST_CHECK_EQUAL(xstd::hasher<fnv1a_word>(7)(string_key), static_cast<std::size_t>(xstd::digester<fnv1a_word>(7)(string_key)));
+}
+
+// A digester, like a hasher, digests keys and is no algorithm a hasher could run.
+BOOST_AUTO_TEST_CASE(ADigesterIsNotAHashAlgorithm)
+{
+        XSTD_CONSTEXPR_CHECK(not xstd::hash_algorithm<xstd::digester<>>);
+        XSTD_CONSTEXPR_CHECK(not hasher_argument<xstd::digester<>>);
 }
 
 // One hasher, no key type of its own: each call hashes its argument as Hash2 would.
