@@ -55,6 +55,9 @@ target_sources(
         include/xstd/misc/concepts/specialization_of.hpp
         include/xstd/misc/ext/boost.hpp
         include/xstd/misc/ext/boost/hash2.hpp
+        include/xstd/misc/ext/boost/hash2/digester.hpp
+        include/xstd/misc/ext/boost/hash2/hash_algorithm.hpp
+        include/xstd/misc/ext/boost/hash2/hasher.hpp
         include/xstd/misc/type_traits.hpp
         include/xstd/misc/type_traits/conditional_data_member.hpp
         include/xstd/misc/type_traits/empty_base_type.hpp

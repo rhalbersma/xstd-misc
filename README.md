@@ -242,7 +242,10 @@ See [the design notes](doc/design.md) for rationale, and
 | `<xstd/misc/type_traits/empty_member_type.hpp>` | `empty_member_type` | A tagged empty type for a data member that is not there | none |
 | `<xstd/misc/type_traits/conditional_data_member.hpp>` | `conditional_data_member` | A conditionally present member | none |
 | `<xstd/misc/utility/to_underlying.hpp>` | `to_underlying` | `std::to_underlying`, plus an `std::integral_constant` overload | [p1682r1](https://wg21.link/p1682r1) (`std::to_underlying`) |
-| `<xstd/misc/ext/boost/hash2.hpp>` | `digester` <br> `hash_algorithm` <br> `hasher` | A key's fingerprint at the algorithm's own width, from a seeded Boost.Hash2 algorithm, XXH3-128 by default <br> A Boost.Hash2 hash algorithm, to its documented requirements <br> A hasher running a seeded Boost.Hash2 algorithm, xxHash64 by default, for an unordered container | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) <br> [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) <br> [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) |
+| `<xstd/misc/ext/boost/hash2/hash_algorithm.hpp>` | `hash_algorithm` | A Boost.Hash2 hash algorithm, to its documented requirements | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) |
+| `<xstd/misc/ext/boost/hash2/hasher.hpp>` | `hasher` | A hasher running a seeded Boost.Hash2 algorithm, xxHash64 by default, for an unordered container | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) |
+| `<xstd/misc/ext/boost/hash2/digester.hpp>` | `digester` | A key's fingerprint at the algorithm's own width, from a seeded Boost.Hash2 algorithm, XXH3-128 by default | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) |
+| `<xstd/misc/ext/boost/hash2.hpp>` | `digester` <br> `hash_algorithm` <br> `hasher` | The three above, through one include | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) |
 
 Each directory has an umbrella exporting what is under it -- `<xstd/misc/concepts.hpp>`,
 `<xstd/misc/type_traits.hpp>`, `<xstd/misc/utility.hpp>` -- and `<xstd/misc.hpp>` exports
@@ -255,9 +258,10 @@ exports it, and an adapted library is asked for by name.
 
 - A conforming [C++20](https://wg21.link/N4861) compiler
 - CMake 3.28 or later when using the supplied CMake project
-- No third-party runtime or library dependencies, except for a header under `ext/`:
-  `<xstd/misc/ext/boost/hash2.hpp>` needs [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/),
-  which the `xstd::misc` target does not link, so a consumer including it links `Boost::hash2`
+- No third-party runtime or library dependencies, except for the headers under `ext/`:
+  each header under `xstd/misc/ext/boost/hash2/`, and its umbrella `<xstd/misc/ext/boost/hash2.hpp>`,
+  needs [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/), which the `xstd::misc`
+  target does not link, so a consumer including one links `Boost::hash2`
 
 Earliest toolchains known to compile the library: GCC 10, Clang 11, MSVC 19.29
 (VS 2019 16.11). CI only covers the versions in the table below; the floors were
