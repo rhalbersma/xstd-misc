@@ -74,7 +74,8 @@ class digester
         H m_prototype{};
 
 public:
-        using result_type = H::result_type;
+        // NOLINTNEXTLINE(readability-redundant-typename): clang-cl's -Wc++20-compat rejects the bare dependent name.
+        using result_type = typename H::result_type;
 
         [[nodiscard]] digester() = default;
 
