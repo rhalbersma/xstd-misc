@@ -196,18 +196,18 @@ BOOST_AUTO_TEST_CASE(ADigestIsWhatHash2Gives)
                 boost::hash2::hash_append(h, {}, v);
                 return h.result();
         };
-        auto const key = std::pair{std::string("piece"), 42};
-        BOOST_CHECK(xstd::digester<>(7)(key) == by_hand(7, key));
+        auto const pair_key = std::pair{std::string("piece"), 42};
+        BOOST_CHECK(xstd::digester<>(7)(pair_key) == by_hand(7, pair_key));
         BOOST_CHECK(xstd::digester<>(7)(std::string("piece")) == by_hand(7, std::string("piece")));
-        BOOST_CHECK(xstd::digester<>(7)(key) != xstd::digester<>(8)(key));
+        BOOST_CHECK(xstd::digester<>(7)(pair_key) != xstd::digester<>(8)(pair_key));
 }
 
 // Where the digest is as wide as std::size_t, the hasher returns it unchanged; elsewhere Hash2 narrows or widens it.
 BOOST_AUTO_TEST_CASE(AHasherIsTheDigestAtTheWidthOfSizeT)
 {
-        using fnv1a_word = std::conditional_t<sizeof(std::size_t) == sizeof(std::uint64_t), boost::hash2::fnv1a_64, boost::hash2::fnv1a_32>;
-        auto const key   = std::string("piece");
-        BOOST_CHECK_EQUAL(xstd::hasher<fnv1a_word>(7)(key), static_cast<std::size_t>(xstd::digester<fnv1a_word>(7)(key)));
+        using fnv1a_word      = std::conditional_t<sizeof(std::size_t) == sizeof(std::uint64_t), boost::hash2::fnv1a_64, boost::hash2::fnv1a_32>;
+        auto const string_key = std::string("piece");
+        BOOST_CHECK_EQUAL(xstd::hasher<fnv1a_word>(7)(string_key), static_cast<std::size_t>(xstd::digester<fnv1a_word>(7)(string_key)));
 }
 
 // A digester, like a hasher, digests keys and is no algorithm a hasher could run.
