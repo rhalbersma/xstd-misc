@@ -25,4 +25,13 @@ jobs:
   # No inputs: this library builds on every rung of the ladder, which is what
   # the shared workflow defaults to.
   gcc:
-    uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@5e70b2dfcf6a2a4d8f8d442c65703588d198548c # v0.11.1
+    uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@1c32e510e25b1d41e613cddc1b169655680f9a01 # main, past v0.11.1
+
+  # 32-bit x86: a 32-bit size_t, 4-byte alignment for 64-bit integers, and no
+  # __int128. One rung in Debug, since what is under test is the target.
+  i686:
+    uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@1c32e510e25b1d41e613cddc1b169655680f9a01 # main, past v0.11.1
+    with:
+      arch: x86
+      tiers: stable
+      build_types: Debug
