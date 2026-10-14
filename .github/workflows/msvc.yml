@@ -24,11 +24,11 @@ on:
 jobs:
   # No inputs: the shared workflow defaults to the MSVC toolset.
   msvc:
-    uses: rhalbersma/cpp-ci/.github/workflows/visual-studio.yml@1c32e510e25b1d41e613cddc1b169655680f9a01 # v0.12.0
+    uses: rhalbersma/cpp-ci/.github/workflows/visual-studio.yml@170191bd9ab421d871b53fb67682376a2695d8a9 # v0.13.0
 
   # 32-bit MSVC: 8-byte alignment for 64-bit members, and the STL's portable 128-bit integer. One rung in Debug, since what is under test is the target.
   msvc_x86:
-    uses: rhalbersma/cpp-ci/.github/workflows/visual-studio.yml@47f850f111f6a0369d8bf184539c3c0c956dd9b3 # cpp-ci#62, repinned to the release tag before merging
+    uses: rhalbersma/cpp-ci/.github/workflows/visual-studio.yml@170191bd9ab421d871b53fb67682376a2695d8a9 # v0.13.0
     with:
       arch: x86
       tiers: qualification
