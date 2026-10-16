@@ -6,12 +6,14 @@
 #ifndef XSTD_MISC_EXT_BOOST_HASH2_HASHER_HPP
 #define XSTD_MISC_EXT_BOOST_HASH2_HASHER_HPP
 
-#include <xstd/misc/ext/boost/hash2/hash_algorithm.hpp> // hash_algorithm
-#include <boost/hash2/get_integral_result.hpp>          // get_integral_result
-#include <boost/hash2/hash_append.hpp>                  // hash_append
-#include <boost/hash2/xxhash.hpp>                       // xxhash_64
-#include <cstddef>                                      // size_t
-#include <cstdint>                                      // uint64_t
+#include <xstd/misc/ext/boost/hash2/hash_algorithm.hpp>                // hash_algorithm
+#include <xstd/misc/ext/boost/hash2/hash_algorithm_is_avalanching.hpp> // hash_algorithm_is_avalanching_v
+#include <boost/hash2/get_integral_result.hpp>                         // get_integral_result
+#include <boost/hash2/hash_append.hpp>                                 // hash_append
+#include <boost/hash2/xxhash.hpp>                                      // xxhash_64
+#include <cstddef>                                                     // size_t
+#include <cstdint>                                                     // uint64_t
+#include <type_traits>                                                 // bool_constant
 
 namespace xstd {
 
@@ -22,6 +24,9 @@ class hasher
         H m_prototype{};
 
 public:
+        // Read by boost::hash_is_avalanching: where true, Boost.Unordered's open-addressing tables skip their post-mix.
+        using is_avalanching = std::bool_constant<hash_algorithm_is_avalanching_v<H>>;
+
         // No is_transparent: equal values of different types need not append the same bytes, nor hash equal.
 
         [[nodiscard]] hasher() = default;
