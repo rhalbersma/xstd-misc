@@ -200,6 +200,10 @@ byte sequence `(unsigned char const*, std::size_t)`. The key type is the call's,
 hasher's, so one hasher serves keys of any type; it is not transparent, as equal values of
 different types, such as `42` and `std::int64_t{42}`, need not hash equal.
 
+For xxHash, XXH3 and SipHash, `hasher` reports itself avalanching through the nested `is_avalanching`
+that `boost::hash_is_avalanching` reads, so Boost.Unordered's open-addressing containers use its hash
+as it is. For FNV-1a and every other algorithm it reports false, and they mix the hash again first.
+
 `digester<H>` runs the same seeded prototype over the same `hash_append`, but returns the
 algorithm's whole `result_type` where `hasher` narrows it to `std::size_t`: a fingerprint that
 stands in for a key, such as a transposition table's, is as wide on a 32-bit target as on a

@@ -260,6 +260,31 @@ resistance without a key buys nothing. Hash2's own advice for keys an adversary 
 `siphash_64` with a seed drawn per container, which is a choice the caller makes and
 spells out.
 
+**`is_avalanching`.** Boost.Unordered's open-addressing containers mix every hash value again
+before using it, unless `boost::hash_is_avalanching` reports the hasher avalanching, which it
+reads from a nested `is_avalanching`. `hasher<H>` declares it `std::true_type` for `xxhash_32`,
+`xxhash_64`, `xxh3_128`, `siphash_32` and `siphash_64`, and `std::false_type` for every other
+`H`. Hash2 records no such property on its algorithms, so the list is a `detail` variable
+template beside the hasher, and it errs one way. A table that trusts a biased hash places keys
+by bits that ignore part of them, while one that mixes an avalanching hash again pays a multiply
+per lookup, so FNV-1a, and any algorithm the list does not name, keeps the mix. The list holds
+the algorithms a table runs and for which the mix is a measurable share of the cost. Every other
+Hash2 algorithm but FNV-1a avalanches too, the cryptographic ones by design, but the mix is noise
+beside their cost, and naming one would make `hasher.hpp` include its header.
+
+The tests measure the Strict Avalanche Criterion (Webster and Tavares, CRYPTO '85) through the
+hasher's whole path: the seeded prototype, `hash_append` of a random 64-bit key, and the fold to
+`std::size_t`. For every key bit and hash bit, the rate at which flipping the one flips the other
+must lie within Hoeffding's bound of ½, union-bounded over every pair at a false-failure
+probability of 10⁻⁶, which at 4096 keys is about 0.053. Each listed algorithm stays near 0.03,
+the sampling noise of an ideal hash, at either width of `std::size_t`; FNV-1a comes close to 0.5,
+some hash bit almost never flipping with some key bit. In a `boost::unordered_flat_set` of 16384
+sequential, strided or common-prefix keys, the listed algorithms' probe lengths without the mix
+match their own with it, while FNV-1a declared avalanching lengthens insertion probes by five to
+eight percent. That second measurement is evidence rather than a test: probes in an
+open-addressing table are not independent, so no threshold on it is calibrated. SMHasher3 gives
+the fuller verdict, and once Hash2 publishes the property the hasher reads it instead.
+
 **`constexpr`, `noexcept`.** All three constructors and the call operator are `constexpr`.
 The constructors are constant expressions for every algorithm outside `legacy/`, which the
 tests assert. The call operator is not yet one for any algorithm: Hash2's

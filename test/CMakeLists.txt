@@ -138,6 +138,9 @@ foreach(h ${standalone_headers})
     cmake_language(CALL ${project_id}_add_header_self_sufficiency_test ${h})
 endforeach()
 
+# A header under a detail/ directory is machinery, not a public header: what includes it specifies it, and tests it.
+list(FILTER public_headers EXCLUDE REGEX "/detail/")
+
 # The test tree mirrors the header tree: every public header is answered by exactly
 # one test source at the same path. A reviewer reading include/xstd/misc/utility/to_underlying.hpp
 # knows where its tests are without looking. Enforced here so it cannot drift --
@@ -209,6 +212,7 @@ endif()
 if(TARGET Boost::hash2)
     cmake_language(CALL ${project_id}_add_header_self_sufficiency_test xstd/misc/ext/boost.hpp ${${project_id}_test_boost_hash2})
     cmake_language(CALL ${project_id}_add_header_self_sufficiency_test xstd/misc/ext/boost/hash2.hpp ${${project_id}_test_boost_hash2})
+    cmake_language(CALL ${project_id}_add_header_self_sufficiency_test xstd/misc/ext/boost/hash2/detail/avalanches.hpp ${${project_id}_test_boost_hash2})
     cmake_language(CALL ${project_id}_add_header_self_sufficiency_test xstd/misc/ext/boost/hash2/digester.hpp ${${project_id}_test_boost_hash2})
     cmake_language(CALL ${project_id}_add_header_self_sufficiency_test xstd/misc/ext/boost/hash2/hash_algorithm.hpp ${${project_id}_test_boost_hash2})
     cmake_language(CALL ${project_id}_add_header_self_sufficiency_test xstd/misc/ext/boost/hash2/hasher.hpp ${${project_id}_test_boost_hash2})

@@ -55,6 +55,7 @@ target_sources(
         include/xstd/misc/concepts/specialization_of.hpp
         include/xstd/misc/ext/boost.hpp
         include/xstd/misc/ext/boost/hash2.hpp
+        include/xstd/misc/ext/boost/hash2/detail/avalanches.hpp
         include/xstd/misc/ext/boost/hash2/digester.hpp
         include/xstd/misc/ext/boost/hash2/hash_algorithm.hpp
         include/xstd/misc/ext/boost/hash2/hasher.hpp
