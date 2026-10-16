@@ -13,9 +13,10 @@
 #include <initializer_list>         // initializer_list
 #include <limits>                   // numeric_limits
 #include <string>                   // string
+#include <thread>                   // thread
 #include <type_traits>              // is_constructible_v, is_convertible_v
 #include <unordered_set>            // unordered_set
-#include <utility>                  // pair
+#include <utility>                  // declval, pair
 #include <vector>                   // vector
 
 // Reached the way a consumer reaches it: the probe here, the adapter behind it.
@@ -126,6 +127,12 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(OneHasherHashesKeysOfEveryType, H, test::algorithm
         BOOST_CHECK_EQUAL(h(word), hash2_of(H(seed), word));
         BOOST_CHECK_EQUAL(h(numbers), hash2_of(H(seed), numbers));
         BOOST_CHECK_EQUAL(h(entry), hash2_of(H(seed), entry));
+}
+
+// Hash2 declares hash_append void for every key, so a constraint on the call admits std::thread::id, which it rejects.
+BOOST_AUTO_TEST_CASE(HashAppendIsDeclaredForKeysHash2CannotHash)
+{
+        XSTD_CONSTEXPR_CHECK((std::same_as<decltype(boost::hash2::hash_append(std::declval<boost::hash2::xxhash_64&>(), {}, std::declval<std::thread::id const&>())), void>));
 }
 
 // 42 and std::int64_t{42} compare equal but append four bytes and eight, so a lookup by one would miss the other.
