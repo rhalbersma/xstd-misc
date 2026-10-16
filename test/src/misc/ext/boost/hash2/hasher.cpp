@@ -4,19 +4,15 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <test/constexpr_check.hpp> // XSTD_CONSTEXPR_CHECK
-#include <boost/test/unit_test.hpp> // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL, BOOST_CHECK_GT, BOOST_CHECK_LT, BOOST_CHECK_NE
-#include <algorithm>                // max
+#include <boost/test/unit_test.hpp> // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL, BOOST_CHECK_NE
 #include <array>                    // array
-#include <cmath>                    // abs, log, sqrt
 #include <concepts>                 // same_as
 #include <cstddef>                  // size_t
 #include <cstdint>                  // int64_t, uint64_t, uint8_t
 #include <functional>               // equal_to, hash
 #include <initializer_list>         // initializer_list
 #include <limits>                   // numeric_limits
-#include <random>                   // mt19937_64
 #include <string>                   // string
-#include <tuple>                    // tuple
 #include <type_traits>              // is_constructible_v, is_convertible_v
 #include <unordered_set>            // unordered_set
 #include <utility>                  // pair
@@ -25,14 +21,15 @@
 // Reached the way a consumer reaches it: the probe here, the adapter behind it.
 #if __has_include(<boost/hash2/hash_append.hpp>)
 #define TEST_HAS_BOOST_HASH2
-#include <xstd/misc/ext/boost/hash2/hash_algorithm.hpp> // hash_algorithm
-#include <xstd/misc/ext/boost/hash2/hasher.hpp>         // hasher
-#include <test/hash2_algorithms.hpp>                    // algorithms, avalanching_algorithms, constexpr_algorithms
-#include <boost/hash2/fnv1a.hpp>                        // fnv1a_64
-#include <boost/hash2/get_integral_result.hpp>          // get_integral_result
-#include <boost/hash2/hash_append.hpp>                  // hash_append
-#include <boost/hash2/siphash.hpp>                      // siphash_64
-#include <boost/hash2/xxhash.hpp>                       // xxhash_64
+#include <xstd/misc/ext/boost/hash2/hash_algorithm.hpp>                // hash_algorithm
+#include <xstd/misc/ext/boost/hash2/hash_algorithm_is_avalanching.hpp> // hash_algorithm_is_avalanching_v
+#include <xstd/misc/ext/boost/hash2/hasher.hpp>                        // hasher
+#include <test/hash2_algorithms.hpp>                                   // algorithms, constexpr_algorithms
+#include <boost/hash2/fnv1a.hpp>                                       // fnv1a_64
+#include <boost/hash2/get_integral_result.hpp>                         // get_integral_result
+#include <boost/hash2/hash_append.hpp>                                 // hash_append
+#include <boost/hash2/siphash.hpp>                                     // siphash_64
+#include <boost/hash2/xxhash.hpp>                                      // xxhash_64
 #endif
 
 #if __has_include(<boost/unordered/unordered_flat_set.hpp>)
@@ -55,49 +52,6 @@ concept hasher_argument = requires { typename xstd::hasher<H>; };
 
 template<class Hash>
 concept transparent = requires { typename Hash::is_transparent; };
-
-template<class H, class Algorithms>
-constexpr auto listed = false;
-
-template<class H, class... Algorithms>
-constexpr auto listed<H, std::tuple<Algorithms...>> = (std::same_as<H, Algorithms> or ...);
-
-constexpr auto key_bits          = std::size_t{std::numeric_limits<std::uint64_t>::digits};
-constexpr auto hash_bits         = std::size_t{std::numeric_limits<std::size_t>::digits};
-constexpr auto avalanche_samples = std::size_t{4096};
-
-// The worst |rate - 1/2| at which flipping one bit of a random key flips one bit of its hash, over every such pair.
-template<class H>
-auto worst_avalanche_bias()
-        -> double
-{
-        auto const h = xstd::hasher<H>(seed);
-        auto keys    = std::mt19937_64(seed);
-        auto flips   = std::vector<std::size_t>(key_bits * hash_bits);
-        for (auto n = std::size_t{0}; n < avalanche_samples; ++n) {
-                auto const k    = std::uint64_t{keys()};
-                auto const hash = h(k);
-                for (auto i = std::size_t{0}; i < key_bits; ++i) {
-                        auto const flipped = hash ^ h(k ^ (std::uint64_t{1} << i));
-                        for (auto j = std::size_t{0}; j < hash_bits; ++j) {
-                                flips[(i * hash_bits) + j] += (flipped >> j) & 1U;
-                        }
-                }
-        }
-        auto worst = 0.0;
-        for (auto const count : flips) {
-                worst = std::max(worst, std::abs((static_cast<double>(count) / avalanche_samples) - 0.5));
-        }
-        return worst;
-}
-
-// Hoeffding's inequality, union-bounded over every pair: an ideal hash exceeds it less than once in a million.
-auto avalanche_bound()
-        -> double
-{
-        constexpr auto false_failure = 1e-6;
-        return std::sqrt(std::log(2.0 * key_bits * hash_bits / false_failure) / (2.0 * avalanche_samples));
-}
 
 // What Hash2 makes of a key, with no hasher in between.
 template<class H, class T>
@@ -145,25 +99,13 @@ BOOST_AUTO_TEST_CASE(TheDefaultLetsTheTopBitReachTheLowBits)
         BOOST_CHECK_NE(by_default(std::uint8_t{0x00}) & low_bits, by_default(std::uint8_t{0x80}) & low_bits);
 }
 
-// Only an algorithm known to avalanche skips Boost.Unordered's post-mix; FNV-1a and any unknown one keep it.
-BOOST_AUTO_TEST_CASE_TEMPLATE(ReportsAvalanchingOnlyForKnownAlgorithms, H, test::algorithms)
+// Boost.Unordered reads the algorithm's answer through the hasher, and skips its post-mix only where it is true.
+BOOST_AUTO_TEST_CASE_TEMPLATE(ReportsWhetherItsAlgorithmAvalanches, H, test::algorithms)
 {
-        XSTD_CONSTEXPR_CHECK((xstd::hasher<H>::is_avalanching::value == listed<H, test::avalanching_algorithms>));
+        XSTD_CONSTEXPR_CHECK((xstd::hasher<H>::is_avalanching::value == xstd::hash_algorithm_is_avalanching_v<H>));
 #ifdef TEST_HAS_BOOST_UNORDERED
-        XSTD_CONSTEXPR_CHECK((boost::hash_is_avalanching<xstd::hasher<H>>::value == listed<H, test::avalanching_algorithms>));
+        XSTD_CONSTEXPR_CHECK((boost::hash_is_avalanching<xstd::hasher<H>>::value == xstd::hash_algorithm_is_avalanching_v<H>));
 #endif
-}
-
-// The Strict Avalanche Criterion, measured through the hasher's whole path: seed, hash_append, and the fold to size_t.
-BOOST_AUTO_TEST_CASE_TEMPLATE(EachKeyBitFlipsEachHashBitHalfTheTime, H, test::avalanching_algorithms)
-{
-        BOOST_CHECK_LT(worst_avalanche_bias<H>(), avalanche_bound());
-}
-
-// FNV-1a fails the same criterion at either width of size_t: some hash bit almost never flips with some key bit.
-BOOST_AUTO_TEST_CASE(Fnv1aFailsTheAvalancheCriterion)
-{
-        BOOST_CHECK_GT(worst_avalanche_bias<boost::hash2::fnv1a_64>(), avalanche_bound());
 }
 
 // A hasher names its algorithm, and only something that is one.

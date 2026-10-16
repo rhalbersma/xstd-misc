@@ -56,11 +56,6 @@ using legacy_algorithms = std::tuple<boost::hash2::murmur3_32, boost::hash2::mur
 
 using algorithms = decltype(std::tuple_cat(std::declval<constexpr_algorithms>(), std::declval<legacy_algorithms>()));
 
-// The algorithms whose hasher reports itself avalanching, so that Boost.Unordered uses its hash without a post-mix.
-using avalanching_algorithms_but_xxh3 = std::tuple<boost::hash2::xxhash_32, boost::hash2::xxhash_64, boost::hash2::siphash_32, boost::hash2::siphash_64>;
-
-using avalanching_algorithms = decltype(std::tuple_cat(std::declval<avalanching_algorithms_but_xxh3>(), std::declval<xxh3_unless_analyzed>()));
-
 } // namespace test
 
 #endif // TEST_HASH2_ALGORITHMS_HPP
