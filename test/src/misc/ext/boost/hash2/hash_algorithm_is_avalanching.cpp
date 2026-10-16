@@ -60,8 +60,9 @@ template<class H>
 auto worst_avalanche_bias()
         -> double
 {
-        auto const h = xstd::hasher<H>(seed);
+        // NOLINTNEXTLINE(bugprone-random-generator-seed): a fixed seed gives every run and platform the same verdict.
         auto keys    = std::mt19937_64(seed);
+        auto const h = xstd::hasher<H>(seed);
         auto flips   = std::vector<std::size_t>(key_bits * hash_bits);
         for (auto n = std::size_t{0}; n < avalanche_samples<H>; ++n) {
                 auto const k    = std::uint64_t{keys()};
