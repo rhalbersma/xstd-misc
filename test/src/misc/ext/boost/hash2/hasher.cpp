@@ -21,19 +21,21 @@
 // Reached the way a consumer reaches it: the probe here, the adapter behind it.
 #if __has_include(<boost/hash2/hash_append.hpp>)
 #define TEST_HAS_BOOST_HASH2
-#include <xstd/misc/ext/boost/hash2/hash_algorithm.hpp> // hash_algorithm
-#include <xstd/misc/ext/boost/hash2/hasher.hpp>         // hasher
-#include <test/hash2_algorithms.hpp>                    // algorithms, constexpr_algorithms
-#include <boost/hash2/fnv1a.hpp>                        // fnv1a_64
-#include <boost/hash2/get_integral_result.hpp>          // get_integral_result
-#include <boost/hash2/hash_append.hpp>                  // hash_append
-#include <boost/hash2/siphash.hpp>                      // siphash_64
-#include <boost/hash2/xxhash.hpp>                       // xxhash_64
+#include <xstd/misc/ext/boost/hash2/hash_algorithm.hpp>                // hash_algorithm
+#include <xstd/misc/ext/boost/hash2/hash_algorithm_is_avalanching.hpp> // hash_algorithm_is_avalanching_v
+#include <xstd/misc/ext/boost/hash2/hasher.hpp>                        // hasher
+#include <test/hash2_algorithms.hpp>                                   // algorithms, constexpr_algorithms
+#include <boost/hash2/fnv1a.hpp>                                       // fnv1a_64
+#include <boost/hash2/get_integral_result.hpp>                         // get_integral_result
+#include <boost/hash2/hash_append.hpp>                                 // hash_append
+#include <boost/hash2/siphash.hpp>                                     // siphash_64
+#include <boost/hash2/xxhash.hpp>                                      // xxhash_64
 #endif
 
 #if __has_include(<boost/unordered/unordered_flat_set.hpp>)
 #define TEST_HAS_BOOST_UNORDERED
-#include <boost/unordered/unordered_flat_set.hpp> // unordered_flat_set
+#include <boost/container_hash/hash_is_avalanching.hpp> // hash_is_avalanching
+#include <boost/unordered/unordered_flat_set.hpp>       // unordered_flat_set
 #endif
 
 #ifdef TEST_HAS_BOOST_HASH2
@@ -95,6 +97,15 @@ BOOST_AUTO_TEST_CASE(TheDefaultLetsTheTopBitReachTheLowBits)
                 BOOST_CHECK_EQUAL(fnv1a(std::uint8_t{0x00}) & low_bits, fnv1a(std::uint8_t{0x80}) & low_bits);
         }
         BOOST_CHECK_NE(by_default(std::uint8_t{0x00}) & low_bits, by_default(std::uint8_t{0x80}) & low_bits);
+}
+
+// Boost.Unordered reads the algorithm's answer through the hasher, and skips its post-mix only where it is true.
+BOOST_AUTO_TEST_CASE_TEMPLATE(ReportsWhetherItsAlgorithmAvalanches, H, test::algorithms)
+{
+        XSTD_CONSTEXPR_CHECK((xstd::hasher<H>::is_avalanching::value == xstd::hash_algorithm_is_avalanching_v<H>));
+#ifdef TEST_HAS_BOOST_UNORDERED
+        XSTD_CONSTEXPR_CHECK((boost::hash_is_avalanching<xstd::hasher<H>>::value == xstd::hash_algorithm_is_avalanching_v<H>));
+#endif
 }
 
 // A hasher names its algorithm, and only something that is one.

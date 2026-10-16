@@ -172,7 +172,7 @@ umbrella. It goes under `ext/boost/` instead, the layout xstd-ints uses for its 
 adapted upstream library, an umbrella `<xstd/misc/ext/boost.hpp>` and none above it. The
 Hash2 one, `<xstd/misc/ext/boost/hash2.hpp>`, is itself the umbrella of a directory holding one
 header per name, as `concepts/` and `type_traits/` do, so a consumer that needs only the
-concept does not pull in xxHash and XXH3. Nothing else includes them, so `xstd::misc` stays
+concept or the avalanching trait does not pull in xxHash and XXH3. Nothing else includes them, so `xstd::misc` stays
 dependency-free and the CMake target links nothing; a consumer who includes any of them links
 `Boost::hash2` themselves, as an xstd-ints consumer of `<xstd/ints/ext/boost/int128.hpp>`
 links `Boost::int128`. The installed package config therefore calls no `find_dependency` for
@@ -259,6 +259,44 @@ multiplies. The default is not SipHash either: a default-constructed hasher is u
 resistance without a key buys nothing. Hash2's own advice for keys an adversary chooses is
 `siphash_64` with a seed drawn per container, which is a choice the caller makes and
 spells out.
+
+**`is_avalanching`.** Boost.Unordered's open-addressing containers mix every hash value again
+before using it, unless `boost::hash_is_avalanching` reports the hasher avalanching, which it
+reads from a nested `is_avalanching`. `hasher<H>` declares it from
+`hash_algorithm_is_avalanching<H>`, a public trait, because Hash2 records no such property on
+its algorithms and a user with an algorithm of their own has a reason to state it. The trait is
+true for every Hash2 algorithm but FNV-1a, and false for anything it is not told about. It errs
+that way because a table that trusts a biased hash places keys by bits that ignore part of them,
+while one that mixes an avalanching hash again pays only a multiply per lookup.
+
+Every translation unit that sees the hasher sees every answer. The trait's header names each
+Hash2 algorithm through a forward declaration rather than its header, so the answers cost no
+include, and an answer cannot depend on which headers a translation unit happened to include.
+That matters beyond speed: an explicit specialization that one translation unit sees and another
+does not is ill-formed, no diagnostic required, and two translation units that disagree on a
+hasher's `is_avalanching` inline two different probe sequences into one container, so a lookup
+compiled in one misses an element inserted by the other. Answers given per algorithm header,
+opted into by including ours instead of Hash2's, would have put that one include away from every
+user. The forward declarations match Hash2's own, `class` in `boost::hash2` for each algorithm
+and `template<class H> class hmac`, from 1.88 to 1.92, so a change there fails to compile rather
+than going unnoticed. HMAC answers as the algorithm it keys does. An algorithm outside Hash2 gets
+its answer from a specialization its author writes beside its definition, as with `std::hash`.
+
+The tests measure the Strict Avalanche Criterion (Webster and Tavares, CRYPTO '85) through the
+hasher's whole path: the seeded prototype, `hash_append` of a random 64-bit key, and the fold to
+`std::size_t`, and they check the trait against it for every Hash2 algorithm. For every key bit
+and hash bit, the rate at which flipping the one flips the other must lie within Hoeffding's
+bound of ½, union-bounded over every pair at a false-failure probability of 10⁻⁶. The algorithms
+a table runs are measured over 4096 keys, where the bound is about 0.053; the cryptographic ones
+avalanche by design and cost far more per hash, so 256 keys check them coarsely, against a bound
+of about 0.21. Measured over 4096 keys, every algorithm but FNV-1a stays near 0.03, the sampling
+noise of an ideal hash, at either width of `std::size_t`; FNV-1a comes close to 0.5, some hash bit
+almost never flipping with some key bit. In a `boost::unordered_flat_set` of 16384 sequential,
+strided or common-prefix keys, xxHash, XXH3 and SipHash have the same probe lengths without the
+mix as with it, while FNV-1a declared avalanching lengthens insertion probes by five to eight
+percent. That second measurement is evidence rather than a test: probes in an
+open-addressing table are not independent, so no threshold on it is calibrated. SMHasher3 gives
+the fuller verdict, and once Hash2 publishes the property the hasher reads it instead.
 
 **`constexpr`, `noexcept`.** All three constructors and the call operator are `constexpr`.
 The constructors are constant expressions for every algorithm outside `legacy/`, which the
