@@ -219,6 +219,14 @@ auto const position    = fingerprint(std::string("r1/p1/..."));             // b
 auto const key64       = xstd::digester<boost::hash2::xxhash_64>()(42);      // std::uint64_t everywhere
 ```
 
+A fingerprint persists across runs, builds, and every little-endian target, for keys of
+fixed-width integer types, strings, and arrays of those. Hash2 appends an integer in
+the target's own byte order, and a range's size as a `std::uint32_t`; the tests check those bytes'
+digests against xxHash's reference implementation. Its default flavor, which fixes those bytes, is
+the same in every release from 1.88 to 1.92. A key of `long`, `std::size_t` or `wchar_t`, whose
+width differs between platforms, gives different bytes on each, and so does every integer on a
+big-endian target.
+
 `H` is any type satisfying `hash_algorithm`, Boost.Hash2's documented requirements as a concept,
 so an algorithm written outside Hash2 is checked where it is named:
 

@@ -6,6 +6,7 @@
 #include <test/constexpr_check.hpp> // XSTD_CONSTEXPR_CHECK
 #include <boost/test/unit_test.hpp> // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL, BOOST_CHECK_NE
 #include <array>                    // array
+#include <bit>                      // endian
 #include <concepts>                 // same_as
 #include <cstddef>                  // size_t
 #include <cstdint>                  // int64_t, uint64_t, uint8_t
@@ -95,6 +96,25 @@ BOOST_AUTO_TEST_CASE(TheDefaultLetsTheTopBitReachTheLowBits)
                 BOOST_CHECK_EQUAL(fnv1a(std::uint8_t{0x00}) & low_bits, fnv1a(std::uint8_t{0x80}) & low_bits);
         }
         BOOST_CHECK_NE(by_default(std::uint8_t{0x00}) & low_bits, by_default(std::uint8_t{0x80}) & low_bits);
+}
+
+// The 64-bit digest itself where std::size_t holds it, and get_integral_result's multiply-high fold where it is 32.
+BOOST_AUTO_TEST_CASE(IsOneValuePerWidthOfSizeT)
+{
+        if constexpr (std::endian::native == std::endian::little) {
+                auto const h       = xstd::hasher<>(seed);
+                auto const at_size = [](std::uint64_t digest, std::uint32_t fold) -> std::size_t {
+                        if constexpr (std::numeric_limits<std::size_t>::digits >= 64) {
+                                return static_cast<std::size_t>(digest);
+                        } else {
+                                return fold;
+                        }
+                };
+                BOOST_CHECK_EQUAL(h(std::uint64_t{42}), at_size(0xf92a'4389'bd62'ee57, 0xb9d9'e2fa));
+                BOOST_CHECK_EQUAL(h(std::string("r1/p1/...")), at_size(0xd7e9'ed42'f1d4'b1ce, 0xab90'41e8));
+        } else {
+                BOOST_CHECK(true); // silence Boost.Test's "test case did not check any assertions"
+        }
 }
 
 // A hasher names its algorithm, and only something that is one.
