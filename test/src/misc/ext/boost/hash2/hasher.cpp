@@ -73,22 +73,20 @@ auto worst_avalanche_bias()
 {
         auto const h = xstd::hasher<H>(seed);
         auto keys    = std::mt19937_64(seed);
-        auto flips   = std::array<std::array<std::size_t, hash_bits>, key_bits>{};
+        auto flips   = std::vector<std::size_t>(key_bits * hash_bits);
         for (auto n = std::size_t{0}; n < avalanche_samples; ++n) {
                 auto const k    = std::uint64_t{keys()};
                 auto const hash = h(k);
                 for (auto i = std::size_t{0}; i < key_bits; ++i) {
                         auto const flipped = hash ^ h(k ^ (std::uint64_t{1} << i));
                         for (auto j = std::size_t{0}; j < hash_bits; ++j) {
-                                flips[i][j] += (flipped >> j) & 1U;
+                                flips[(i * hash_bits) + j] += (flipped >> j) & 1U;
                         }
                 }
         }
         auto worst = 0.0;
-        for (auto const& row : flips) {
-                for (auto const count : row) {
-                        worst = std::max(worst, std::abs((static_cast<double>(count) / avalanche_samples) - 0.5));
-                }
+        for (auto const count : flips) {
+                worst = std::max(worst, std::abs((static_cast<double>(count) / avalanche_samples) - 0.5));
         }
         return worst;
 }
