@@ -8,12 +8,11 @@
 #include <xstd/misc/type_traits/hash_algorithm_is_avalanching.hpp> // hash_algorithm_is_avalanching_v
 #include <test/constexpr_check.hpp>                                // XSTD_CONSTEXPR_CHECK
 #include <test/hash2_algorithms.hpp>                               // algorithms, constexpr_algorithms
-#include <boost/hash2/digest.hpp>                                  // digest
-#include <boost/hash2/fnv1a.hpp>                                   // fnv1a_32, fnv1a_64
+#include <boost/hash2/flavor.hpp>                                  // default_flavor
+#include <boost/hash2/fnv1a.hpp>                                   // fnv1a_64
 #include <boost/hash2/get_integral_result.hpp>                     // get_integral_result
 #include <boost/hash2/hash_append.hpp>                             // hash_append
 #include <boost/hash2/siphash.hpp>                                 // siphash_64
-#include <boost/hash2/xxh3.hpp>                                    // xxh3_128
 #include <boost/hash2/xxhash.hpp>                                  // xxhash_64
 #include <boost/test/unit_test.hpp>                                // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL, BOOST_CHECK_GT, BOOST_CHECK_NE
 #include <array>                                                   // array
@@ -28,7 +27,7 @@
 #include <string>                                                  // string
 #include <string_view>                                             // string_view
 #include <thread>                                                  // thread
-#include <type_traits>                                             // conditional_t, is_constructible_v, is_convertible_v
+#include <type_traits>                                             // is_constructible_v, is_convertible_v
 #include <unordered_set>                                           // unordered_set
 #include <utility>                                                 // declval, pair
 #include <vector>                                                  // vector
@@ -99,9 +98,10 @@ BOOST_AUTO_TEST_CASE(AHashIsNotAHashAlgorithm)
         XSTD_CONSTEXPR_CHECK(not xstd::hash_algorithm<xstd::hash<int>>);
 }
 
-BOOST_AUTO_TEST_CASE(TheDefaultAlgorithmIsXxhash64)
+// A table's hash never leaves the process, so it appends in the target's own byte order.
+BOOST_AUTO_TEST_CASE(TheDefaultAlgorithmIsXxhash64InNativeBytes)
 {
-        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<int>, xstd::hash<int, boost::hash2::xxhash_64>>));
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<int>, xstd::hash<int, boost::hash2::xxhash_64, boost::hash2::default_flavor>>));
 }
 
 // FNV-1a carries no bit of a byte down to the bits below it, so masking its 64-bit hash erases the tag.
@@ -219,7 +219,6 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(AStringHashesAsItsViewAndItsCString, H, test::algo
         BOOST_CHECK_EQUAL(h(std::string_view(string)), h(string));
         BOOST_CHECK_EQUAL(h("piece"), h(string));
         BOOST_CHECK_EQUAL(h(string), hash2_of(H(seed), string));
-        BOOST_CHECK(h.digest(std::string_view(string)) == h.digest(string));
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(EqualValuesHashEqual, H, test::algorithms)
@@ -268,37 +267,6 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(IsConstructibleInConstantExpressions, H, test::con
         [[maybe_unused]] constexpr auto keyed    = xstd::hash<int, H>(key.data(), key.size());
 
         BOOST_CHECK(true); // silence Boost.Test's "test case did not check any assertions"
-}
-
-// A digest is as wide as its algorithm makes it, the same on every target, where the call's is std::size_t.
-BOOST_AUTO_TEST_CASE(ADigestIsTheAlgorithmsWholeResult)
-{
-        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<int>::digest_type, std::uint64_t>));
-        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<std::string>::digest_type, std::uint64_t>));
-        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<int, boost::hash2::xxh3_128>::digest_type, boost::hash2::digest<16>>));
-        XSTD_CONSTEXPR_CHECK((std::same_as<decltype(xstd::hash<int, boost::hash2::fnv1a_32>().digest(42)), std::uint32_t>));
-}
-
-// The digest is what Hash2 gives for the key appended to the seeded algorithm, and seeds tell digests apart.
-BOOST_AUTO_TEST_CASE_TEMPLATE(ADigestIsWhatHash2Gives, H, test::algorithms)
-{
-        auto const by_hand = [](H algorithm, auto const& v) {
-                boost::hash2::hash_append(algorithm, {}, v);
-                return algorithm.result();
-        };
-        using pair_hash     = xstd::hash<std::pair<std::string, int>, H>;
-        auto const pair_key = std::pair{std::string("piece"), 42};
-        BOOST_CHECK(pair_hash(seed).digest(pair_key) == by_hand(H(seed), pair_key));
-        BOOST_CHECK(pair_hash(seed).digest(pair_key) != pair_hash(other_seed).digest(pair_key));
-}
-
-// Where the digest is as wide as std::size_t, the call returns it unchanged; elsewhere Hash2 narrows or widens it.
-BOOST_AUTO_TEST_CASE(TheCallIsTheDigestAtTheWidthOfSizeT)
-{
-        using fnv1a_word      = std::conditional_t<sizeof(std::size_t) == sizeof(std::uint64_t), boost::hash2::fnv1a_64, boost::hash2::fnv1a_32>;
-        auto const h          = xstd::hash<std::string, fnv1a_word>(seed);
-        auto const string_key = std::string("piece");
-        BOOST_CHECK_EQUAL(h(string_key), static_cast<std::size_t>(h.digest(string_key)));
 }
 
 // Hash2's advice for keys an adversary chooses: SipHash, seeded per container.

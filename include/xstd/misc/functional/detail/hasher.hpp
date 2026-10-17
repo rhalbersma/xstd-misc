@@ -17,7 +17,7 @@
 namespace xstd::detail {
 
 // A seeded prototype of H, copied on each call so that every key is appended from the same state.
-template<hash_algorithm H>
+template<hash_algorithm H, class Flavor>
 class hasher
 {
         H m_prototype{};
@@ -27,7 +27,7 @@ class hasher
                 -> H
         {
                 auto h = m_prototype;
-                boost::hash2::hash_append(h, {}, v);
+                boost::hash2::hash_append(h, Flavor(), v);
                 return h;
         }
 

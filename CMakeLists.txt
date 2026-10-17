@@ -62,6 +62,8 @@ target_sources(
         include/xstd/misc/concepts/proxy_semi_reference.hpp
         include/xstd/misc/concepts/simple_allocator.hpp
         include/xstd/misc/concepts/specialization_of.hpp
+        include/xstd/misc/format.hpp
+        include/xstd/misc/format/digest.hpp
         include/xstd/misc/functional.hpp
         include/xstd/misc/functional/detail/hasher.hpp
         include/xstd/misc/functional/digest.hpp

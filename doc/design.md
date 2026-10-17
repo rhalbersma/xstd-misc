@@ -330,8 +330,7 @@ digest rather than the hash. It cannot serve an unordered container, whose hash 
 `std::basic_string` its call still takes the view, so a literal digests without a string being
 built.
 
-`hash<T, H>::digest` returns the same whole result under the table's algorithm; `digest` is a
-class of its own as well because the two want different defaults.
+It is a class of its own rather than a member of `hash` because the two want different defaults.
 A table hashes on every lookup and needs only `size_t`'s width; a digest is computed once per key
 and its width is the point, as wide as makes two keys colliding never the likeliest bug at any
 table size. The default is therefore `boost::hash2::xxh3_128`, which
@@ -342,6 +341,24 @@ table size. The default is therefore `boost::hash2::xxh3_128`, which
 copied on every call. That is a price a digest pays once and a table would pay on every lookup.
 A digest that persists still does better to name its algorithm, so that no change of default
 could invalidate what was stored.
+
+**Flavor.** Both classes take Hash2's flavor as a third parameter, the byte order in which
+`hash_append` writes integers and the type in which it writes a range's size. `digest` defaults to
+`little_endian_flavor`, so a persisted digest is the same on a big-endian target as on a
+little-endian one; there it writes the native bytes, at no cost, so every digest the tests pin
+keeps its value. `hash` defaults to `default_flavor`, the native order, because a table's hash
+never leaves the process and the native order keeps Hash2's contiguous fast path on every target.
+
+### Formatting a digest
+
+`<xstd/misc/format/digest.hpp>` specializes `std::formatter` for `boost::hash2::digest<N>`, the
+result of XXH3-128 and every other algorithm with an array-like result, so that `std::format` and
+`std::print` write it as `boost::hash2::to_string` does: two lowercase hex digits per byte, in byte
+order, with `X` for uppercase. Any other specification is a `std::format_error`, and so a compile
+error in a checked format string: a width or a base is the habit from integers, and a digest is
+none. [namespace.std] admits the specialization because it depends on a type the standard library
+does not define; Hash2 1.92 ships no formatter of its own, and one that a later release ships
+would collide with this one at compile time rather than replace it in silence.
 
 ## Boost and include-cleaner
 
