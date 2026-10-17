@@ -14,7 +14,7 @@
 #include <boost/hash2/hash_append.hpp>                             // hash_append
 #include <boost/hash2/siphash.hpp>                                 // siphash_64
 #include <boost/hash2/xxhash.hpp>                                  // xxhash_64
-#include <boost/test/unit_test.hpp>                                // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL, BOOST_CHECK_GT, BOOST_CHECK_NE
+#include <boost/test/unit_test.hpp>                                // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL, BOOST_CHECK_GT, BOOST_CHECK_LT, BOOST_CHECK_NE
 #include <array>                                                   // array
 #include <bit>                                                     // endian, has_single_bit
 #include <concepts>                                                // same_as
@@ -34,6 +34,7 @@
 
 #if __has_include(<boost/unordered/unordered_flat_set.hpp>)
 #define TEST_HAS_BOOST_UNORDERED
+#define BOOST_UNORDERED_ENABLE_STATS
 #include <boost/container_hash/hash_is_avalanching.hpp> // hash_is_avalanching
 #include <boost/unordered/unordered_flat_set.hpp>       // unordered_flat_set
 #endif
@@ -325,6 +326,26 @@ BOOST_AUTO_TEST_CASE(SeedsABoostUnorderedFlatSet)
         BOOST_CHECK(not s.contains("four"));
         BOOST_CHECK_EQUAL(used(two), seeded(two));
         BOOST_CHECK_NE(used(two), unseeded(two));
+}
+
+// Boost's open-addressing tables take a group from a hash's high bits, which FNV-1a leaves alike, and mix it first.
+BOOST_AUTO_TEST_CASE(TaggedIdsSpreadUnderFnv1aWhereABoostUnorderedFlatSetMixesTheirHash)
+{
+        using fnv1a = xstd::hash<std::uint64_t, boost::hash2::fnv1a_64>;
+
+        auto const hash = fnv1a();
+        if constexpr (std::numeric_limits<std::size_t>::digits >= 64) {
+                for (auto const id : tagged_ids) {
+                        BOOST_CHECK_EQUAL(hash(id) >> 56U, hash(tagged_ids[0]) >> 56U);
+                }
+        }
+        BOOST_CHECK(not boost::hash_is_avalanching<fnv1a>::value);
+
+        auto table = boost::unordered_flat_set<std::uint64_t, fnv1a>();
+        table.reserve(1024);
+        table.insert(tagged_ids.begin(), tagged_ids.end());
+        auto const average_with_one_spill = 1.0 + (1.0 / static_cast<double>(tagged_ids.size()));
+        BOOST_CHECK_LT(table.get_stats().insertion.probe_length.average, average_with_one_spill);
 }
 
 BOOST_AUTO_TEST_CASE(FindsAStringKeyByItsViewInABoostUnorderedFlatSet)
