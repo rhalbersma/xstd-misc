@@ -4,7 +4,7 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <xstd/misc/concepts/hash_algorithm.hpp>                   // hash_algorithm
-#include <xstd/misc/functional/hasher.hpp>                         // hasher
+#include <xstd/misc/functional/hash.hpp>                           // hash
 #include <xstd/misc/type_traits/hash_algorithm_is_avalanching.hpp> // hash_algorithm_is_avalanching, hash_algorithm_is_avalanching_v
 #include <test/constexpr_check.hpp>                                // XSTD_CONSTEXPR_CHECK
 #include <test/hash2_algorithms.hpp>                               // algorithms
@@ -55,7 +55,7 @@ auto worst_avalanche_bias()
 {
         // NOLINTNEXTLINE(bugprone-random-generator-seed): a fixed seed gives every run and platform the same verdict.
         auto keys    = std::mt19937_64(seed);
-        auto const h = xstd::hasher<H>(seed);
+        auto const h = xstd::hash<std::uint64_t, H>(seed);
         auto flips   = std::vector<std::size_t>(key_bits * hash_bits);
         for (auto n = std::size_t{0}; n < avalanche_samples<H>; ++n) {
                 auto const k    = std::uint64_t{keys()};
@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(EveryHash2AlgorithmButFnv1aAvalanches, H, test::al
         XSTD_CONSTEXPR_CHECK((xstd::hash_algorithm_is_avalanching_v<H> == not is_fnv1a<H>));
 }
 
-// The Strict Avalanche Criterion, measured through the hasher's whole path: seed, hash_append, and the fold to size_t.
+// The Strict Avalanche Criterion, measured through the hash's whole path: seed, hash_append, and the fold to size_t.
 BOOST_AUTO_TEST_CASE_TEMPLATE(AgreesWithTheAvalancheCriterion, H, test::algorithms)
 {
         if constexpr (xstd::hash_algorithm_is_avalanching_v<H>) {
@@ -128,9 +128,9 @@ BOOST_AUTO_TEST_CASE(AnAlgorithmOutsideHash2AvalanchesOnceItsAuthorSaysSo)
 {
         XSTD_CONSTEXPR_CHECK(xstd::hash_algorithm<declared_xxhash>);
         XSTD_CONSTEXPR_CHECK(xstd::hash_algorithm_is_avalanching_v<declared_xxhash>);
-        XSTD_CONSTEXPR_CHECK(xstd::hasher<declared_xxhash>::is_avalanching::value);
+        XSTD_CONSTEXPR_CHECK((xstd::hash<int, declared_xxhash>::is_avalanching::value));
         XSTD_CONSTEXPR_CHECK(not xstd::hash_algorithm_is_avalanching_v<undeclared_xxhash>);
-        XSTD_CONSTEXPR_CHECK(not xstd::hasher<undeclared_xxhash>::is_avalanching::value);
+        XSTD_CONSTEXPR_CHECK((not xstd::hash<int, undeclared_xxhash>::is_avalanching::value));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

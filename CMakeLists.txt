@@ -63,8 +63,9 @@ target_sources(
         include/xstd/misc/concepts/simple_allocator.hpp
         include/xstd/misc/concepts/specialization_of.hpp
         include/xstd/misc/functional.hpp
+        include/xstd/misc/functional/detail/hasher.hpp
+        include/xstd/misc/functional/digest.hpp
         include/xstd/misc/functional/hash.hpp
-        include/xstd/misc/functional/hasher.hpp
         include/xstd/misc/type_traits.hpp
         include/xstd/misc/type_traits/conditional_data_member.hpp
         include/xstd/misc/type_traits/detail/hash2_algorithms_fwd.hpp

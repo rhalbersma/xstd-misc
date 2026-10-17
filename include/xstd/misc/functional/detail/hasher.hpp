@@ -3,22 +3,21 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef XSTD_MISC_FUNCTIONAL_HASHER_HPP
-#define XSTD_MISC_FUNCTIONAL_HASHER_HPP
+#ifndef XSTD_MISC_FUNCTIONAL_DETAIL_HASHER_HPP
+#define XSTD_MISC_FUNCTIONAL_DETAIL_HASHER_HPP
 
 #include <xstd/misc/concepts/hash_algorithm.hpp>                   // hash_algorithm
 #include <xstd/misc/type_traits/hash_algorithm_is_avalanching.hpp> // hash_algorithm_is_avalanching_v
 #include <boost/hash2/get_integral_result.hpp>                     // get_integral_result
 #include <boost/hash2/hash_append.hpp>                             // hash_append
-#include <boost/hash2/xxhash.hpp>                                  // xxhash_64
 #include <cstddef>                                                 // size_t
 #include <cstdint>                                                 // uint64_t
 #include <type_traits>                                             // bool_constant
 
-namespace xstd {
+namespace xstd::detail {
 
-// xxHash avalanches at any key length; FNV-1a never lets the last byte's high bits reach the low result bits.
-template<hash_algorithm H = boost::hash2::xxhash_64>
+// A seeded prototype of H, copied on each call so that every key is appended from the same state.
+template<hash_algorithm H>
 class hasher
 {
         H m_prototype{};
@@ -77,6 +76,6 @@ public:
         }
 };
 
-} // namespace xstd
+} // namespace xstd::detail
 
-#endif // XSTD_MISC_FUNCTIONAL_HASHER_HPP
+#endif // XSTD_MISC_FUNCTIONAL_DETAIL_HASHER_HPP
