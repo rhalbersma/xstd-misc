@@ -162,6 +162,11 @@ possible, and the work relies on them rather than on whatever happens to be inst
   break while iterating, and every leg before a push. Push only what it reports green: CI is there to confirm,
   not to discover.
 
+Run every job that takes more than a moment in the background: the setup script, a `ci-local.sh` run, a build, a
+test suite, clang-tidy. A leg takes minutes and a full run far longer, and a conversation waiting on one in the
+foreground cannot answer the question that arrives meanwhile. Start it, keep working or answering, and read its log
+when it reports back.
+
 Never build with whatever `g++` or `clang++` happen to resolve to. Ubuntu 24.04 ships GCC 13, which rejects
 `-std=c++2c` outright, so the default compiler cannot build this library at all, and a check that quietly falls
 back to a cut-down reproduction proves less than it appears to. What `ci-local.sh` cannot cover, MSVC, clang-cl,
