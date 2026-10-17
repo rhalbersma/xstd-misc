@@ -30,8 +30,9 @@
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/rhalbersma/xstd-misc/badge)](https://scorecard.dev/viewer/?uri=github.com/rhalbersma/xstd-misc)
 
 xstd-misc is a header-only collection of small extensions to the C++ standard
-library: facilities too small, and too unrelated to one another, to deserve a
-library of their own. Each lives under the standard header it extends, so the
+library: what the xstd family needs beyond integers, which
+[xstd-ints](https://github.com/rhalbersma/xstd-ints) holds, and bit containers, which
+[xstd-bits](https://github.com/rhalbersma/xstd-bits) holds. Each lives under the standard header it extends, so the
 layout mirrors `<concepts>`, `<format>`, `<functional>`, `<type_traits>` and
 `<utility>`. It adds two pairs
 of a concept and a trait for recognizing a specialization of a class template --
