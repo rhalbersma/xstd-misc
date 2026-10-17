@@ -142,7 +142,7 @@ cases users will meet and the pitfalls they will fall into, never against a cons
 - **Positives are real models:** the types users will pass, such as Boost.Hash2's own algorithms for
   `hash_algorithm`.
 - **Negatives are the mistakes users will make:** a near-miss a reader would expect to qualify, such as
-  `std::hash<int>` or `xstd::hasher<>` for `hash_algorithm`, each a hasher where an algorithm is asked for. A type
+  `std::hash<int>` or `xstd::hash<int>` for `hash_algorithm`, each a hasher where an algorithm is asked for. A type
   that is plainly not one, such as `int`, proves nothing and is left out.
 - **An unexpected clause names its pitfall.** A clause in a concept or a function's constraint that a reader would
   not expect carries a one-line comment naming the real-world mistake it guards against, and a near-miss test shows
