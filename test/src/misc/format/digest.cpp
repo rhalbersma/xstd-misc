@@ -7,11 +7,11 @@
 #include <xstd/misc/functional/digest.hpp> // digest
 #include <boost/hash2/digest.hpp>          // digest, to_string
 #include <boost/hash2/sha2.hpp>            // sha2_256
-#include <boost/test/unit_test.hpp>        // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK_EQUAL, BOOST_CHECK_THROW
+#include <boost/test/unit_test.hpp>        // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL, BOOST_CHECK_THROW
 #include <algorithm>                       // copy
 #include <array>                           // array
 #include <cstddef>                         // size_t
-#include <format>                          // format, format_error, make_format_args, vformat
+#include <format>                          // format, format_error, format_parse_context, formatter, make_format_args, vformat
 #include <string>                          // string
 
 namespace {
@@ -63,6 +63,17 @@ BOOST_AUTO_TEST_CASE(RejectsAnyOtherSpecification)
 
         BOOST_CHECK_THROW(static_cast<void>(std::vformat("{:d}", std::make_format_args(d))), std::format_error);
         BOOST_CHECK_THROW(static_cast<void>(std::vformat("{:08x}", std::make_format_args(d))), std::format_error);
+}
+
+// A formatter nested in another's is handed a specification that ends where its parse context does.
+BOOST_AUTO_TEST_CASE(ParsesASpecificationThatEndsItsContext)
+{
+        auto formatter = std::formatter<boost::hash2::digest<4>>();
+        auto empty     = std::format_parse_context("");
+        auto upper     = std::format_parse_context("X");
+
+        BOOST_CHECK(formatter.parse(empty) == empty.end());
+        BOOST_CHECK(formatter.parse(upper) == upper.end());
 }
 
 BOOST_AUTO_TEST_SUITE_END()
