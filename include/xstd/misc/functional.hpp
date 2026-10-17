@@ -6,6 +6,7 @@
 #ifndef XSTD_MISC_FUNCTIONAL_HPP
 #define XSTD_MISC_FUNCTIONAL_HPP
 
-#include <xstd/misc/functional/hash.hpp> // IWYU pragma: export; hash
+#include <xstd/misc/functional/hasher.hpp> // IWYU pragma: export; hasher
+#include <xstd/misc/functional/hash.hpp>   // IWYU pragma: export; hash
 
 #endif // XSTD_MISC_FUNCTIONAL_HPP

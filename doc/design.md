@@ -22,7 +22,7 @@ need one third-party library, Boost.Hash2, which the hashing facilities are buil
   enforces this over every public header rather than trusting it.
 - **Stay modular and header-only.** Linking `xstd::misc` adds include paths, the
   [C++20](https://wg21.link/N4861) requirement and the header-only `Boost::hash2`,
-  but no runtime library; see [`hash`](#hash) for why Hash2 is a dependency
+  but no runtime library; see [`hasher`](#hasher) for why Hash2 is a dependency
   rather than an opt-in.
 
 ## API shape
@@ -151,15 +151,21 @@ value-initialized one converts to `false`, so it is not. The suppression sits on
 that line rather than in `.clang-tidy`, so it reaches a consumer linting their
 own code -- their configuration is not ours to fix.
 
-### `hash`
+### `hasher`
 
-`xstd::hash<H>` is the hasher the
+`xstd::hasher<H>` is the hasher the
 [Boost.Hash2 documentation](https://www.boost.org/doc/libs/release/libs/hash2/)
 sketches for an unordered container: it holds a prototype of the algorithm `H`, seeded
 once, and copies it on every call, so that `hash_append` of the key starts from the same
 state each time and a `const` call operator mutates nothing. Hash2 separates *what* a type
 hashes, its `tag_invoke` hook, from *which algorithm* hashes it; this is the piece that
-lets a user choose the algorithm per container, and seed it per container.
+lets a user choose the algorithm per container, and seed it per container. It descends from
+[N3980](https://wg21.link/n3980)'s `uhash`, which default-constructs its algorithm on every call
+and returns the whole result, as `digest` does; `hasher` adds the seeded prototype and the fold to
+`std::size_t`. The paper sets `uhash` beside `std::hash` rather than in it, as this library sets
+`hasher`: an algorithm parameter on `std::hash` would change the type of every
+`std::hash<Key>`, and so the ABI of every unordered container over one, and a specialization per
+key computes its value itself, so no algorithm could reach the key's bytes through it.
 
 **Where it lives.** Under `functional/`, the directory mirroring `<functional>`, which holds
 `std::hash`; the concept goes under `concepts/` and the avalanching trait
@@ -170,11 +176,11 @@ CMake target links `Boost::hash2`, the installed package config calls `find_depe
 and the vcpkg manifest lists it. It is header-only, so that costs an include path and no
 runtime library, and xstd-bits, the library's main consumer, requires it already. An adapter
 directory such as xstd-ints' `ext/boost/` would keep it optional, but would fence off from
-`<xstd/misc.hpp>` the one facility here whose dependency every consumer has. `xstd::hash` and
+`<xstd/misc.hpp>` the one facility here whose dependency every consumer has. `xstd::hasher` and
 `xstd::hash_algorithm` name nothing in xstd-ints or xstd-bits, which share the namespace.
 
 **No key type.** The key is a parameter of the call, not of the class, as with the
-standard's transparent function objects: one `hash<H>` serves an `int` key, a string key
+standard's transparent function objects: one `hasher<H>` serves an `int` key, a string key
 and a key of a user's own type, each hashed as `hash_append` hashes it. `std::hash<T>` fixes
 its key because a specialization per key is its customization point; Hash2's is
 `tag_invoke`, which the call reaches for whatever it is given, so a key type on the class
@@ -185,8 +191,9 @@ heterogeneous lookup, but it declares no `is_transparent`. Heterogeneous lookup 
 values to hash equal across their types, and `hash_append` hashes a value in the bytes of
 its own type: `42` appends four bytes and `std::int64_t{42}` eight, so they compare equal
 and hash apart, and a lookup by one would miss a key stored as the other. A container over
-a `hash` therefore converts a lookup argument to its key type first, as it would for
-`std::hash`.
+a `hasher` therefore converts a lookup argument to its key type first, as it would for
+`std::hash`. Where a lookup should not build a key, [`hash`](#hash) names the key type and can be
+transparent over the arguments that hash as it does.
 
 **`digest`, a member.** The call operator folds the algorithm's result to `std::size_t`, which
 a container needs and a stored digest must not have: its width would change with the target.
@@ -230,7 +237,7 @@ concept asks for that one. `block_size` is optional, required only of an algorit
 `hmac`, so an algorithm without one satisfies the concept, and one that declares it must
 declare it as the documentation does. `update`'s return type and the `explicit` on the seed
 constructor are left free: Hash2 reads neither, so requiring them would reject an algorithm
-Hash2 runs. Since every algorithm has both seeded constructors, so does every `hash`, with
+Hash2 runs. Since every algorithm has both seeded constructors, so does every `hasher`, with
 no constraint of its own; the `std::uint64_t` one is `explicit`, as Hash2's are, so an
 integer never becomes a hasher by conversion.
 
@@ -267,7 +274,7 @@ spells out.
 
 **`is_avalanching`.** Boost.Unordered's open-addressing containers mix every hash value again
 before using it, unless `boost::hash_is_avalanching` reports the hasher avalanching, which it
-reads from a nested `is_avalanching`. `hash<H>` declares it from
+reads from a nested `is_avalanching`. `hasher<H>` declares it from
 `hash_algorithm_is_avalanching<H>`, a public trait, because Hash2 records no such property on
 its algorithms and a user with an algorithm of their own has a reason to state it. The trait is
 true for every Hash2 algorithm but FNV-1a, and false for anything it is not told about. It errs
@@ -312,6 +319,26 @@ reimplementing the fold here to evaluate it now would fork Hash2's mapping, whic
 built on Hash2 must not. Nothing is `noexcept`: Hash2 declares no exception specification
 on its algorithms, and the `hash_append` of a key is the user's own code, so a written
 guarantee would be a promise about code this header does not see.
+
+### `hash`
+
+`xstd::hash<T, H>` is `hasher<H>` at one key type, spelled as `std::hash<T>` is, so a reader who
+knows the standard's finds the key where they expect it. Its call operator and `digest` take a
+`T const&`, so every argument converts to the key type before it is hashed: `hash<std::int64_t>`
+hashes `42` as the 8 bytes of the key a table holds, where `hasher` hashes the 4 bytes of an
+`int`. It derives privately from `hasher<H>`, inheriting the three constructors and their
+`explicit`, and exposing `digest_type` and `is_avalanching`; it is not a `hasher`, so it does not
+convert to one.
+
+The key type is what makes transparency sound. A heterogeneous lookup hashes the argument it is
+given, so every argument a transparent hash accepts must append the bytes the key would for an
+equal value. Over a `std::basic_string` the call takes its `std::basic_string_view`: a string, a
+view and a C string all convert to it, and Hash2 appends a string and its view alike, so they
+hash equal under every algorithm, as the tests check. That specialization declares
+`is_transparent`, and a container pairing it with `std::equal_to<>` finds a string key by a view
+or a literal without building a string. No other key is transparent: a `hasher` that did not
+know its key could not be, and a key whose equal values span types Hash2 appends differently,
+such as the integers, would miss.
 
 ## Boost and include-cleaner
 

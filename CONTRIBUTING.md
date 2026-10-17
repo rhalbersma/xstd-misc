@@ -37,7 +37,7 @@ The library itself needs one dependency, the header-only [Boost.Hash2](https://w
 | A conforming C++20 compiler | everything | Same requirement as the library; see the table in [README.md](README.md) for the versions under CI |
 | [CMake](https://cmake.org/) 3.30+ | configuring and building | `cmake_minimum_required` in [`CMakeLists.txt`](CMakeLists.txt); CTest ships with it |
 | [Boost.Test](https://www.boost.org/doc/libs/release/libs/test/) 1.70+ | the unit tests under `test/src/` | The floor the CMake project asks for, shared with the other xstd repositories; declared in the checked-in [`vcpkg.json`](vcpkg.json) manifest, the `*-vcpkg` presets pick it up from a `VCPKG_ROOT`-configured vcpkg, or install it with your system package manager |
-| [Boost.Unordered](https://www.boost.org/doc/libs/release/libs/unordered/) | the tests running `xstd::hash` in an open-addressing container | Found quietly: without it those tests compile to a placeholder, so CI installs it through the [`vcpkg.json`](vcpkg.json) `test` feature |
+| [Boost.Unordered](https://www.boost.org/doc/libs/release/libs/unordered/) | the tests running `xstd::hasher` in an open-addressing container | Found quietly: without it those tests compile to a placeholder, so CI installs it through the [`vcpkg.json`](vcpkg.json) `test` feature |
 | [gcovr](https://gcovr.com/) | reproducing the coverage gate | Only for the workflow below; `pip install gcovr` |
 | `clang-tidy` and `run-clang-tidy` | reproducing the clang-tidy gate | Only for the workflow below |
 | `clang-format` | the formatting gate | Run `clang-format -i` on changed files before pushing |

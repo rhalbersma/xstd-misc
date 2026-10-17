@@ -6,74 +6,59 @@
 #ifndef XSTD_MISC_FUNCTIONAL_HASH_HPP
 #define XSTD_MISC_FUNCTIONAL_HASH_HPP
 
-#include <xstd/misc/concepts/hash_algorithm.hpp>                   // hash_algorithm
-#include <xstd/misc/type_traits/hash_algorithm_is_avalanching.hpp> // hash_algorithm_is_avalanching_v
-#include <boost/hash2/get_integral_result.hpp>                     // get_integral_result
-#include <boost/hash2/hash_append.hpp>                             // hash_append
-#include <boost/hash2/xxhash.hpp>                                  // xxhash_64
-#include <cstddef>                                                 // size_t
-#include <cstdint>                                                 // uint64_t
-#include <type_traits>                                             // bool_constant
+#include <xstd/misc/concepts/hash_algorithm.hpp> // hash_algorithm
+#include <xstd/misc/functional/hasher.hpp>       // hasher
+#include <boost/hash2/xxhash.hpp>                // xxhash_64
+#include <cstddef>                               // size_t
+#include <string>                                // basic_string
+#include <string_view>                           // basic_string_view
 
 namespace xstd {
 
-// xxHash avalanches at any key length; FNV-1a never lets the last byte's high bits reach the low result bits.
-template<hash_algorithm H = boost::hash2::xxhash_64>
+// The hasher at one key type: each argument converts to T before it is appended, so it hashes as the key it finds.
+template<class T, hash_algorithm H = boost::hash2::xxhash_64>
 class hash
+        : hasher<H>
 {
-        H m_prototype{};
-
-        template<class T>
-        [[nodiscard]] constexpr auto appended(T const& v) const
-                -> H
-        {
-                auto h = m_prototype;
-                boost::hash2::hash_append(h, {}, v);
-                return h;
-        }
-
 public:
-        // NOLINTNEXTLINE(readability-redundant-typename): clang-cl's -Wc++20-compat rejects the bare dependent name.
-        using digest_type = typename H::result_type;
+        using hasher<H>::hasher;
+        using typename hasher<H>::digest_type;
+        using typename hasher<H>::is_avalanching;
 
-        // Read by boost::hash_is_avalanching: where true, Boost.Unordered's open-addressing tables skip their post-mix.
-        using is_avalanching = std::bool_constant<hash_algorithm_is_avalanching_v<H>>;
-
-        // No is_transparent: equal values of different types need not append the same bytes, nor hash equal.
-
-        [[nodiscard]] hash() = default;
-
-        // MSVC checks C4459 as it instantiates the template, so any namespace-scope seed a consumer declares trips it.
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4459)
-#endif
-        [[nodiscard]] constexpr explicit hash(std::uint64_t seed)
-                : m_prototype(seed)
-        {}
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
-
-        [[nodiscard]] constexpr hash(unsigned char const* p, std::size_t n)
-                : m_prototype(p, n)
-        {}
-
-        // Neither constrained nor noexcept: Hash2 declares hash_append void for every T, and it runs the user's code.
-        template<class T>
         [[nodiscard]] constexpr auto operator()(T const& v) const
                 -> std::size_t
         {
-                auto h = appended(v);
-                return boost::hash2::get_integral_result<std::size_t>(h);
+                return hasher<H>::operator()(v);
         }
 
-        // The algorithm's whole result, as wide on every target, where the call operator folds it to std::size_t.
-        template<class T>
         [[nodiscard]] constexpr auto digest(T const& v) const
                 -> digest_type
         {
-                return appended(v).result();
+                return hasher<H>::digest(v);
+        }
+};
+
+// A string, its view and a C string append the same characters, so a lookup by any of them finds the key.
+template<class CharT, class Traits, class Allocator, hash_algorithm H>
+class hash<std::basic_string<CharT, Traits, Allocator>, H>
+        : hasher<H>
+{
+public:
+        using hasher<H>::hasher;
+        using typename hasher<H>::digest_type;
+        using typename hasher<H>::is_avalanching;
+        using is_transparent = void;
+
+        [[nodiscard]] constexpr auto operator()(std::basic_string_view<CharT, Traits> v) const
+                -> std::size_t
+        {
+                return hasher<H>::operator()(v);
+        }
+
+        [[nodiscard]] constexpr auto digest(std::basic_string_view<CharT, Traits> v) const
+                -> digest_type
+        {
+                return hasher<H>::digest(v);
         }
 };
 

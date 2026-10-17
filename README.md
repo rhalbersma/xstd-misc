@@ -40,10 +40,11 @@ types that keep a place in a class layout, a data member present only when a
 condition holds, a portable spelling of `[[no_unique_address]]`, four
 concepts recognizing proxy iterators and proxy references, and `to_underlying`
 over a plain enum, one wrapped in `std::integral_constant`, and a proxy for one.
-Under `<functional>`, it adds `hash`, a hasher for an unordered container that runs
+Under `<functional>`, it adds `hasher`, a hash function object for an unordered container that runs
 a [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) algorithm of
 the caller's choosing, seeded per container, whose `digest` member returns a key's digest
-at the algorithm's own width; beside it, `hash_algorithm` is the concept that
+at the algorithm's own width, and `hash`, the same hasher at one key type, transparent over strings;
+beside them, `hash_algorithm` is the concept that
 algorithm satisfies, and `hash_algorithm_is_avalanching` tells Boost.Unordered whether
 the algorithm's hash can be used without mixing it again.
 
@@ -178,7 +179,7 @@ static_assert(xstd::simple_allocator<std::allocator<int>>);
 static_assert(xstd::container_compatible_range<std::vector<int>, long>);
 ```
 
-`hash<H>` hashes a key of any type through `hash_append` with the Boost.Hash2 algorithm `H`,
+`hasher<H>` hashes a key of any type through `hash_append` with the Boost.Hash2 algorithm `H`,
 holding a seeded prototype of `H` and copying it on every call. The default is `boost::hash2::xxhash_64`
 on every platform: it avalanches at any key length, where FNV-1a leaves the low bits a masked table takes blind
 to the high bits of the last byte.
@@ -191,7 +192,7 @@ For keys an adversary chooses, name SipHash and seed it per container, as Hash2 
 #include <string>
 #include <unordered_set>
 
-using siphasher = xstd::hash<boost::hash2::siphash_64>;
+using siphasher = xstd::hasher<boost::hash2::siphash_64>;
 
 auto const seed = std::uint64_t{/* drawn at random, per container */};
 auto names      = std::unordered_set<std::string, siphasher>(0, siphasher(seed));
@@ -202,7 +203,24 @@ byte sequence `(unsigned char const*, std::size_t)`. The key type is the call's,
 class's, so one hasher serves keys of any type; it is not transparent, as equal values of
 different types, such as `42` and `std::int64_t{42}`, need not hash equal.
 
-`hash<H>` reports itself avalanching, through the nested `is_avalanching` that
+`hash<T, H>` is the same hasher at one key type, spelled as `std::hash<T>` is: each argument
+converts to `T` before it is hashed, so `xstd::hash<std::int64_t>()(42)` hashes the 8 bytes of
+the key a table holds. Over a `std::basic_string` it is transparent, taking the string's view, so
+a string, a `std::string_view` and a C string with the same characters hash equal, and a set
+looks a key up by any of them without building a string:
+
+```cpp
+#include <xstd/misc/functional.hpp>
+#include <functional>
+#include <string>
+#include <string_view>
+#include <unordered_set>
+
+auto names = std::unordered_set<std::string, xstd::hash<std::string>, std::equal_to<>>{"one", "two"};
+auto found = names.contains(std::string_view("two"));                // no std::string is built
+```
+
+`hasher<H>` reports itself avalanching, through the nested `is_avalanching` that
 `boost::hash_is_avalanching` reads, wherever `xstd::hash_algorithm_is_avalanching<H>` holds, and
 Boost.Unordered's open-addressing containers then use its hash as it is. The trait holds for every
 Hash2 algorithm but FNV-1a, and every translation unit sees the same answer without including the
@@ -214,7 +232,7 @@ template<>
 struct xstd::hash_algorithm_is_avalanching<my_algorithm> : std::true_type {};
 ```
 
-`hash<H>::digest` runs the same seeded prototype over the same `hash_append`, but returns the
+`hasher<H>::digest` runs the same seeded prototype over the same `hash_append`, but returns the
 algorithm's whole `result_type`, as `digest_type`, where the call operator folds it to
 `std::size_t`: a digest that stands in for a key, such as a transposition table's, is as wide on
 a 32-bit target as on a 64-bit one. A digest that stands in for its key should be wide enough that
@@ -229,9 +247,9 @@ that no change of default can invalidate what was stored:
 #include <cstdint>
 #include <string>
 
-auto const persisted = xstd::hash<boost::hash2::xxh3_128>(std::uint64_t{/* fixed, so digests persist */});
+auto const persisted = xstd::hasher<boost::hash2::xxh3_128>(std::uint64_t{/* fixed, so digests persist */});
 auto const position  = persisted.digest(std::string("r1/p1/..."));    // boost::hash2::digest<16>
-auto const key64     = xstd::hash<>().digest(42);                     // std::uint64_t everywhere
+auto const key64     = xstd::hasher<>().digest(42);                     // std::uint64_t everywhere
 ```
 
 A digest persists across runs, builds, and every little-endian target, for keys of
@@ -267,8 +285,9 @@ See [the design notes](doc/design.md) for rationale, and
 | `<xstd/misc/utility/to_underlying.hpp>` | `to_underlying` | `std::to_underlying`, plus an `std::integral_constant` overload | [p1682r1](https://wg21.link/p1682r1) (`std::to_underlying`) |
 | `<xstd/misc/concepts/hash_algorithm.hpp>` | `hash_algorithm` | A Boost.Hash2 hash algorithm, to its documented requirements | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) |
 | `<xstd/misc/type_traits/hash_algorithm_is_avalanching.hpp>` | `hash_algorithm_is_avalanching` | Whether a hash algorithm avalanches: true for every Boost.Hash2 algorithm but FNV-1a, and specializable for one's own | [Boost.Unordered](https://www.boost.org/doc/libs/release/libs/unordered/) (`hash_is_avalanching`) |
-| `<xstd/misc/functional/hash.hpp>` | `hash` | A hasher running a seeded Boost.Hash2 algorithm, xxHash64 by default, for an unordered container, and a key's digest at the algorithm's own width | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) |
-| `<xstd/misc/functional.hpp>` | `hash` | The one above, through the directory's umbrella | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) |
+| `<xstd/misc/functional/hasher.hpp>` | `hasher` | A hasher running a seeded Boost.Hash2 algorithm, xxHash64 by default, for an unordered container, and a key's digest at the algorithm's own width | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) |
+| `<xstd/misc/functional/hash.hpp>` | `hash` | A `hasher` at one key type, as `std::hash<T>` is, transparent over `std::basic_string` | [N3980](https://wg21.link/n3980) |
+| `<xstd/misc/functional.hpp>` | `hash` <br> `hasher` | The two above, through one include | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) |
 
 Each directory has an umbrella exporting what is under it -- `<xstd/misc/concepts.hpp>`,
 `<xstd/misc/functional.hpp>`, `<xstd/misc/type_traits.hpp>`, `<xstd/misc/utility.hpp>` -- and
