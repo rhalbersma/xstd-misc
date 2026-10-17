@@ -22,8 +22,11 @@ class hash
 {
 public:
         using hasher<H>::hasher;
-        using typename hasher<H>::digest_type;
-        using typename hasher<H>::is_avalanching;
+        // Declared rather than using-declared: MSVC then denies access to their members through the private base.
+        // NOLINTNEXTLINE(readability-redundant-typename): clang-cl's -Wc++20-compat rejects the bare dependent name.
+        using digest_type = typename hasher<H>::digest_type;
+        // NOLINTNEXTLINE(readability-redundant-typename): clang-cl's -Wc++20-compat rejects the bare dependent name.
+        using is_avalanching = typename hasher<H>::is_avalanching;
 
         [[nodiscard]] constexpr auto operator()(T const& v) const
                 -> std::size_t
@@ -45,8 +48,11 @@ class hash<std::basic_string<CharT, Traits, Allocator>, H>
 {
 public:
         using hasher<H>::hasher;
-        using typename hasher<H>::digest_type;
-        using typename hasher<H>::is_avalanching;
+        // Declared rather than using-declared: MSVC then denies access to their members through the private base.
+        // NOLINTNEXTLINE(readability-redundant-typename): clang-cl's -Wc++20-compat rejects the bare dependent name.
+        using digest_type = typename hasher<H>::digest_type;
+        // NOLINTNEXTLINE(readability-redundant-typename): clang-cl's -Wc++20-compat rejects the bare dependent name.
+        using is_avalanching = typename hasher<H>::is_avalanching;
         using is_transparent = void;
 
         [[nodiscard]] constexpr auto operator()(std::basic_string_view<CharT, Traits> v) const

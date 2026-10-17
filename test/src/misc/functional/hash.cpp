@@ -42,6 +42,7 @@ BOOST_AUTO_TEST_SUITE(Hash)
 BOOST_AUTO_TEST_CASE(TheDefaultAlgorithmIsXxhash64)
 {
         XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<int>, xstd::hash<int, boost::hash2::xxhash_64>>));
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<std::string>::digest_type, std::uint64_t>));
 }
 
 // No integer converts to a seed by accident.
