@@ -77,7 +77,7 @@ concepts recognize proxies, in two strengths:
 |---|---|
 | `proxy_semi_reference<R, V>` | a class `R` that converts implicitly to the `V` the caller names |
 | `proxy_semi_iterator<I>` | an iterator whose reference is a semi-reference for its value type |
-| `proxy_reference<R>` | a proxy closed under `&` and `*`: its address is a semi-iterator dereferencing back to it, which names its value |
+| `proxy_reference<R>` | a proxy closed under `&` and `*`, and written through when `const`: its address is a semi-iterator dereferencing back to it, which names its value |
 | `proxy_iterator<I>` | a semi-iterator whose reference is a proxy reference |
 
 `to_underlying` reads through a proxy reference to an enumeration:
@@ -90,8 +90,8 @@ concepts recognize proxies, in two strengths:
 static_assert(xstd::proxy_semi_iterator<std::vector<bool>::iterator>);
 static_assert(xstd::proxy_semi_reference<std::vector<bool>::reference, bool>);
 
-for (auto key : set_of_enums) {
-    auto n = xstd::to_underlying(key); // key is the set's proxy, not the enum
+for (auto element : packed_enums) {
+    auto n = xstd::to_underlying(element); // element is the container's proxy, not the enum
 }
 ```
 
@@ -99,7 +99,14 @@ Every library's `std::vector<bool>::reference` and `std::bitset<N>::reference` i
 a semi-reference for `bool`, and `std::vector<bool>`'s iterator and `zip_view`'s
 are semi-iterators. Whether the bit references are also proxy references depends
 on the library: libc++ 22 gives them an `&` that leads to an iterator, and
-libstdc++ gives them none.
+libstdc++ gives them none. The concepts otherwise ask what the standard asks:
+a semi-iterator is `std::indirectly_readable`, and a proxy reference's address is
+also `std::indirectly_writable`, which [P2321](https://wg21.link/p2321) makes
+`std::vector<bool>`'s iterator by assignment through a `const` proxy. A read-only
+proxy, such as libc++'s `const_reference` or a set's element, is therefore a
+semi-reference only: convert it first, as
+`xstd::to_underlying(static_cast<E>(key))`. The round trip through `&` is the one
+clause the standard has no counterpart for.
 
 A concept cannot name itself, even through another, so the four are layered one
 way, each over those before it. That a proxy reference's address is a proxy

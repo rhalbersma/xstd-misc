@@ -9,7 +9,9 @@
 #include <boost/test/unit_test.hpp>            // BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_AUTO_TEST_CASE
 #include <array>                               // array
 #include <concepts>                            // same_as
+#include <cstddef>                             // size_t
 #include <type_traits>                         // integral_constant, underlying_type_t
+#include <utility>                             // declval
 
 BOOST_AUTO_TEST_SUITE(Misc)
 BOOST_AUTO_TEST_SUITE(Utility)
@@ -60,15 +62,19 @@ BOOST_AUTO_TEST_CASE(IsConstrainedToEnumerations)
         XSTD_CONSTEXPR_CHECK(not has_to_underlying<double>);
 }
 
-constexpr auto shades = std::array{test::shade::light, test::shade::dark};
+// The underlying value at idx of a range of two shades, read through the proxy its iterator yields.
+constexpr auto underlying_at = [](std::size_t idx) -> std::underlying_type_t<test::shade> {
+        auto shades = std::array{test::shade::light, test::shade::dark};
+        return xstd::to_underlying(*test::element_iterator<test::shade>(shades, idx));
+};
 
 // Through a proxy closed under & and *, the value is the enumerator the proxy converts to.
 BOOST_AUTO_TEST_CASE(ReadsThroughAProxyForAnEnumeration)
 {
-        static_assert(std::same_as<decltype(xstd::to_underlying(*test::element_iterator<test::shade>(shades, 0))), std::underlying_type_t<test::shade>>);
-        static_assert(noexcept(xstd::to_underlying(*test::element_iterator<test::shade>(shades, 0))));
-        XSTD_CONSTEXPR_CHECK_EQUAL(xstd::to_underlying(*test::element_iterator<test::shade>(shades, 0)), static_cast<unsigned char>(1));
-        XSTD_CONSTEXPR_CHECK_EQUAL(xstd::to_underlying(*++test::element_iterator<test::shade>(shades, 0)), static_cast<unsigned char>(2));
+        static_assert(std::same_as<decltype(xstd::to_underlying(std::declval<test::element_reference<test::shade>>())), std::underlying_type_t<test::shade>>);
+        static_assert(noexcept(xstd::to_underlying(std::declval<test::element_reference<test::shade>>())));
+        XSTD_CONSTEXPR_CHECK_EQUAL(underlying_at(0), static_cast<unsigned char>(1));
+        XSTD_CONSTEXPR_CHECK_EQUAL(underlying_at(1), static_cast<unsigned char>(2));
 }
 
 // A proxy for a non-enumeration, and a type that converts without the round trip, have no underlying value to give.
