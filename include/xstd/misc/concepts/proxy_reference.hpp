@@ -7,17 +7,17 @@
 #define XSTD_MISC_CONCEPTS_PROXY_REFERENCE_HPP
 
 #include <xstd/misc/concepts/proxy_semi_iterator.hpp> // proxy_semi_iterator
-#include <concepts>                                   // same_as
-#include <iterator>                                   // iter_reference_t
+#include <concepts>                                   // assignable_from, same_as
+#include <iterator>                                   // iter_reference_t, iter_value_t
 #include <utility>                                    // declval
 
 namespace xstd {
 
-// Closed under & and *: its address is a semi-iterator dereferencing back to it, which names the value it stands for.
+// Its address is a semi-iterator back to it, naming its value; P2321's const assignment turns read-only proxies away.
 template<class R>
 concept proxy_reference = requires (R& ref) {
         { &ref } -> proxy_semi_iterator;
-} and std::same_as<std::iter_reference_t<decltype(&std::declval<R&>())>, R>;
+} and std::same_as<std::iter_reference_t<decltype(&std::declval<R&>())>, R> and std::assignable_from<R const&, std::iter_value_t<decltype(&std::declval<R&>())>>;
 
 } // namespace xstd
 

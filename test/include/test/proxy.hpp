@@ -23,11 +23,11 @@ class element_iterator;
 template<class T>
 class element_reference
 {
-        std::span<T const> m_range;
+        std::span<T> m_range;
         std::size_t m_idx;
 
 public:
-        [[nodiscard]] constexpr element_reference(std::span<T const> range, std::size_t idx) noexcept
+        [[nodiscard]] constexpr element_reference(std::span<T> range, std::size_t idx) noexcept
                 : m_range(range)
                 , m_idx(idx)
         {}
@@ -35,6 +35,13 @@ public:
         [[nodiscard]] constexpr explicit(false) operator T() const noexcept // NOLINT(misc-explicit-constructor)
         {
                 return m_range[m_idx];
+        }
+
+        constexpr auto operator=(T value) const noexcept // NOLINT(misc-unconventional-assign-operator)
+                -> element_reference const&
+        {
+                m_range[m_idx] = value;
+                return *this;
         }
 
         [[nodiscard]] constexpr auto operator&() const noexcept
@@ -47,7 +54,7 @@ public:
 template<class T>
 class element_iterator
 {
-        std::span<T const> m_range;
+        std::span<T> m_range;
         std::size_t m_idx{};
 
 public:
@@ -56,7 +63,7 @@ public:
 
         [[nodiscard]] element_iterator() = default;
 
-        [[nodiscard]] constexpr element_iterator(std::span<T const> range, std::size_t idx) noexcept
+        [[nodiscard]] constexpr element_iterator(std::span<T> range, std::size_t idx) noexcept
                 : m_range(range)
                 , m_idx(idx)
         {}
