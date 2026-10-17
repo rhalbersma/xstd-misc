@@ -252,9 +252,10 @@ by a few nanoseconds, and slower once keys reach a few words; xxHash consumes th
 worst case is a fixed overhead on a key of a few bytes. There is no second alias for short
 keys: a choice between a fast default and a safe one is the misuse this rules out, and a
 caller who wants FNV-1a names `boost::hash2::fnv1a_64`. One algorithm on every platform
-also makes the value the same on 32- and 64-bit targets, `get_integral_result` folding it
-into a narrower `size_t`; the cost is that a 32-bit CPU emulates xxHash's 64-bit
-multiplies. The default is not SipHash either: a default-constructed hasher is unseeded, and keyed
+also makes the value one function of the key at each width of `size_t`: the 64-bit digest
+itself where `size_t` holds it, and `get_integral_result`'s multiply-high fold of that digest
+where it is 32 bits, which the tests pin with literal values. The cost is that a 32-bit CPU
+emulates xxHash's 64-bit multiplies. The default is not SipHash either: a default-constructed hasher is unseeded, and keyed
 resistance without a key buys nothing. Hash2's own advice for keys an adversary chooses is
 `siphash_64` with a seed drawn per container, which is a choice the caller makes and
 spells out.
