@@ -117,8 +117,12 @@ BOOST_AUTO_TEST_CASE(TaggedIdsShareABucketUnderFnv1aWhereATableMasksTheirHash)
         BOOST_CHECK(not std::has_single_bit(bucket_count));
 #endif
         // A prime count, as libstdc++ rounds up to, or the multiply-high fold to a 32-bit size_t mixes the tag back in.
-        if (std::has_single_bit(bucket_count) and std::numeric_limits<std::size_t>::digits >= 64) {
-                BOOST_CHECK_EQUAL(fnv1a_buckets, 1U);
+        if constexpr (std::numeric_limits<std::size_t>::digits >= 64) {
+                if (std::has_single_bit(bucket_count)) {
+                        BOOST_CHECK_EQUAL(fnv1a_buckets, 1U);
+                } else {
+                        BOOST_CHECK_GT(fnv1a_buckets, 1U);
+                }
         } else {
                 BOOST_CHECK_GT(fnv1a_buckets, 1U);
         }
