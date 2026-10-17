@@ -52,9 +52,14 @@ suite() {
                 && ctest --test-dir "${dir}" --output-on-failure --parallel "${jobs}"
 }
 
-# A suite leg on another standard library, a trunk one or another target links a Boost.Test built for it.
-boost_test_for() {
-        "${root}/tools/boost-test.sh" "${out}/boost-test-$1" "$2" $3
+# A suite leg on another standard library, a trunk one or another target links a Boost.Test built for it by the same
+# compiler and flags, and fails if that build does rather than fall back to the installed one: <as suite>
+suite_with_boost_test() {
+        local leg="$1" cxx="$2" flags="$3" type="$4" boost_test
+        shift 4
+        # shellcheck disable=SC2086 # the flags are a word list
+        boost_test="$("${root}/tools/boost-test.sh" "${out}/boost-test-${leg}" "${cxx}" ${flags})" || return 1
+        suite "${leg}" "${cxx}" "${flags}" "${type}" "$@" "${boost_test}"
 }
 
 # The clang-tidy job's passes over the compile database, and its check of each public header on its own. Every rung
@@ -100,15 +105,11 @@ run_leg() {
                 gcc-1[56]) suite "$1" "g++-${1#gcc-}" "" "${build_type}" ;;
                 clang-2[23]) suite "$1" "clang++-${1#clang-}" "$(gcc_for_clang "${1#clang-}")" "${build_type}" ;;
                 # The trunk libstdc++ is newer than the GCC 15 that built the installed Boost.Test.
-                gcc-17) suite "$1" g++-17 "" "${build_type}" "$(boost_test_for "$1" g++-17)" ;;
-                clang-24)
-                        suite "$1" clang++-24 "$(gcc_for_clang 24)" "${build_type}" \
-                                "$(boost_test_for "$1" clang++-24 "$(gcc_for_clang 24)")" ;;
-                libcxx-22)
-                        suite "$1" clang++-22 "-stdlib=libc++" "${build_type}" -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++ \
-                                "$(boost_test_for "$1" clang++-22 -stdlib=libc++)" ;;
+                gcc-17) suite_with_boost_test "$1" g++-17 "" "${build_type}" ;;
+                clang-24) suite_with_boost_test "$1" clang++-24 "$(gcc_for_clang 24)" "${build_type}" ;;
+                libcxx-22) suite_with_boost_test "$1" clang++-22 "-stdlib=libc++" "${build_type}" -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++ ;;
                 # One rung in Debug, as the i686 job runs it.
-                i686) suite "$1" g++-15 "-m32" Debug "$(boost_test_for "$1" g++-15 -m32)" ;;
+                i686) suite_with_boost_test "$1" g++-15 "-m32" Debug ;;
                 coverage) coverage ;;
                 tidy-2[234]) tidy "${1#tidy-}" ;;
                 format) format ;;
