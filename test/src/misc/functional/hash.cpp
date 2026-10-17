@@ -335,8 +335,9 @@ BOOST_AUTO_TEST_CASE(TaggedIdsSpreadUnderFnv1aWhereABoostUnorderedFlatSetMixesTh
 
         auto const hash = fnv1a();
         if constexpr (std::numeric_limits<std::size_t>::digits >= 64) {
+                auto const top_byte = [&](std::uint64_t id) -> std::size_t { return hash(id) >> ((sizeof(std::size_t) - 1U) * 8U); };
                 for (auto const id : tagged_ids) {
-                        BOOST_CHECK_EQUAL(hash(id) >> 56U, hash(tagged_ids[0]) >> 56U);
+                        BOOST_CHECK_EQUAL(top_byte(id), top_byte(tagged_ids[0]));
                 }
         }
         BOOST_CHECK(not boost::hash_is_avalanching<fnv1a>::value);
