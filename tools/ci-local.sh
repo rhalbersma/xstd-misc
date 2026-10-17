@@ -16,8 +16,8 @@
 # CI_LOCAL_BUILD_TYPE picks the suite legs' build type, Debug by default; CI runs both Debug and Release.
 #
 # Not here, having no Linux equivalent: MSVC, clang-cl, MinGW, Apple Clang and Emscripten. Nor the libc++ legs of the
-# two newer rungs, whose libc++ cannot be installed beside libc++ 22, nor the sanitizer, coverage, CodeQL, consumption
-# and actionlint jobs, whose own commands CONTRIBUTING.md gives.
+# two newer rungs, whose libc++ cannot be installed beside libc++ 22, nor the sanitizer, CodeQL, consumption and
+# actionlint jobs, whose own commands CONTRIBUTING.md gives.
 
 set -uo pipefail
 
@@ -30,7 +30,7 @@ cmake="${HOME:-/root}/.local/bin/cmake"
 [ -x "${cmake}" ] || cmake="cmake"
 readonly cmake
 
-readonly all_legs=(gcc-15 gcc-16 gcc-17 clang-22 clang-23 clang-24 libcxx-22 i686 tidy-22 tidy-23 tidy-24 format)
+readonly all_legs=(gcc-15 gcc-16 gcc-17 clang-22 clang-23 clang-24 libcxx-22 i686 coverage tidy-22 tidy-23 tidy-24 format)
 
 # Each clang uses the libstdc++ of its own rung, as on the runners, rather than the newest GCC installed.
 gcc_for_clang() {
@@ -74,6 +74,22 @@ tidy() {
         return "${status}"
 }
 
+# The coverage job: the suite on GCC 15 at -O0 with --coverage, then gcovr's gate at the bars coverage.yml sets.
+coverage() {
+        local dir="${out}/coverage"
+        [ -d "${dir}" ] && find "${dir}" -name '*.gcda' -delete
+        suite coverage g++-15 "--coverage -O0" Debug -DCMAKE_EXE_LINKER_FLAGS=--coverage || return 1
+        (cd "${root}" && "${HOME:-/root}/.local/bin/gcovr" --root . --gcov-executable gcov-15 --merge-lines \
+                --exclude 'test/.*' --exclude 'build/.*' \
+                --exclude-lines-by-pattern '^\s*(assert|[A-Z][A-Z0-9_]*_ASSERT)\(' \
+                --exclude-lines-by-pattern '=\s*default;' \
+                --exclude-lines-by-pattern '\s*\}\s*$' \
+                --exclude-branches-by-pattern '^\s*(assert|[A-Z][A-Z0-9_]*_ASSERT)\(' \
+                --exclude-branches-by-pattern '^\s*.*=\s*default;' \
+                --exclude-throw-branches --exclude-unreachable-branches \
+                --print-summary --fail-under-line 100 --fail-under-branch 100 "${dir}")
+}
+
 # The format gate: the stable rung's clang-format over include/ and test/, reporting rather than rewriting.
 format() {
         find "${root}/include" "${root}/test" -regex '.*\.\(hpp\|cpp\)' -print0 | xargs -0 clang-format-22 --dry-run --Werror
@@ -93,6 +109,7 @@ run_leg() {
                                 "$(boost_test_for "$1" clang++-22 -stdlib=libc++)" ;;
                 # One rung in Debug, as the i686 job runs it.
                 i686) suite "$1" g++-15 "-m32" Debug "$(boost_test_for "$1" g++-15 -m32)" ;;
+                coverage) coverage ;;
                 tidy-2[234]) tidy "${1#tidy-}" ;;
                 format) format ;;
                 *) echo "no leg named $1; tools/ci-local.sh --list names them" >&2; return 2 ;;

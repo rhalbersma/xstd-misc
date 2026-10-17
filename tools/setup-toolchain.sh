@@ -13,12 +13,13 @@
 #
 #   GCC 15, 16 and the trunk snapshot as g++-17; clang 22, 23 and trunk as clang++-24, with clang-tidy for each;
 #   clang-format 22, the format gate's one rung; libc++ 22; GCC 15's 32-bit multilib for the i686 leg; CMake from
-#   PyPI; and Boost 1.92's Hash2, Test and Unordered, vcpkg.json's dependencies, built from Boost's release tarball
-#   by GCC 15 into /usr/local.
+#   PyPI, gcovr from PyPI at the coverage job's pin; and Boost 1.92's Hash2, Test and Unordered, vcpkg.json's
+#   dependencies, built from Boost's release tarball by GCC 15 into /usr/local.
 #
 # A compiler on libc++, on the trunk snapshot's libstdc++ or on a 32-bit target links a Boost.Test of its own, which
 # boost-test.sh beside this script builds; CI gets one from vcpkg, which builds Boost with the compiler under test.
-# The unit tests, clang-tidy and the format gate then all run locally, through ci-local.sh beside this script.
+# The unit tests, clang-tidy, the coverage gate and the format gate then all run locally, through ci-local.sh beside
+# this script.
 
 set -euo pipefail
 
@@ -113,6 +114,12 @@ pip install --quiet --user --break-system-packages --require-hashes -r "${CMAKE_
         || pip3 install --quiet --user --require-hashes -r "${CMAKE_REQUIREMENTS}"
 readonly CMAKE="${HOME:-/root}/.local/bin/cmake"
 
+# gcovr for the coverage gate, at the version the coverage job pins, from PyPI the same way and into the same directory.
+GCOVR_REQUIREMENTS="$(dirname "${BASH_SOURCE[0]}")/gcovr-requirements.txt"
+readonly GCOVR_REQUIREMENTS
+pip install --quiet --user --break-system-packages --require-hashes -r "${GCOVR_REQUIREMENTS}" \
+        || pip3 install --quiet --user --require-hashes -r "${GCOVR_REQUIREMENTS}"
+
 # Boost from its CMake release tarball, which installs a CMake package for every library, the header-only ones the
 # project finds by name included. Only vcpkg.json's libraries are built, by GCC 15, and a rerun skips a done install.
 if [ ! -f "${BOOST_PREFIX}/lib/cmake/Boost-${BOOST_VERSION}/BoostConfig.cmake" ]; then
@@ -135,6 +142,7 @@ fi
 "clang++-${CLANG_VERSION}" --version | head -1 || true
 "clang-format-${CLANG_VERSION}" --version || true
 "${CMAKE}" --version | head -1 || true
+"${HOME:-/root}/.local/bin/gcovr" --version | head -1 || true
 echo "Boost ${BOOST_VERSION} (${BOOST_LIBRARIES}) in ${BOOST_PREFIX}"
 for compiler in "g++-${GCC_QUALIFICATION_VERSION}" "g++-${GCC_TRUNK_VERSION}" "clang++-${CLANG_QUALIFICATION_VERSION}" "clang++-${CLANG_TRUNK_VERSION}"; do
         "${compiler}" --version | head -1 || true

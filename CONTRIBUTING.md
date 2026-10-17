@@ -38,7 +38,7 @@ The library itself needs one dependency, the header-only [Boost.Hash2](https://w
 | [CMake](https://cmake.org/) 3.30+ | configuring and building | `cmake_minimum_required` in [`CMakeLists.txt`](CMakeLists.txt); CTest ships with it. Noble's is 3.28; `setup-toolchain.sh` installs the version the workflows pin, from [`tools/cmake-requirements.txt`](tools/cmake-requirements.txt) |
 | [Boost.Test](https://www.boost.org/doc/libs/release/libs/test/) 1.70+ | the unit tests under `test/src/` | The floor the CMake project asks for, shared with the other xstd repositories; declared in the checked-in [`vcpkg.json`](vcpkg.json) manifest, the `*-vcpkg` presets pick it up from a `VCPKG_ROOT`-configured vcpkg, or install it with your system package manager |
 | [Boost.Unordered](https://www.boost.org/doc/libs/release/libs/unordered/) | the tests running `xstd::hasher` in an open-addressing container | Found quietly: without it those tests compile to a placeholder, so CI installs it through the [`vcpkg.json`](vcpkg.json) `test` feature |
-| [gcovr](https://gcovr.com/) | reproducing the coverage gate | Only for the workflow below; `pip install gcovr` |
+| [gcovr](https://gcovr.com/) | reproducing the coverage gate | `setup-toolchain.sh` installs the coverage job's version, hash-pinned in [`tools/gcovr-requirements.txt`](tools/gcovr-requirements.txt) |
 | `clang-tidy` and `run-clang-tidy` | reproducing the clang-tidy gate | Only for the workflow below |
 | `clang-format` | the formatting gate | Run `clang-format -i` on changed files before pushing |
 
@@ -54,7 +54,8 @@ an Ubuntu box gets, every rung of [README.md](README.md)'s matrix and the Boost 
 - GCC 15 and 16 from the Ubuntu toolchain PPA, and the GCC trunk snapshot the development rung uses, as `g++-17`;
 - clang 22, 23 and trunk, as `clang++-24`, each with its clang-tidy, and clang-format 22 and libc++ 22, from apt.llvm.org;
 - GCC 15's 32-bit multilib, for the i686 leg;
-- the same clang-format 22 as an unversioned `clang-format`, and CMake, from PyPI, pinned by hash;
+- the same clang-format 22 as an unversioned `clang-format`, CMake and the coverage job's gcovr, from PyPI, pinned by
+  hash;
 - Boost 1.92's Hash2, Test and Unordered, the libraries [`vcpkg.json`](vcpkg.json) asks for, built by GCC 15 from
   Boost's CMake release tarball, checked against the SHA-256 Boost publishes, into `/usr/local`.
 
@@ -130,6 +131,8 @@ Before a push, [`tools/ci-local.sh`](tools/ci-local.sh) runs the GitHub Actions 
 
 - the suite on GCC 15, 16 and 17-SVN, and on clang 22, 23 and 24-SVN, each clang on its own rung's libstdc++;
 - the libc++ 22 leg, and the i686 leg, at `-m32` in Debug;
+- the coverage gate, the suite on GCC 15 with `--coverage`, held to 100% of lines and branches by the coverage job's
+  `gcovr` command;
 - clang-tidy 22, 23 and 24-SVN, each on GCC 15's libstdc++ as the clang-tidy job compiles, with that job's passes:
   the generated per-header units, each public header on its own, and the test sources;
 - the format gate.
@@ -144,8 +147,8 @@ tools/ci-local.sh gcc-17 tidy-24   # the ones a change is likeliest to break
 ```
 
 MSVC, clang-cl, MinGW, Apple Clang and Emscripten have no Linux equivalent, and the libc++ 23 and 24-SVN legs need a
-libc++ that cannot be installed beside 22. The sanitizer, coverage, CodeQL, consumption and actionlint jobs are not in
-it either; the coverage and clang-tidy commands are in the sections below.
+libc++ that cannot be installed beside 22. The sanitizer, CodeQL, consumption and actionlint jobs are not in it
+either; the coverage and clang-tidy commands are also given on their own in the sections below.
 
 ### Reproducing the coverage gate
 
