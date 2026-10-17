@@ -25,7 +25,7 @@ auto digest_of(std::array<unsigned char, N> const& bytes)
         return d;
 }
 
-constexpr auto bytes = std::array<unsigned char, 4>{0x00, 0x01, 0xab, 0xff};
+constexpr auto four_bytes = std::array<unsigned char, 4>{0x00, 0x01, 0xab, 0xff};
 
 } // namespace
 
@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_SUITE(Digest)
 // A leading zero stays, so a printed digest reads back as the bytes stored, as boost::hash2::to_string prints them.
 BOOST_AUTO_TEST_CASE(PrintsLowercaseHexInByteOrder)
 {
-        auto const d = digest_of(bytes);
+        auto const d = digest_of(four_bytes);
 
         BOOST_CHECK_EQUAL(std::format("{}", d), "0001abff");
         BOOST_CHECK_EQUAL(std::format("{:x}", d), boost::hash2::to_string(d));
@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(PrintsLowercaseHexInByteOrder)
 
 BOOST_AUTO_TEST_CASE(PrintsUppercaseHexWithX)
 {
-        BOOST_CHECK_EQUAL(std::format("{:X}", digest_of(bytes)), "0001ABFF");
+        BOOST_CHECK_EQUAL(std::format("{:X}", digest_of(four_bytes)), "0001ABFF");
 }
 
 // Two hex digits per byte, at the width of whichever algorithm produced it.
@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(PrintsEveryByte)
 // A decimal or width specification is the habit from integers, and a digest is no integer.
 BOOST_AUTO_TEST_CASE(RejectsAnyOtherSpecification)
 {
-        auto const d = digest_of(bytes);
+        auto const d = digest_of(four_bytes);
 
         BOOST_CHECK_THROW(static_cast<void>(std::vformat("{:d}", std::make_format_args(d))), std::format_error);
         BOOST_CHECK_THROW(static_cast<void>(std::vformat("{:08x}", std::make_format_args(d))), std::format_error);
