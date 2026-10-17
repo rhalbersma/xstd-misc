@@ -98,13 +98,14 @@ Every library's `std::vector<bool>::reference` and `std::bitset<N>::reference` i
 a semi-reference for `bool`, and `std::vector<bool>`'s iterator and `zip_view`'s
 are semi-iterators. Whether the bit references are also proxy references depends
 on the library: libc++ 22 gives them an `&` that leads to an iterator, and
-libstdc++ gives them none. A proxy reference is also written through as
-[P2321](https://wg21.link/p2321) has `std::vector<bool>::reference` written,
-by assignment to a `const` proxy, so a read-only proxy, such as libc++'s
-`const_reference` or a set's element, is a semi-reference only: convert it
-first, as `xstd::to_underlying(static_cast<E>(key))`. The common reference
-`std::ranges` asks of a proxy and its value needs no clause of its own: the
-address being a semi-iterator already requires it.
+libstdc++ gives them none. The concepts otherwise ask what the standard asks:
+a semi-iterator is `std::indirectly_readable`, and a proxy reference's address is
+also `std::indirectly_writable`, which [P2321](https://wg21.link/p2321) makes
+`std::vector<bool>`'s iterator by assignment through a `const` proxy. A read-only
+proxy, such as libc++'s `const_reference` or a set's element, is therefore a
+semi-reference only: convert it first, as
+`xstd::to_underlying(static_cast<E>(key))`. The round trip through `&` is the one
+clause the standard has no counterpart for.
 
 A concept cannot name itself, even through another, so the four are layered one
 way, each over those before it. That a proxy reference's address is a proxy
