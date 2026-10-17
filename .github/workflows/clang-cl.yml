@@ -13,20 +13,17 @@ concurrency:
   cancel-in-progress: true
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
     branches: [ main ]
+  # canary.yml dispatches this weekly on main, the run its README badge shows.
   workflow_dispatch:
-  # canary.yml calls this weekly, so the stub stays callable itself.
-  workflow_call:
 
 jobs:
   # The same Visual Studio ladder as msvc.yml, with clang-cl in front of the
   # MSVC STL instead of cl. Its own cache prefix, since the two callers build
   # the dependencies with different compilers.
   clang_cl:
-    uses: rhalbersma/cpp-ci/.github/workflows/visual-studio.yml@170191bd9ab421d871b53fb67682376a2695d8a9 # v0.13.0
+    uses: rhalbersma/cpp-ci/.github/workflows/visual-studio.yml@0e9948a4bd9f844797ce5b1c9b4c915a94cd665a # main after rhalbersma/cpp-ci#68, whose install-gcc fails its step when the PPA did not serve the compiler
     with:
       toolset: ClangCL,host=x64
       preview_toolset_prefix: "ClangCL,"

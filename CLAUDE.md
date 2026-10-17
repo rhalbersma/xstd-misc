@@ -165,10 +165,10 @@ change is meant to be comment-only, and that every marker still sits on the line
 
 ## Pull requests and CI
 
-A push to a pull request runs the whole matrix, dozens of jobs, and a merge into `main` runs it again. Pull
-requests in this repository whose CI runs side by side finish no sooner for it: each waits longer for its first
-result, and every merge makes the others' runs stale. CI is therefore a queue, one pull request long, in each
-repository.
+A push to a pull request runs the whole matrix, dozens of jobs; a merge into `main` does not, as the weekly canary
+runs it there. Pull requests in this repository whose CI runs side by side finish no sooner for it: each waits
+longer for its first result, and every merge makes the others' runs stale. CI is therefore a queue, one pull request
+long, in each repository.
 
 - **One run in flight in this repository.** Before opening a pull request, or pushing to one, check that no other
   pull request here has a run queued or in progress. If one has, finish the change locally and push only the
@@ -183,8 +183,8 @@ repository.
 - **Push once per round.** Reproduce a failure and fix it locally, on the stable rung as above, and push when
   everything passes. A push cancels the run before it, but not the jobs that already took their slots.
 - **Merge on green, then start the next.** A green, conflict-free pull request is squash-merged at once. The next
-  one opens when the merge's run on `main` is green, so it never starts from a broken `main`. Runs on a pull
-  request that will be updated before it merges are cancelled rather than left to finish.
+  one opens once the merge has landed. Runs on a pull request that will be updated before it merges are cancelled
+  rather than left to finish.
 
 ## `[[nodiscard]]`
 
