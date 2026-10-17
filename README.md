@@ -271,15 +271,13 @@ exports it, and an adapted library is asked for by name.
 
 
 - A conforming [C++20](https://wg21.link/N4861) compiler
-- CMake 3.28 or later when using the supplied CMake project
+- CMake 3.30 or later when using the supplied CMake project
 - No third-party runtime or library dependencies, except for the headers under `ext/`:
   each header under `xstd/misc/ext/boost/hash2/`, and its umbrella `<xstd/misc/ext/boost/hash2.hpp>`,
   needs [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/), which the `xstd::misc`
   target does not link, so a consumer including one links `Boost::hash2`
 
-Earliest toolchains known to compile the library: GCC 10, Clang 11, MSVC 19.29
-(VS 2019 16.11). CI only covers the versions in the table below; the floors were
-verified by hand.
+CI covers the toolchains in the table below, and no older ones.
 
 ## Installation
 

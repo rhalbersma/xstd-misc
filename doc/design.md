@@ -101,13 +101,12 @@ comparisons over a member that has nothing to compare.
 
 `conditional_data_member_t` is spelled with `std::conditional_t` rather than as
 `conditional_data_member<...>::type`. The latter is a dependent `::type`, and
-omitting the `typename` before it is [P0634R3](https://wg21.link/P0634R3), which
-Clang did not implement until 16 -- so that spelling would set the library's
-Clang floor at 16 though nothing else in it needs more than 11. There is no
-feature-test macro for P0634R3 to branch on. Writing the `typename` instead
-would work everywhere, but `readability-redundant-typename` then flags it while
-the C++20-compat warning flags its absence; `conditional_t` is the spelling
-neither tool has an opinion about. The two cannot drift: `conditional_t` is
+omitting the `typename` before it relies on [P0634R3](https://wg21.link/P0634R3),
+which Clang implemented only in 16, with no feature-test macro to branch on.
+Writing the `typename` instead works everywhere, but
+`readability-redundant-typename` then flags it while the C++20-compat warning
+flags its absence; `conditional_t` is the spelling neither tool has an opinion
+about. The two cannot drift: `conditional_t` is
 specified as `typename conditional<...>::type`.
 
 `XSTD_NO_UNIQUE_ADDRESS` is a macro rather than a portable attribute because
@@ -322,7 +321,7 @@ linter, and CMake carries no usage requirement that could propagate one.
 ## Requirements and evolution
 
 xstd-misc requires a conforming [C++20](https://wg21.link/N4861) compiler, and the
-CMake project CMake 3.28 or later, exporting the header-only `xstd::misc` target.
+CMake project CMake 3.30 or later, exporting the header-only `xstd::misc` target.
 Consumers build neither the tests nor their dependencies. New facilities should
 stay small, portable and motivated by current practice; one that enters the
 standard library can be retired, and the baseline can advance once a later
