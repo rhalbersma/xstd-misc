@@ -6,8 +6,8 @@
 #include <xstd/misc/concepts/proxy_iterator.hpp> // proxy_iterator
 #include <test/proxy.hpp>                        // element_iterator, element_reference, shade, value_iterator
 #include <boost/test/unit_test.hpp>              // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK
+#include <concepts>                              // assignable_from
 #include <ranges>                                // iterator_t, ref_view, zip_view
-#include <type_traits>                           // is_class_v
 #include <utility>                               // declval
 #include <vector>                                // vector
 #include <version>                               // IWYU pragma: keep; __cpp_lib_ranges_zip
@@ -22,6 +22,10 @@ using ints = std::ranges::ref_view<std::vector<int>>;
 template<class R>
 constexpr bool declares_address_of = requires (R& ref) { ref.operator&(); };
 
+// Whether a proxy assigns through when const, which P2321 asks of vector<bool>'s reference.
+template<class R>
+constexpr bool writes_through_const = std::assignable_from<R const&, bool>;
+
 // What it yields is a proxy reference, whose address is again such an iterator.
 BOOST_AUTO_TEST_CASE(ItsReferenceIsAProxyReference)
 {
@@ -29,9 +33,9 @@ BOOST_AUTO_TEST_CASE(ItsReferenceIsAProxyReference)
         static_assert(xstd::proxy_iterator<test::element_iterator<bool>>);
         static_assert(xstd::proxy_iterator<decltype(&std::declval<test::element_reference<test::shade>&>())>);
 
-        // vector<bool>'s iterators are, exactly where their library gives the reference an operator&.
-        static_assert(xstd::proxy_iterator<std::vector<bool>::iterator> == declares_address_of<std::vector<bool>::reference>);
-        static_assert(xstd::proxy_iterator<std::vector<bool>::const_iterator> == std::is_class_v<std::vector<bool>::const_reference>);
+        // vector<bool>'s iterator is where its reference has an operator& and writes through, its const_iterator never.
+        static_assert(xstd::proxy_iterator<std::vector<bool>::iterator> == (declares_address_of<std::vector<bool>::reference> and writes_through_const<std::vector<bool>::reference>));
+        static_assert(not xstd::proxy_iterator<std::vector<bool>::const_iterator>);
         BOOST_CHECK(true);
 }
 

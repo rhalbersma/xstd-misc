@@ -8,21 +8,29 @@
 #include <boost/test/unit_test.hpp>               // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK
 #include <atomic>                                 // atomic
 #include <bitset>                                 // bitset
-#include <type_traits>                            // integral_constant, is_class_v
+#include <concepts>                               // assignable_from, common_reference_with
+#include <type_traits>                            // integral_constant
 #include <vector>                                 // vector
 
 BOOST_AUTO_TEST_SUITE(Misc)
 BOOST_AUTO_TEST_SUITE(Concepts)
 BOOST_AUTO_TEST_SUITE(ProxyReference)
 
-// The address leads to an iterator and the iterator back to the proxy, whatever value it stands for.
-BOOST_AUTO_TEST_CASE(AProxyClosedUnderAddressAndDereferenceIsOne)
+// The address leads to an iterator and the iterator back to the proxy, which writes through to the value it stands for.
+BOOST_AUTO_TEST_CASE(AWritableProxyClosedUnderAddressAndDereferenceIsOne)
 {
         static_assert(xstd::proxy_reference<test::element_reference<test::shade>>);
         static_assert(xstd::proxy_reference<test::element_reference<bool>>);
 
-        // libc++'s const_reference round-trips through its const iterator; libstdc++'s is bool.
-        static_assert(xstd::proxy_reference<std::vector<bool>::const_reference> == std::is_class_v<std::vector<bool>::const_reference>);
+        // The common reference std::ranges asks of a proxy follows from its address being a semi-iterator.
+        static_assert(std::common_reference_with<test::element_reference<test::shade>&&, test::shade&>);
+        BOOST_CHECK(true);
+}
+
+// libc++'s const_reference round-trips through its const iterator, libstdc++'s is bool, and neither writes through.
+BOOST_AUTO_TEST_CASE(AReadOnlyBitReferenceIsNone)
+{
+        static_assert(not xstd::proxy_reference<std::vector<bool>::const_reference>);
         BOOST_CHECK(true);
 }
 
@@ -30,11 +38,15 @@ BOOST_AUTO_TEST_CASE(AProxyClosedUnderAddressAndDereferenceIsOne)
 template<class R>
 constexpr bool declares_address_of = requires (R& ref) { ref.operator&(); };
 
-// A bit reference is one wherever its library gives it an operator&, as libc++ 22 does and libstdc++ does not.
-BOOST_AUTO_TEST_CASE(ALibraryBitReferenceIsOneWhereItsAddressRoundTrips)
+// Whether a proxy assigns through when const, which P2321 asks of vector<bool>'s reference and not of bitset's.
+template<class R>
+constexpr bool writes_through_const = std::assignable_from<R const&, bool>;
+
+// A bit reference is one where its library gives it an operator&, as libc++ 22 does, and assignment through const.
+BOOST_AUTO_TEST_CASE(ALibraryBitReferenceIsOneWhereItsAddressRoundTripsAndItWritesThrough)
 {
-        static_assert(xstd::proxy_reference<std::vector<bool>::reference> == declares_address_of<std::vector<bool>::reference>);
-        static_assert(xstd::proxy_reference<std::bitset<8>::reference> == declares_address_of<std::bitset<8>::reference>);
+        static_assert(xstd::proxy_reference<std::vector<bool>::reference> == (declares_address_of<std::vector<bool>::reference> and writes_through_const<std::vector<bool>::reference>));
+        static_assert(xstd::proxy_reference<std::bitset<8>::reference> == (declares_address_of<std::bitset<8>::reference> and writes_through_const<std::bitset<8>::reference>));
         BOOST_CHECK(true);
 }
 
