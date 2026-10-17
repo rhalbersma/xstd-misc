@@ -255,7 +255,10 @@ hash again, which hide it, while MSVC's STL always masks a power-of-two count an
 one whenever it is asked for a power of two. The tests insert sixteen IDs differing only in a
 tag in their top four bits into a table asked for eight buckets: under a 64-bit FNV-1a all of
 them share one bucket where the table masks, and on a 32-bit target `get_integral_result`'s
-multiply-high fold to `std::size_t` spreads them again. That it hides on the most common
+multiply-high fold to `std::size_t` spreads them again. A `boost::unordered_flat_set` takes a
+group from a hash's high bits instead, and FNV-1a leaves those alike for the same IDs too: the
+last byte meets a single multiply, which carries its high bits only part of the way up. The
+table mixes FNV-1a's hash before taking the group, and no insertion then probes past its first. That it hides on the most common
 toolchain is what makes it easy to miss. Measured over 24-byte keys, FNV-1a has input/output bit pairs that never flip
 together, where xxHash is at the sampling noise. FNV-1a is faster on a key of about a word,
 by a few nanoseconds, and slower once keys reach a few words; xxHash consumes the input a word per lane with a constant finalization, so its
