@@ -32,22 +32,23 @@
 xstd-misc is a header-only collection of small extensions to the C++ standard
 library: facilities too small, and too unrelated to one another, to deserve a
 library of their own. Each lives under the standard header it extends, so the
-layout mirrors `<concepts>`, `<type_traits>` and `<utility>`. It adds two pairs
+layout mirrors `<concepts>`, `<format>`, `<functional>`, `<type_traits>` and
+`<utility>`. It adds two pairs
 of a concept and a trait for recognizing a specialization of a class template --
 one naming the template, one naming an example of it -- tagged empty
 types that keep a place in a class layout, a data member present only when a
 condition holds, a portable spelling of `[[no_unique_address]]`, four
 concepts recognizing proxy iterators and proxy references, and `to_underlying`
 over a plain enum, one wrapped in `std::integral_constant`, and a proxy for one.
-Under `ext/boost/`, it adds `hasher`, a hasher for an unordered container that runs
-a [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) algorithm of
-the caller's choosing, seeded per container; `digester`, which runs one for a key's
-fingerprint at the algorithm's own width; `hash_algorithm`, the concept that
-algorithm satisfies; and `hash_algorithm_is_avalanching`, which tells Boost.Unordered whether
+Under `<functional>`, it adds `hash`, the hash function object of an unordered container, which
+runs a [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) algorithm of the
+caller's choosing, seeded per container, and is transparent over strings; and `digest`, which
+runs one for a key's digest at the algorithm's own width. Beside them, `hash_algorithm` is the concept that
+algorithm satisfies, and `hash_algorithm_is_avalanching` tells Boost.Unordered whether
 the algorithm's hash can be used without mixing it again.
 
-Nothing outside `ext/` needs more than the standard library itself, so a project can take
-it on its own. It relies on the [C++20](https://wg21.link/N4861) standard and
+Boost.Hash2 is the one dependency, and the CMake target and the installed package bring it
+along. It relies on the [C++20](https://wg21.link/N4861) standard and
 targets the draft [C++29](https://wg21.link/std) standard library. All public
 APIs are in namespace `xstd`.
 
@@ -177,31 +178,48 @@ static_assert(xstd::simple_allocator<std::allocator<int>>);
 static_assert(xstd::container_compatible_range<std::vector<int>, long>);
 ```
 
-`hasher<H>` hashes a key of any type through `hash_append` with the Boost.Hash2 algorithm `H`,
-holding a seeded prototype of `H` and copying it on every call. The default is `boost::hash2::xxhash_64`
-on every platform: it avalanches at any key length, where FNV-1a leaves the low bits a masked table takes blind
-to the high bits of the last byte.
-For keys an adversary chooses, name SipHash and seed it per container, as Hash2 advises:
+`hash<T, H>` hashes a key of type `T` through `hash_append` with the Boost.Hash2 algorithm `H`,
+holding a seeded prototype of `H` and copying it on every call, and returns the `std::size_t` an
+unordered container asks for. The default is `boost::hash2::xxhash_64` on every platform: it
+avalanches at any key length, where FNV-1a leaves the low bits a masked table takes blind to the
+high bits of the last byte. For keys an adversary chooses, name SipHash and seed it per container,
+as Hash2 advises:
 
 ```cpp
-#include <xstd/misc/ext/boost/hash2.hpp> // needs Boost.Hash2: link Boost::hash2
+#include <xstd/misc/functional.hpp>
 #include <boost/hash2/siphash.hpp>
 #include <cstdint>
 #include <string>
 #include <unordered_set>
 
-using siphasher = xstd::hasher<boost::hash2::siphash_64>;
+using siphasher = xstd::hash<std::string, boost::hash2::siphash_64>;
 
 auto const seed = std::uint64_t{/* drawn at random, per container */};
 auto names      = std::unordered_set<std::string, siphasher>(0, siphasher(seed));
 ```
 
 The constructors are the three every Hash2 algorithm has: none, a `std::uint64_t` seed, and a
-byte sequence `(unsigned char const*, std::size_t)`. The key type is the call's, not the
-hasher's, so one hasher serves keys of any type; it is not transparent, as equal values of
-different types, such as `42` and `std::int64_t{42}`, need not hash equal.
+byte sequence `(unsigned char const*, std::size_t)`. Each argument converts to `T` before it is
+hashed, so `xstd::hash<std::int64_t>()(42)` hashes the 8 bytes of the key a table holds rather
+than the 4 of an `int`. Over a `std::basic_string` it is transparent, taking the string's view, so
+a string, a `std::string_view` and a C string with the same characters hash equal, and a set
+looks a key up by any of them without building a string:
 
-`hasher<H>` reports itself avalanching, through the nested `is_avalanching` that
+```cpp
+#include <xstd/misc/functional.hpp>
+#include <functional>
+#include <string>
+#include <string_view>
+#include <unordered_set>
+
+auto names = std::unordered_set<std::string, xstd::hash<std::string>, std::equal_to<>>{"one", "two"};
+auto found = names.contains(std::string_view("two"));                // no std::string is built
+```
+
+No other key is transparent: equal values of different types, such as `42` and
+`std::int64_t{42}`, need not append the same bytes, so a lookup by one would miss the other.
+
+`hash<T, H>` reports itself avalanching, through the nested `is_avalanching` that
 `boost::hash_is_avalanching` reads, wherever `xstd::hash_algorithm_is_avalanching<H>` holds, and
 Boost.Unordered's open-addressing containers then use its hash as it is. The trait holds for every
 Hash2 algorithm but FNV-1a, and every translation unit sees the same answer without including the
@@ -213,32 +231,48 @@ template<>
 struct xstd::hash_algorithm_is_avalanching<my_algorithm> : std::true_type {};
 ```
 
-`digester<H>` runs the same seeded prototype over the same `hash_append`, but returns the
-algorithm's whole `result_type` where `hasher` narrows it to `std::size_t`: a fingerprint that
-stands in for a key, such as a transposition table's, is as wide on a 32-bit target as on a
-64-bit one. The default is `boost::hash2::xxh3_128`, whose result is a 16-byte `digest<16>`: a
-fingerprint stands in for its key, so its default is wide enough that two keys colliding is never
-the likeliest bug, at any table size, and [xxHash](https://github.com/Cyan4973/xxHash) recommends
-XXH3's 128-bit variant where a 128-bit hash is required. Name `xxhash_64` for a 64-bit one:
+`digest<T, H>` runs the same seeded prototype over the same `hash_append`, but returns the
+algorithm's whole `result_type` where `hash` folds it to `std::size_t`: a digest that stands in
+for a key, such as a transposition table's, is as wide on a 32-bit target as on a 64-bit one. It
+should be wide enough that two keys colliding is never the likeliest bug, at any table size, so the
+default is `boost::hash2::xxh3_128`, whose result is a 16-byte `digest<16>`, as
+[xxHash](https://github.com/Cyan4973/xxHash) recommends where a 128-bit hash is required. Its
+per-call cost is two to four times xxHash64's on short keys, which a table hashing every lookup
+would feel and a digest computed once does not. Name `xxhash_64` for a 64-bit one:
 
 ```cpp
-#include <xstd/misc/ext/boost/hash2.hpp> // needs Boost.Hash2: link Boost::hash2
+#include <xstd/misc/functional.hpp>
 #include <boost/hash2/xxhash.hpp>
 #include <cstdint>
 #include <string>
 
-auto const fingerprint = xstd::digester<>(std::uint64_t{/* fixed, so fingerprints persist */});
-auto const position    = fingerprint(std::string("r1/p1/..."));             // boost::hash2::digest<16>
-auto const key64       = xstd::digester<boost::hash2::xxhash_64>()(42);      // std::uint64_t everywhere
+auto const position = xstd::digest<std::string>(std::uint64_t{/* fixed, so digests persist */});
+auto const stored   = position("r1/p1/...");                              // boost::hash2::digest<16>
+auto const key64    = xstd::digest<int, boost::hash2::xxhash_64>()(42);   // std::uint64_t everywhere
 ```
 
-A fingerprint persists across runs, builds, and every little-endian target, for keys of
-fixed-width integer types, strings, and arrays of those. Hash2 appends an integer in
-the target's own byte order, and a range's size as a `std::uint32_t`; the tests check those bytes'
-digests against xxHash's reference implementation. Its default flavor, which fixes those bytes, is
-the same in every release from 1.88 to 1.92. A key of `long`, `std::size_t` or `wchar_t`, whose
-width differs between platforms, gives different bytes on each, and so does every integer on a
-big-endian target.
+A digest persists across runs, builds and targets, for keys of fixed-width integer types,
+strings, and arrays of those. Both classes take a Boost.Hash2 flavor as their third parameter,
+which fixes the bytes `hash_append` writes. `digest` defaults to `boost::hash2::little_endian_flavor`,
+so an integer appends the same bytes on a big-endian target as on a little-endian one, and a
+range's size appends as a `std::uint32_t`; the tests check those bytes' digests against xxHash's
+reference implementation, and the flavor is the same in every release from 1.88 to 1.92. `hash`
+defaults to `boost::hash2::default_flavor`, the target's own byte order, as a table's hash never
+leaves the process. A key of `long`, `std::size_t` or `wchar_t`, whose width differs between
+platforms, gives different bytes on each.
+
+A `boost::hash2::digest<N>`, the result of XXH3-128 and every other algorithm with an array-like
+result, formats through `std::format` and `std::print` as hex, two digits per byte in byte order,
+as `boost::hash2::to_string` writes it, with `{:X}` for uppercase:
+
+```cpp
+#include <xstd/misc/format.hpp>
+#include <xstd/misc/functional.hpp>
+#include <format>
+#include <string>
+
+auto const text = std::format("{}", xstd::digest<std::string>()("r1/p1/..."));   // 32 hex digits
+```
 
 `H` is any type satisfying `hash_algorithm`, Boost.Hash2's documented requirements as a concept,
 so an algorithm written outside Hash2 is checked where it is named:
@@ -263,27 +297,25 @@ See [the design notes](doc/design.md) for rationale, and
 | `<xstd/misc/type_traits/empty_member_type.hpp>` | `empty_member_type` | A tagged empty type for a data member that is not there | none |
 | `<xstd/misc/type_traits/conditional_data_member.hpp>` | `conditional_data_member` | A conditionally present member | none |
 | `<xstd/misc/utility/to_underlying.hpp>` | `to_underlying` | `std::to_underlying`, plus an `std::integral_constant` overload | [p1682r1](https://wg21.link/p1682r1) (`std::to_underlying`) |
-| `<xstd/misc/ext/boost/hash2/hash_algorithm.hpp>` | `hash_algorithm` | A Boost.Hash2 hash algorithm, to its documented requirements | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) |
-| `<xstd/misc/ext/boost/hash2/hash_algorithm_is_avalanching.hpp>` | `hash_algorithm_is_avalanching` | Whether a hash algorithm avalanches: true for every Boost.Hash2 algorithm but FNV-1a, and specializable for one's own | [Boost.Unordered](https://www.boost.org/doc/libs/release/libs/unordered/) (`hash_is_avalanching`) |
-| `<xstd/misc/ext/boost/hash2/hasher.hpp>` | `hasher` | A hasher running a seeded Boost.Hash2 algorithm, xxHash64 by default, for an unordered container | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) |
-| `<xstd/misc/ext/boost/hash2/digester.hpp>` | `digester` | A key's fingerprint at the algorithm's own width, from a seeded Boost.Hash2 algorithm, XXH3-128 by default | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) |
-| `<xstd/misc/ext/boost/hash2.hpp>` | `digester` <br> `hash_algorithm` <br> `hash_algorithm_is_avalanching` <br> `hasher` | The four above, through one include | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) |
+| `<xstd/misc/concepts/hash_algorithm.hpp>` | `hash_algorithm` | A Boost.Hash2 hash algorithm, to its documented requirements | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) |
+| `<xstd/misc/type_traits/hash_algorithm_is_avalanching.hpp>` | `hash_algorithm_is_avalanching` | Whether a hash algorithm avalanches: true for every Boost.Hash2 algorithm but FNV-1a, and specializable for one's own | [Boost.Unordered](https://www.boost.org/doc/libs/release/libs/unordered/) (`hash_is_avalanching`) |
+| `<xstd/misc/format/digest.hpp>` | `formatter<boost::hash2::digest<N>>` | Formats a Boost.Hash2 digest as hex | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) |
+| `<xstd/misc/format.hpp>` | `formatter<boost::hash2::digest<N>>` | The one above, through one include | none |
+| `<xstd/misc/functional/digest.hpp>` | `digest` | A key's digest at the algorithm's own width, from a seeded Boost.Hash2 algorithm, XXH3-128 by default | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) |
+| `<xstd/misc/functional/hash.hpp>` | `hash` | A key's hash for an unordered container, from a seeded Boost.Hash2 algorithm, xxHash64 by default, transparent over `std::basic_string` | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/), [N3980](https://wg21.link/n3980) |
+| `<xstd/misc/functional.hpp>` | `digest` <br> `hash` | The two above, through one include | [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) |
 
 Each directory has an umbrella exporting what is under it -- `<xstd/misc/concepts.hpp>`,
-`<xstd/misc/type_traits.hpp>`, `<xstd/misc/utility.hpp>` -- and `<xstd/misc.hpp>` exports
-the three, so one include brings the whole surface. `ext/` is the exception: its umbrella
-`<xstd/misc/ext/boost.hpp>` needs Boost.Hash2 on the include path, so nothing above it
-exports it, and an adapted library is asked for by name.
+`<xstd/misc/format.hpp>`, `<xstd/misc/functional.hpp>`, `<xstd/misc/type_traits.hpp>`,
+`<xstd/misc/utility.hpp>` -- and `<xstd/misc.hpp>` exports the five, so one include brings the whole surface.
 
 ## Requirements
 
 
 - A conforming [C++20](https://wg21.link/N4861) compiler
 - CMake 3.30 or later when using the supplied CMake project
-- No third-party runtime or library dependencies, except for the headers under `ext/`:
-  each header under `xstd/misc/ext/boost/hash2/`, and its umbrella `<xstd/misc/ext/boost/hash2.hpp>`,
-  needs [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/), which the `xstd::misc`
-  target does not link, so a consumer including one links `Boost::hash2`
+- [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) 1.88 or later, header-only,
+  which the `xstd::misc` target links and its installed package finds
 
 CI covers the toolchains in the table below, and no older ones.
 
@@ -305,7 +337,8 @@ target_link_libraries(my_target PRIVATE xstd::misc)
 ```
 
 `find_package(xstd-misc CONFIG REQUIRED)` and `add_subdirectory(external/xstd-misc)` provide
-the same `xstd::misc` target.
+the same `xstd::misc` target. Each finds Boost.Hash2 with `find_package(boost_hash2 CONFIG)`, so it
+must be installed where CMake looks, as vcpkg's `boost-hash2` port or Boost 1.88+ puts it.
 
 To build and install the headers alone, without the test suite and its Boost.Test
 dependency, configure with tests off:

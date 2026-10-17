@@ -3,27 +3,20 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <test/constexpr_check.hpp> // XSTD_CONSTEXPR_CHECK
-#include <boost/test/unit_test.hpp> // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK
-#include <array>                    // array
-#include <concepts>                 // same_as, unsigned_integral
-#include <cstddef>                  // size_t
-#include <cstdint>                  // uint32_t, uint64_t
-#include <span>                     // span
-#include <utility>                  // declval
-
-// Reached the way a consumer reaches it: the probe here, the adapter behind it.
-#if __has_include(<boost/hash2/hash_append.hpp>)
-#define TEST_HAS_BOOST_HASH2
-#include <xstd/misc/ext/boost/hash2/hash_algorithm.hpp> // hash_algorithm
-#include <test/hash2_algorithms.hpp>                    // algorithms
-#include <boost/hash2/digest.hpp>                       // digest
-#include <boost/hash2/fnv1a.hpp>                        // fnv1a_32
-#include <boost/hash2/legacy/murmur3.hpp>               // murmur3_128
-#include <boost/hash2/md5.hpp>                          // md5_128
-#endif
-
-#ifdef TEST_HAS_BOOST_HASH2
+#include <xstd/misc/concepts/hash_algorithm.hpp> // hash_algorithm
+#include <test/constexpr_check.hpp>              // XSTD_CONSTEXPR_CHECK
+#include <test/hash2_algorithms.hpp>             // algorithms
+#include <boost/hash2/digest.hpp>                // digest
+#include <boost/hash2/fnv1a.hpp>                 // fnv1a_32
+#include <boost/hash2/legacy/murmur3.hpp>        // murmur3_128
+#include <boost/hash2/md5.hpp>                   // md5_128
+#include <boost/test/unit_test.hpp>              // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK
+#include <array>                                 // array
+#include <concepts>                              // same_as, unsigned_integral
+#include <cstddef>                               // size_t
+#include <cstdint>                               // uint32_t, uint64_t
+#include <span>                                  // span
+#include <utility>                               // declval
 
 namespace {
 
@@ -57,15 +50,9 @@ auto digest_of(H h, std::size_t n)
 
 } // namespace
 
-#endif
-
 BOOST_AUTO_TEST_SUITE(Misc)
-BOOST_AUTO_TEST_SUITE(Ext)
-BOOST_AUTO_TEST_SUITE(Boost)
-BOOST_AUTO_TEST_SUITE(Hash2)
+BOOST_AUTO_TEST_SUITE(Concepts)
 BOOST_AUTO_TEST_SUITE(HashAlgorithm)
-
-#ifdef TEST_HAS_BOOST_HASH2
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(EveryHash2AlgorithmIsAHashAlgorithm, H, test::algorithms)
 {
@@ -166,17 +153,6 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(EveryArrayLikeResultHasAtLeastEightBytes, H, test:
         XSTD_CONSTEXPR_CHECK(std::unsigned_integral<result> or sizeof(result) >= 8);
 }
 
-#else
-
-BOOST_AUTO_TEST_CASE(NeedsBoostHash2)
-{
-        BOOST_CHECK(true);
-}
-
-#endif
-
-BOOST_AUTO_TEST_SUITE_END()
-BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE_END()

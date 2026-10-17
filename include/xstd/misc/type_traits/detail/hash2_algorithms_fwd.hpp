@@ -3,8 +3,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef XSTD_MISC_EXT_BOOST_HASH2_DETAIL_ALGORITHMS_FWD_HPP
-#define XSTD_MISC_EXT_BOOST_HASH2_DETAIL_ALGORITHMS_FWD_HPP
+#ifndef XSTD_MISC_TYPE_TRAITS_DETAIL_HASH2_ALGORITHMS_FWD_HPP
+#define XSTD_MISC_TYPE_TRAITS_DETAIL_HASH2_ALGORITHMS_FWD_HPP
 
 // Hash2's algorithms, declared exactly as Hash2 declares them, so that a trait can name each without including it.
 namespace boost::hash2 {
@@ -43,4 +43,4 @@ class hmac;
 
 } // namespace boost::hash2
 
-#endif // XSTD_MISC_EXT_BOOST_HASH2_DETAIL_ALGORITHMS_FWD_HPP
+#endif // XSTD_MISC_TYPE_TRAITS_DETAIL_HASH2_ALGORITHMS_FWD_HPP

@@ -3,11 +3,11 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef XSTD_MISC_EXT_BOOST_HASH2_HASH_ALGORITHM_IS_AVALANCHING_HPP
-#define XSTD_MISC_EXT_BOOST_HASH2_HASH_ALGORITHM_IS_AVALANCHING_HPP
+#ifndef XSTD_MISC_TYPE_TRAITS_HASH_ALGORITHM_IS_AVALANCHING_HPP
+#define XSTD_MISC_TYPE_TRAITS_HASH_ALGORITHM_IS_AVALANCHING_HPP
 
-#include <xstd/misc/ext/boost/hash2/detail/algorithms_fwd.hpp> // blake2b_512, blake2s_256, hmac, md5_128, murmur3_128, murmur3_32, ripemd_128, ripemd_160, sha1_160, sha2_224, sha2_256, sha2_384, sha2_512, sha2_512_224, sha2_512_256, sha3_224, sha3_256, sha3_384, sha3_512, shake_128, shake_256, siphash_32, siphash_64, spooky2_128, xxh3_128, xxhash_32, xxhash_64
-#include <type_traits>                                         // false_type, true_type
+#include <xstd/misc/type_traits/detail/hash2_algorithms_fwd.hpp> // blake2b_512, blake2s_256, hmac, md5_128, murmur3_128, murmur3_32, ripemd_128, ripemd_160, sha1_160, sha2_224, sha2_256, sha2_384, sha2_512, sha2_512_224, sha2_512_256, sha3_224, sha3_256, sha3_384, sha3_512, shake_128, shake_256, siphash_32, siphash_64, spooky2_128, xxh3_128, xxhash_32, xxhash_64
+#include <type_traits>                                           // false_type, true_type
 
 namespace xstd {
 
@@ -131,4 +131,4 @@ inline constexpr bool hash_algorithm_is_avalanching_v = hash_algorithm_is_avalan
 
 } // namespace xstd
 
-#endif // XSTD_MISC_EXT_BOOST_HASH2_HASH_ALGORITHM_IS_AVALANCHING_HPP
+#endif // XSTD_MISC_TYPE_TRAITS_HASH_ALGORITHM_IS_AVALANCHING_HPP

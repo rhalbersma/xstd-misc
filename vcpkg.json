@@ -4,20 +4,16 @@
   "description": "Miscellaneous extensions to the C++ Standard Library",
   "homepage": "https://github.com/rhalbersma/xstd-misc",
   "license": "BSL-1.0",
+  "dependencies": [
+    "boost-hash2"
+  ],
   "default-features": [
     "test"
   ],
   "features": {
-    "hash2": {
-      "description": "Hash with Boost.Hash2 through <xstd/misc/ext/boost/hash2.hpp>",
-      "dependencies": [
-        "boost-hash2"
-      ]
-    },
     "test": {
       "description": "Build the Boost.Test-based unit tests",
       "dependencies": [
-        "boost-hash2",
         "boost-test",
         "boost-unordered"
       ]

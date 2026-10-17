@@ -3,8 +3,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef XSTD_MISC_EXT_BOOST_HASH2_HASH_ALGORITHM_HPP
-#define XSTD_MISC_EXT_BOOST_HASH2_HASH_ALGORITHM_HPP
+#ifndef XSTD_MISC_CONCEPTS_HASH_ALGORITHM_HPP
+#define XSTD_MISC_CONCEPTS_HASH_ALGORITHM_HPP
 
 #include <boost/hash2/has_constant_size.hpp> // has_constant_size
 #include <concepts>                          // constructible_from, same_as, semiregular, unsigned_integral
@@ -34,4 +34,4 @@ concept hash_algorithm =
 
 } // namespace xstd
 
-#endif // XSTD_MISC_EXT_BOOST_HASH2_HASH_ALGORITHM_HPP
+#endif // XSTD_MISC_CONCEPTS_HASH_ALGORITHM_HPP

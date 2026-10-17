@@ -19,6 +19,9 @@ include(GNUInstallDirs)
 # Set before any of them; consumers keep control over their own.
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Boost.Hash2 is a public dependency of the functional/ headers, and of the concept and trait they are built on.
+find_package(boost_hash2 CONFIG REQUIRED)
+
 add_library(
     ${PROJECT_NAME} INTERFACE
 )
@@ -39,6 +42,11 @@ target_compile_features(
     cxx_std_20
 )
 
+target_link_libraries(
+    ${PROJECT_NAME} INTERFACE
+    Boost::hash2
+)
+
 target_sources(
     ${PROJECT_NAME} INTERFACE
     FILE_SET HEADERS
@@ -47,23 +55,26 @@ target_sources(
         include/xstd/misc.hpp
         include/xstd/misc/concepts.hpp
         include/xstd/misc/concepts/container_compatible_range.hpp
+        include/xstd/misc/concepts/hash_algorithm.hpp
         include/xstd/misc/concepts/proxy_iterator.hpp
         include/xstd/misc/concepts/proxy_reference.hpp
         include/xstd/misc/concepts/proxy_semi_iterator.hpp
         include/xstd/misc/concepts/proxy_semi_reference.hpp
         include/xstd/misc/concepts/simple_allocator.hpp
         include/xstd/misc/concepts/specialization_of.hpp
-        include/xstd/misc/ext/boost.hpp
-        include/xstd/misc/ext/boost/hash2.hpp
-        include/xstd/misc/ext/boost/hash2/detail/algorithms_fwd.hpp
-        include/xstd/misc/ext/boost/hash2/digester.hpp
-        include/xstd/misc/ext/boost/hash2/hash_algorithm.hpp
-        include/xstd/misc/ext/boost/hash2/hash_algorithm_is_avalanching.hpp
-        include/xstd/misc/ext/boost/hash2/hasher.hpp
+        include/xstd/misc/format.hpp
+        include/xstd/misc/format/detail/hex_spec.hpp
+        include/xstd/misc/format/digest.hpp
+        include/xstd/misc/functional.hpp
+        include/xstd/misc/functional/detail/hasher.hpp
+        include/xstd/misc/functional/digest.hpp
+        include/xstd/misc/functional/hash.hpp
         include/xstd/misc/type_traits.hpp
         include/xstd/misc/type_traits/conditional_data_member.hpp
+        include/xstd/misc/type_traits/detail/hash2_algorithms_fwd.hpp
         include/xstd/misc/type_traits/empty_base_type.hpp
         include/xstd/misc/type_traits/empty_member_type.hpp
+        include/xstd/misc/type_traits/hash_algorithm_is_avalanching.hpp
         include/xstd/misc/type_traits/is_specialization_of.hpp
         include/xstd/misc/type_traits/no_unique_address.hpp
         include/xstd/misc/utility.hpp
