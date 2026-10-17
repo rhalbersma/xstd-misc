@@ -143,7 +143,7 @@ BOOST_AUTO_TEST_CASE(IsOneValuePerWidthOfSizeT)
                         }
                 };
                 BOOST_CHECK_EQUAL(integer(std::uint64_t{42}), at_size(0xf92a'4389'bd62'ee57, 0xb9d9'e2fa));
-                BOOST_CHECK_EQUAL(string(std::string("r1/p1/...")), at_size(0xd7e9'ed42'f1d4'b1ce, 0xab90'41e8));
+                BOOST_CHECK_EQUAL(string("r1/p1/..."), at_size(0xd7e9'ed42'f1d4'b1ce, 0xab90'41e8));
         } else {
                 BOOST_CHECK(true); // silence Boost.Test's "test case did not check any assertions"
         }
