@@ -26,8 +26,9 @@ struct formatter<boost::hash2::digest<N>>
                 auto const hex = digits();
                 auto out       = ctx.out();
                 for (auto const octet : d) {
-                        *out++ = hex[static_cast<unsigned>(octet) >> 4U];
-                        *out++ = hex[static_cast<unsigned>(octet) & 0x0FU];
+                        auto const value = std::size_t{octet};
+                        *out++           = hex[value / hex.size()];
+                        *out++           = hex[value % hex.size()];
                 }
                 return out;
         }
