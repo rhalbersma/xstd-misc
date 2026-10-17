@@ -130,11 +130,7 @@ foreach(h ${public_headers})
     endif()
 endforeach()
 
-# Every header but those under ext/, which cannot compile before their optional dependency resolves.
-set(standalone_headers ${public_headers})
-list(FILTER standalone_headers EXCLUDE REGEX "^xstd/misc/ext/")
-
-foreach(h ${standalone_headers})
+foreach(h ${public_headers})
     cmake_language(CALL ${project_id}_add_header_self_sufficiency_test ${h})
 endforeach()
 
@@ -192,31 +188,12 @@ find_package(
     unit_test_framework
 )
 
-# The library adapted under ext/, and not a hard dependency: Boost.Hash2 first shipped in 1.88, above the floor just asked for.
-find_package(boost_hash2 CONFIG QUIET)
-if(TARGET Boost::hash2)
-    set(${project_id}_test_boost_hash2 Boost::hash2)
-else()
-    set(${project_id}_test_boost_hash2)
-endif()
-
 # The other unordered container the hasher is tested in, beside the standard's; the library itself never names it.
 find_package(boost_unordered CONFIG QUIET)
 if(TARGET Boost::unordered)
     set(${project_id}_test_boost_unordered Boost::unordered)
 else()
     set(${project_id}_test_boost_unordered)
-endif()
-
-# The headers held back above, each compiled only where the library it adapts is there to adapt.
-if(TARGET Boost::hash2)
-    cmake_language(CALL ${project_id}_add_header_self_sufficiency_test xstd/misc/ext/boost.hpp ${${project_id}_test_boost_hash2})
-    cmake_language(CALL ${project_id}_add_header_self_sufficiency_test xstd/misc/ext/boost/hash2.hpp ${${project_id}_test_boost_hash2})
-    cmake_language(CALL ${project_id}_add_header_self_sufficiency_test xstd/misc/ext/boost/hash2/detail/algorithms_fwd.hpp ${${project_id}_test_boost_hash2})
-    cmake_language(CALL ${project_id}_add_header_self_sufficiency_test xstd/misc/ext/boost/hash2/digester.hpp ${${project_id}_test_boost_hash2})
-    cmake_language(CALL ${project_id}_add_header_self_sufficiency_test xstd/misc/ext/boost/hash2/hash_algorithm.hpp ${${project_id}_test_boost_hash2})
-    cmake_language(CALL ${project_id}_add_header_self_sufficiency_test xstd/misc/ext/boost/hash2/hash_algorithm_is_avalanching.hpp ${${project_id}_test_boost_hash2})
-    cmake_language(CALL ${project_id}_add_header_self_sufficiency_test xstd/misc/ext/boost/hash2/hasher.hpp ${${project_id}_test_boost_hash2})
 endif()
 
 set(current_source_dir ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -238,7 +215,6 @@ foreach(t ${targets})
         ${target_id} PRIVATE
         xstd::misc
         Boost::unit_test_framework
-        ${${project_id}_test_boost_hash2}
         ${${project_id}_test_boost_unordered}
         ${project_id}_test_options
     )

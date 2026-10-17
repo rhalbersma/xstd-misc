@@ -22,3 +22,6 @@ on:
 jobs:
   consumption:
     uses: rhalbersma/cpp-ci/.github/workflows/consumption.yml@170191bd9ab421d871b53fb67682376a2695d8a9 # v0.13.0
+    with:
+      # CMakeLists.txt find_package()s boost_hash2 unconditionally, so every configure here needs vcpkg.
+      vcpkg: true

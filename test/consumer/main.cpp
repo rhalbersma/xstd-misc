@@ -5,9 +5,11 @@
 
 #include <xstd/misc/concepts/simple_allocator.hpp>
 #include <xstd/misc/concepts/specialization_of.hpp>
+#include <xstd/misc/functional.hpp>
 #include <xstd/misc/type_traits.hpp>
 #include <xstd/misc/utility.hpp>
 #include <complex>
+#include <cstddef>
 #include <memory>
 #include <type_traits>
 
@@ -27,6 +29,7 @@ auto main()
         static_assert(xstd::simple_allocator<std::allocator<int>>);
         static_assert(decltype(xstd::to_underlying(std::integral_constant<color, color::red>()))::value == 1);
         static_assert(sizeof(storage) == sizeof(int));
+        static_assert(std::is_invocable_r_v<std::size_t, xstd::hash<> const&, int>);
 
         return xstd::to_underlying(color::red) == 1u ? 0 : 1;
 }
