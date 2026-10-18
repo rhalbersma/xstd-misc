@@ -13,7 +13,7 @@
 
 namespace xstd {
 
-// The cast P1682R1 specifies std::to_underlying as, and nothing more.
+// Returns what N5054 [utility.underlying]/1 has std::to_underlying return, and does nothing more.
 template<class Enum>
         requires std::is_enum_v<Enum>
 [[nodiscard]] constexpr auto to_underlying(Enum value) noexcept

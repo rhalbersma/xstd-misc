@@ -44,7 +44,8 @@ The type utilities intentionally remain narrow:
   *container-compatible-range* ([container.intro.reqmts]), spelled out word for word
   so that a container outside the standard library can constrain its allocator
   arguments and `from_range` constructors exactly as the standard's containers are
-  specified to.
+  specified to. Each header cites the working draft and paragraph it copies, and
+  `tools/check-draft-wording.py` checks the copy against that draft, token for token.
 - `empty_member_type` and `conditional_data_member_t` support optional
   `[[no_unique_address]]` storage, and `empty_base_type` is the same idea for a
   base class. Both tags default to `void`, so `empty_member_type<>` and
@@ -132,9 +133,11 @@ constraint is then written where it applies, as the wrapped one writes its own.
 
 It performs the cast rather than calling `std::to_underlying`, which would put
 the library's baseline at [C++23](https://wg21.link/N4950) for one function. The
-cast is not an approximation of that function: P1682R1's Returns clause is
-`static_cast<underlying_type_t<T>>(value)` and nothing more, so this is the
-standard's own wording rather than a reimplementation of it. Selecting between
+cast is not an approximation of that function: its Returns element,
+[utility.underlying]/1, is `static_cast<underlying_type_t<T>>(value)` and nothing
+more, so this is the standard's own wording rather than a reimplementation of it.
+`tools/check-draft-wording.py` holds the cast to that paragraph of the working
+draft the header cites. Selecting between
 the two on `__cpp_lib_to_underlying` was considered and dropped: it would buy
 nothing an identity can give, at the price of a header included on some builds
 and not others, and a branch only one CI dimension ever compiles.

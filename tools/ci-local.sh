@@ -6,8 +6,9 @@
 
 # Runs the GitHub Actions ladders' Linux legs on what setup-toolchain.sh installs, so a change is green here before it
 # waits on CI's runners. Each leg does what its job does: configure, build and test the suite on one compiler, or run
-# clang-tidy or the format gate. Each leg works under build/ci-local/<leg>, logs to build/ci-local/<leg>.log, and
-# the run ends in one line per leg.
+# clang-tidy or the format gate. The draft leg is the one no workflow runs: it fetches the working draft the headers
+# cite and checks that what they copy from it still reads as it does. Each leg works under build/ci-local/<leg>, logs
+# to build/ci-local/<leg>.log, and the run ends in one line per leg.
 #
 #   tools/ci-local.sh                     every leg, one after another, each on every core
 #   tools/ci-local.sh gcc-17 tidy-24      the legs named
@@ -30,7 +31,7 @@ cmake="${HOME:-/root}/.local/bin/cmake"
 [ -x "${cmake}" ] || cmake="cmake"
 readonly cmake
 
-readonly all_legs=(gcc-15 gcc-16 gcc-17 clang-22 clang-23 clang-24 libcxx-22 i686 coverage tidy-22 tidy-23 tidy-24 format)
+readonly all_legs=(gcc-15 gcc-16 gcc-17 clang-22 clang-23 clang-24 libcxx-22 i686 coverage tidy-22 tidy-23 tidy-24 format draft)
 
 # Each clang uses the libstdc++ of its own rung, as on the runners, rather than the newest GCC installed.
 gcc_for_clang() {
@@ -100,6 +101,17 @@ format() {
         find "${root}/include" "${root}/test" -regex '.*\.\(hpp\|cpp\)' -print0 | xargs -0 clang-format-22 --dry-run --Werror
 }
 
+# The working draft at the tag the headers cite, from the draft's own repository, then the check of their wording.
+draft() {
+        local dir="${out}/draft" docno
+        docno="$(python3 -I "${root}/tools/check-draft-wording.py" --docno)" || return 1
+        if [ ! -d "${dir}/.git" ]; then
+                git init -q "${dir}" && git -C "${dir}" remote add origin https://github.com/cplusplus/draft.git || return 1
+        fi
+        git -C "${dir}" fetch -q --depth 1 origin tag "${docno}" && git -C "${dir}" checkout -q "${docno}" \
+                && python3 -I "${root}/tools/check-draft-wording.py" "${dir}"
+}
+
 run_leg() {
         case "$1" in
                 gcc-1[56]) suite "$1" "g++-${1#gcc-}" "" "${build_type}" ;;
@@ -113,6 +125,7 @@ run_leg() {
                 coverage) coverage ;;
                 tidy-2[234]) tidy "${1#tidy-}" ;;
                 format) format ;;
+                draft) draft ;;
                 *) echo "no leg named $1; tools/ci-local.sh --list names them" >&2; return 2 ;;
         esac
 }
