@@ -4,6 +4,12 @@ Each public entity of xstd-misc is specified here the way the standard specifies
 then for each entity the elements of [structure.specifications] that apply. The baseline is
 [C++20](https://wg21.link/N4861), and a name with no namespace is in `std`.
 
+The synopses leave out `[[nodiscard]]`, as the standard's own have since [P2422R1](https://wg21.link/p2422r1), which made
+it a recommended practice rather than part of a library's specification. The code carries it on every function that
+returns a value and on every constructor, so discarding any result here draws a warning. *Untested:* the attribute
+changes only diagnostics, which no test can observe, and no clang-tidy check is enabled for it, so the repository's
+code conventions are its only authority.
+
 Every element names the test that holds the code to it, as `test-file: TestCase` under `test/src/misc/`. An element
 that no test can hold names why instead: either no existing type makes the mistake it turns away, which the
 repository's test rules then leave to the definition, or the element copies the working draft, which
