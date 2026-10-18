@@ -269,7 +269,7 @@ together, where xxHash is at the sampling noise. Measured with nanobench on one 
 Xeon at `-O2`, FNV-1a is faster by 3–14 ns on keys of up to 16 bytes, and four to eight times
 slower from 64 bytes. xxHash consumes the input a word per lane with a constant finalization, so
 its cost through `hash` is a fixed 15–19 ns a call for strings up to 64 bytes, 8.5 ns for a
-64-bit integer, and 37 ns at 256 bytes, where it meets `std::hash` and `boost::hash`. There is no second alias for short
+64-bit integer, and 37 ns at 256 bytes. There is no second alias for short
 keys: a choice between a fast default and a safe one is the misuse this rules out, and a
 caller who wants FNV-1a names `boost::hash2::fnv1a_64`. One algorithm on every platform
 also makes the value one function of the key at each width of `size_t`: the 64-bit digest
@@ -277,12 +277,7 @@ itself where `size_t` holds it, and `get_integral_result`'s multiply-high fold o
 where it is 32 bits, which the tests pin with literal values. The cost is that a 32-bit CPU
 emulates xxHash's 64-bit multiplies, about 34–50 ns a call on i686 up to 16 bytes.
 
-**The fixed cost in a table.** Copying the seeded prototype and appending through Hash2 costs
-6–15 ns a call more than `boost::hash` on strings of up to 64 bytes. A `boost::unordered_flat_set`
-of 1024 16-byte strings that inserts and then finds every key runs 2.9 times slower under `hash`
-than under `boost::hash` on x86-64, and 3.6 times on i686, which is more than the per-call gap
-alone. It is the price of a seed and of one appending path for every key type. The method, the
-build and the per-length tables are in [#53](https://github.com/rhalbersma/xstd-misc/issues/53#issuecomment-6250956313). The default is not SipHash either: a default-constructed hasher is unseeded, and keyed
+The method, the build and the per-length tables are in [#53](https://github.com/rhalbersma/xstd-misc/issues/53#issuecomment-6250956313). The default is not SipHash either: a default-constructed hasher is unseeded, and keyed
 resistance without a key buys nothing. Hash2's own advice for keys an adversary chooses is
 `siphash_64` with a seed drawn per container, which is a choice the caller makes and
 spells out.
