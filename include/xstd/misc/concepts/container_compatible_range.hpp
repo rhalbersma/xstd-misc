@@ -11,7 +11,7 @@
 
 namespace xstd {
 
-// [container.intro.reqmts]/2's exposition-only container-compatible-range, word for word.
+// N5054 [container.intro.reqmts]/2's exposition-only container-compatible-range, word for word.
 template<class R, class T>
 concept container_compatible_range = std::ranges::input_range<R> and std::convertible_to<std::ranges::range_reference_t<R>, T>;
 
