@@ -5,11 +5,12 @@
 
 #include <xstd/misc/utility/to_underlying.hpp> // to_underlying
 #include <test/constexpr_check.hpp>            // XSTD_CONSTEXPR_CHECK, XSTD_CONSTEXPR_CHECK_EQUAL
-#include <test/proxy.hpp>                      // element_iterator, element_reference, one_way_reference, shade, wrapper
+#include <test/proxy.hpp>                      // element_iterator, element_reference, shade
 #include <boost/test/unit_test.hpp>            // BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_AUTO_TEST_CASE
 #include <array>                               // array
 #include <concepts>                            // same_as
 #include <cstddef>                             // size_t
+#include <functional>                          // reference_wrapper
 #include <type_traits>                         // integral_constant, underlying_type_t
 #include <utility>                             // declval
 
@@ -82,8 +83,7 @@ BOOST_AUTO_TEST_CASE(IsConstrainedToProxiesForEnumerations)
 {
         XSTD_CONSTEXPR_CHECK(has_to_underlying<test::element_reference<test::shade>>);
         XSTD_CONSTEXPR_CHECK(not has_to_underlying<test::element_reference<bool>>);
-        XSTD_CONSTEXPR_CHECK(not has_to_underlying<test::wrapper>);
-        XSTD_CONSTEXPR_CHECK(not has_to_underlying<test::one_way_reference>);
+        XSTD_CONSTEXPR_CHECK(not has_to_underlying<std::reference_wrapper<test::shade>>);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
