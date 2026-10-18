@@ -111,7 +111,15 @@ clause the standard has no counterpart for.
 A concept cannot name itself, even through another, so the four are layered one
 way, each over those before it. That a proxy reference's address is a proxy
 iterator follows rather than being required: it is a semi-iterator whose
-reference is the proxy reference itself.
+reference is the proxy reference itself, which is a semi-reference for the value
+that address names.
+
+Only the iterators order by their constraints: an overload on `proxy_iterator`
+is taken over one on `proxy_semi_iterator`. A semi-reference is for a value the
+caller names, while a proxy reference reads its value from its address, so an
+overload on `proxy_semi_reference<R, bool>` and one on `proxy_reference<R>` are
+ambiguous for a type that is both. Set the weaker one aside with
+`requires xstd::proxy_semi_reference<R, bool> and (not xstd::proxy_reference<R>)`.
 
 `empty_member_type` and `conditional_data_member_t` give a member that is present only
 under a condition, and `XSTD_NO_UNIQUE_ADDRESS` costs it nothing when it is not.
