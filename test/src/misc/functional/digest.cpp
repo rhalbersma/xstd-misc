@@ -21,7 +21,7 @@
 #include <string>                                // string
 #include <string_view>                           // string_view
 #include <type_traits>                           // is_constructible_v, is_convertible_v
-#include <utility>                               // pair
+#include <utility>                               // declval, pair
 
 namespace {
 
@@ -63,6 +63,14 @@ BOOST_AUTO_TEST_CASE(SeedsAreExplicit)
         XSTD_CONSTEXPR_CHECK((std::is_constructible_v<xstd::digest<int>, std::uint64_t>));
         XSTD_CONSTEXPR_CHECK((not std::is_convertible_v<std::uint64_t, xstd::digest<int>>));
         XSTD_CONSTEXPR_CHECK((std::is_constructible_v<xstd::digest<int>, unsigned char const*, std::size_t>));
+}
+
+// A key's own hash_append may throw, which a noexcept call would turn into std::terminate.
+BOOST_AUTO_TEST_CASE(TheCallIsNotNoexcept)
+{
+        static_assert(not noexcept(std::declval<xstd::digest<int> const&>()(0)));
+        static_assert(not noexcept(std::declval<xstd::digest<std::string> const&>()("word")));
+        BOOST_CHECK(true);
 }
 
 // The digest is what Hash2 gives for the key appended to the seeded algorithm, and seeds tell digests apart.

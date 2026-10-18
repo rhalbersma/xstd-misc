@@ -176,6 +176,14 @@ BOOST_AUTO_TEST_CASE(SeedsAreExplicit)
         XSTD_CONSTEXPR_CHECK((std::is_constructible_v<xstd::hash<int>, unsigned char const*, std::size_t>));
 }
 
+// A key's own hash_append may throw, which a noexcept call would turn into std::terminate.
+BOOST_AUTO_TEST_CASE(TheCallIsNotNoexcept)
+{
+        static_assert(not noexcept(std::declval<xstd::hash<int> const&>()(0)));
+        static_assert(not noexcept(std::declval<xstd::hash<std::string> const&>()("word")));
+        BOOST_CHECK(true);
+}
+
 // Each key type hashes as Hash2 appends it, under the seeded algorithm.
 BOOST_AUTO_TEST_CASE_TEMPLATE(HashesItsKeyAsHash2Does, H, test::algorithms)
 {
