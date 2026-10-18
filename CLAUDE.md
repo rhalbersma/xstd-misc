@@ -201,6 +201,9 @@ long, in each repository.
   one opens once the merge has landed. Runs on a pull request that will be updated before it merges are cancelled
   rather than left to finish.
 
+How an agent drives a pull request from opened to merged is in
+[`.claude/skills/steward/SKILL.md`](.claude/skills/steward/SKILL.md).
+
 ## `[[nodiscard]]`
 
 Every function that returns a value carries it. Two kinds do not.
