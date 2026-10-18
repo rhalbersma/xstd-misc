@@ -11,7 +11,7 @@
 
 namespace xstd {
 
-// [allocator.requirements.general]/99's exposition-only simple-allocator, word for word.
+// N5054 [allocator.requirements.general]/99's exposition-only simple-allocator, word for word.
 template<class Alloc>
 concept simple_allocator =
         requires (Alloc alloc, std::size_t n) {
