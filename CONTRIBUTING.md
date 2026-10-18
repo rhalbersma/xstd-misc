@@ -153,6 +153,25 @@ MSVC, clang-cl, MinGW, Apple Clang and Emscripten have no Linux equivalent, and 
 libc++ that cannot be installed beside 22. The sanitizer, CodeQL, consumption and actionlint jobs are not in it
 either; the coverage and clang-tidy commands are also given on their own in the sections below.
 
+### Deleting clauses
+
+Full coverage says a line ran, not that a test would fail if it were wrong, and a concept or a requires-clause
+emits no code for a mutation tester such as Mull to change. [`tools/delete-clauses.py`](tools/delete-clauses.py)
+makes those mutants itself:
+
+- for every concept and requires-clause in a public header, it deletes, one at a time, each operand of an `and`
+  or an `or`, each `not`, and each requirement of a requires-expression;
+- it then compiles every test source, without running it, on GCC 15 and on clang 22 with libc++.
+
+A mutant that some test no longer compiles under is killed. One the header itself rejects is reported as invalid.
+One that every compiler accepts survives, and is answered by a test with an existing type or explained. It takes
+about twenty minutes on four cores, and no workflow runs it.
+
+```sh
+tools/delete-clauses.py                                           # every header
+tools/delete-clauses.py include/xstd/misc/concepts/proxy_reference.hpp
+```
+
 ### Reproducing the coverage gate
 
 ```sh
