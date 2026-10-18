@@ -157,7 +157,8 @@ possible, and the work relies on them rather than on whatever happens to be inst
 
 - [`tools/setup-toolchain.sh`](tools/setup-toolchain.sh) installs what CI builds with: every rung of
   [README.md](README.md)'s matrix, clang-tidy for each of the three clangs, the format gate's clang-format 22, the
-  CMake the workflows pin and the Boost CI resolves. Run it once per container; it is idempotent.
+  CMake the workflows pin and the Boost CI resolves. Run it once per container; it is idempotent, and in a Claude
+  Code cloud session the SessionStart hook in `.claude/hooks/session-start.sh` has already run it.
 - [`tools/ci-local.sh`](tools/ci-local.sh) runs the ladders' Linux legs on that toolchain. Run the legs a change can
   break while iterating, and every leg before a push. Push only what it reports green: CI is there to confirm,
   not to discover.

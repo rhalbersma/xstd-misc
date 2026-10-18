@@ -70,9 +70,12 @@ tools/setup-toolchain.sh
 apt's libc++ packages exclude one another, so libc++ stays at 22; the script names the command that swaps in another
 for a libc++ leg of a newer rung. The script is idempotent, so re-running it on a warm container is safe.
 
-In a [Claude Code cloud](https://code.claude.com/docs/en/claude-code-on-the-web) environment, the environment's
-setup script runs it, so every session starts with the rung already in place. That field holds a script rather than
-a command, and it runs from outside the checkout, so it needs a shebang and an absolute path:
+In a [Claude Code cloud](https://code.claude.com/docs/en/claude-code-on-the-web) session, the repository's
+SessionStart hook, [`.claude/hooks/session-start.sh`](.claude/hooks/session-start.sh), runs it before the session
+starts, so every session starts with the rung in place and nothing has to be configured. Its output goes to
+`/tmp/xstd-setup-toolchain.log`. An environment's setup script can run it too, once per container before any session,
+and the hook then finds the rung installed. That field holds a script rather than a command, and it runs from outside
+the checkout, so it needs a shebang and an absolute path:
 
 ```sh
 #!/usr/bin/env bash
