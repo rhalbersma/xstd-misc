@@ -16,7 +16,7 @@
 
 namespace xstd {
 
-// xxHash avalanches at any key length; FNV-1a never lets the last byte's high bits reach the low result bits.
+// xxHash passes SMHasher3's Avalanche test at 3 to 128 bytes; FNV-1a's last byte's high bits never reach the low bits.
 template<class T, hash_algorithm H = boost::hash2::xxhash_64, class Flavor = boost::hash2::default_flavor>
 class hash
         : detail::hasher<H, Flavor>
