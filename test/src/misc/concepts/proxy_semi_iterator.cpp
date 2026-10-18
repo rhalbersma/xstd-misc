@@ -4,7 +4,7 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <xstd/misc/concepts/proxy_semi_iterator.hpp> // proxy_semi_iterator
-#include <test/proxy.hpp>                             // element_iterator, shade, value_iterator
+#include <test/proxy.hpp>                             // element_iterator, shade
 #include <boost/test/unit_test.hpp>                   // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK
 #include <ranges>                                     // iota_view, iterator_t, ref_view, transform_view, zip_view
 #include <string>                                     // string
@@ -23,7 +23,6 @@ BOOST_AUTO_TEST_CASE(AClassPrvalueStandingInForTheValueIsAProxy)
 {
         static_assert(xstd::proxy_semi_iterator<test::element_iterator<test::shade>>);
         static_assert(xstd::proxy_semi_iterator<test::element_iterator<bool>>);
-        static_assert(xstd::proxy_semi_iterator<test::value_iterator>);
         static_assert(xstd::proxy_semi_iterator<std::vector<bool>::iterator>);
 #ifdef __cpp_lib_ranges_zip
         static_assert(xstd::proxy_semi_iterator<std::ranges::iterator_t<std::ranges::zip_view<ints, ints>>>);

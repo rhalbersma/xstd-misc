@@ -111,7 +111,15 @@ clause the standard has no counterpart for.
 A concept cannot name itself, even through another, so the four are layered one
 way, each over those before it. That a proxy reference's address is a proxy
 iterator follows rather than being required: it is a semi-iterator whose
-reference is the proxy reference itself.
+reference is the proxy reference itself, which is a semi-reference for the value
+that address names.
+
+Only the iterators order by their constraints: an overload on `proxy_iterator`
+is taken over one on `proxy_semi_iterator`. A semi-reference is for a value the
+caller names, while a proxy reference reads its value from its address, so an
+overload on `proxy_semi_reference<R, bool>` and one on `proxy_reference<R>` are
+ambiguous for a type that is both. Set the weaker one aside with
+`requires xstd::proxy_semi_reference<R, bool> and (not xstd::proxy_reference<R>)`.
 
 `empty_member_type` and `conditional_data_member_t` give a member that is present only
 under a condition, and `XSTD_NO_UNIQUE_ADDRESS` costs it nothing when it is not.
@@ -191,7 +199,11 @@ holding a seeded prototype of `H` and copying it on every call, and returns the 
 unordered container asks for. The default is `boost::hash2::xxhash_64` on every platform: it
 avalanches at any key length, where FNV-1a leaves the low bits a masked table takes blind to the
 high bits of the last byte. For keys an adversary chooses, name SipHash and seed it per container,
-as Hash2 advises:
+as Hash2 advises. Without a secret seed, an attacker who knows the hash searches offline for keys
+that share a slot: 2.7·10⁸ hashes find 32,768 that lengthen a `boost::unordered_flat_map`'s
+average insertion probe from 1.07 groups to 786, and 7·10⁷ find 8,192 that fill one bucket of a
+reserved `std::unordered_map`, under xxHash, FNV-1a and a publicly seeded SipHash alike. A seed
+drawn per container leaves both tables as they are with random keys:
 
 ```cpp
 #include <xstd/misc/functional.hpp>

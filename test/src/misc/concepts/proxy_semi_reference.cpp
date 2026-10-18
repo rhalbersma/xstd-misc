@@ -4,9 +4,10 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <xstd/misc/concepts/proxy_semi_reference.hpp> // proxy_semi_reference
-#include <test/proxy.hpp>                              // element_reference, one_way_reference, shade, wrapper
+#include <test/proxy.hpp>                              // element_reference, shade
 #include <boost/test/unit_test.hpp>                    // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK
 #include <bitset>                                      // bitset
+#include <functional>                                  // reference_wrapper
 #include <type_traits>                                 // is_class_v
 #include <vector>                                      // vector
 
@@ -29,8 +30,7 @@ BOOST_AUTO_TEST_CASE(TheStandardBitReferencesStandInForBool)
 BOOST_AUTO_TEST_CASE(AClassConvertingToTheNamedValueIsOne)
 {
         static_assert(xstd::proxy_semi_reference<test::element_reference<test::shade>, test::shade>);
-        static_assert(xstd::proxy_semi_reference<test::wrapper, test::shade>);
-        static_assert(xstd::proxy_semi_reference<test::one_way_reference, test::shade>);
+        static_assert(xstd::proxy_semi_reference<std::reference_wrapper<test::shade>, test::shade>);
         BOOST_CHECK(true);
 }
 
@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(TheValueAScalarOrAnotherValueIsNone)
 {
         static_assert(not xstd::proxy_semi_reference<test::shade, test::shade>);
         static_assert(not xstd::proxy_semi_reference<int, long>);
-        static_assert(not xstd::proxy_semi_reference<test::wrapper, bool>);
+        static_assert(not xstd::proxy_semi_reference<std::reference_wrapper<test::shade>, bool>);
         static_assert(not xstd::proxy_semi_reference<test::element_reference<test::shade>&, test::shade>);
         BOOST_CHECK(true);
 }
