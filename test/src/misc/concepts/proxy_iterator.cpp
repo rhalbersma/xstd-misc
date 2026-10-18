@@ -3,14 +3,16 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <xstd/misc/concepts/proxy_iterator.hpp> // proxy_iterator
-#include <test/proxy.hpp>                        // element_iterator, element_reference, shade, value_iterator
-#include <boost/test/unit_test.hpp>              // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK
-#include <concepts>                              // assignable_from
-#include <ranges>                                // iterator_t, ref_view, zip_view
-#include <utility>                               // declval
-#include <vector>                                // vector
-#include <version>                               // IWYU pragma: keep; __cpp_lib_ranges_zip
+#include <xstd/misc/concepts/proxy_iterator.hpp>      // proxy_iterator
+#include <xstd/misc/concepts/proxy_semi_iterator.hpp> // proxy_semi_iterator
+#include <test/proxy.hpp>                             // element_iterator, element_reference, shade
+#include <boost/test/unit_test.hpp>                   // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK
+#include <concepts>                                   // assignable_from
+#include <ranges>                                     // iterator_t, ref_view, zip_view
+#include <string_view>                                // string_view
+#include <utility>                                    // declval
+#include <vector>                                     // vector
+#include <version>                                    // IWYU pragma: keep; __cpp_lib_ranges_zip
 
 BOOST_AUTO_TEST_SUITE(Misc)
 BOOST_AUTO_TEST_SUITE(Concepts)
@@ -42,12 +44,38 @@ BOOST_AUTO_TEST_CASE(ItsReferenceIsAProxyReference)
 // A semi-iterator whose reference keeps the built-in address is no more than that.
 BOOST_AUTO_TEST_CASE(ASemiIteratorWithoutTheRoundTripIsNone)
 {
-        static_assert(not xstd::proxy_iterator<test::value_iterator>);
 #ifdef __cpp_lib_ranges_zip
         static_assert(not xstd::proxy_iterator<std::ranges::iterator_t<std::ranges::zip_view<ints, ints>>>);
 #endif
         static_assert(not xstd::proxy_iterator<int*>);
         static_assert(not xstd::proxy_iterator<std::vector<int>::iterator>);
+        BOOST_CHECK(true);
+}
+
+// One overload per strength, as an algorithm with a faster path for an iterator its proxy leads back to would write.
+template<xstd::proxy_semi_iterator I>
+[[nodiscard]] constexpr auto overload_taken() noexcept
+        -> std::string_view
+{
+        return "proxy_semi_iterator";
+}
+
+template<xstd::proxy_iterator I>
+[[nodiscard]] constexpr auto overload_taken() noexcept
+        -> std::string_view
+{
+        return "proxy_iterator";
+}
+
+// A proxy iterator refines a semi-iterator by subsumption, so a call takes the stronger overload rather than neither.
+BOOST_AUTO_TEST_CASE(SubsumesTheSemiIterator)
+{
+        static_assert(overload_taken<test::element_iterator<test::shade>>() == "proxy_iterator");
+        static_assert(overload_taken<test::element_iterator<bool>>() == "proxy_iterator");
+        static_assert(overload_taken<std::vector<bool>::iterator>() == (xstd::proxy_iterator<std::vector<bool>::iterator> ? "proxy_iterator" : "proxy_semi_iterator"));
+#ifdef __cpp_lib_ranges_zip
+        static_assert(overload_taken<std::ranges::iterator_t<std::ranges::zip_view<ints, ints>>>() == "proxy_semi_iterator");
+#endif
         BOOST_CHECK(true);
 }
 
