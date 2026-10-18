@@ -135,7 +135,10 @@ Before a push, [`tools/ci-local.sh`](tools/ci-local.sh) runs the GitHub Actions 
   `gcovr` command;
 - clang-tidy 22, 23 and 24-SVN, each on GCC 15's libstdc++ as the clang-tidy job compiles, with that job's passes:
   the generated per-header units, each public header on its own, and the test sources;
-- the format gate.
+- the format gate;
+- the draft check, which no workflow runs: it fetches the working draft the headers cite from
+  [cplusplus/draft](https://github.com/cplusplus/draft), at that draft's tag, and `tools/check-draft-wording.py` checks
+  that each definition copied from it still reads as the cited paragraph does, token for token.
 
 It takes a list of legs, or runs them all, one after another, with every core each; `--list` names them. Each leg
 logs to `build/ci-local/<leg>.log`, and the run ends in one line per leg. The suite legs build in Debug, or in
