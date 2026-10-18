@@ -191,7 +191,11 @@ holding a seeded prototype of `H` and copying it on every call, and returns the 
 unordered container asks for. The default is `boost::hash2::xxhash_64` on every platform: it
 avalanches at any key length, where FNV-1a leaves the low bits a masked table takes blind to the
 high bits of the last byte. For keys an adversary chooses, name SipHash and seed it per container,
-as Hash2 advises:
+as Hash2 advises. Without a secret seed, an attacker who knows the hash searches offline for keys
+that share a slot: 2.7·10⁸ hashes find 32,768 that lengthen a `boost::unordered_flat_map`'s
+average insertion probe from 1.07 groups to 786, and 7·10⁷ find 8,192 that fill one bucket of a
+reserved `std::unordered_map`, under xxHash, FNV-1a and a publicly seeded SipHash alike. A seed
+drawn per container leaves both tables as they are with random keys:
 
 ```cpp
 #include <xstd/misc/functional.hpp>

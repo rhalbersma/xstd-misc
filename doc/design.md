@@ -276,6 +276,18 @@ resistance without a key buys nothing. Hash2's own advice for keys an adversary 
 `siphash_64` with a seed drawn per container, which is a choice the caller makes and
 spells out.
 
+**Flooding.** The seed is what defeats an attacker who knows the hash function. An offline
+search for keys that share a slot costs 2.7·10⁸ hashes for 32,768 keys in one group of a
+`boost::unordered_flat_map`, whose average insertion probe then goes from 1.07 groups to 786,
+and 7·10⁷ for 8,192 keys in one bucket of a `std::unordered_map` reserved to them. Insertion
+runs 17–40 and 105–177 times slower, on libstdc++ and libc++, under unseeded xxHash, unseeded
+FNV-1a and SipHash with a public seed alike. A secret seed per container leaves both tables as
+they are with random keys, under SipHash and under xxHash. That search does not tell the two
+apart: SipHash's half of the advice answers collisions found independently of the seed, as
+Aumasson and Bernstein found for MurmurHash and CityHash in 2012, which this measurement does
+not attempt. The method, its source and the full results are in
+[#63](https://github.com/rhalbersma/xstd-misc/issues/63#issuecomment-6247746524).
+
 **`is_avalanching`.** Boost.Unordered's open-addressing containers mix every hash value again
 before using it, unless `boost::hash_is_avalanching` reports the hasher avalanching, which it
 reads from a nested `is_avalanching`. `hash<T, H>` declares it from
