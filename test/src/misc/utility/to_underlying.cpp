@@ -48,6 +48,10 @@ BOOST_AUTO_TEST_CASE(YieldsTheUnderlyingValue)
         XSTD_CONSTEXPR_CHECK_EQUAL(xstd::to_underlying(e3_<e3{}>()), static_cast<char>(0));
         XSTD_CONSTEXPR_CHECK_EQUAL(xstd::to_underlying(e4_<e4{}>()), static_cast<unsigned char>(0));
         XSTD_CONSTEXPR_CHECK_EQUAL(xstd::to_underlying(e5_<e5{}>()), static_cast<unsigned>(0));
+
+        // A cast, so neither form throws, as std::to_underlying does not.
+        static_assert(noexcept(xstd::to_underlying(e1())));
+        static_assert(noexcept(xstd::to_underlying(e1_<e1{}>())));
 }
 
 template<class T>

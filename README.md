@@ -290,8 +290,8 @@ static_assert(xstd::hash_algorithm<boost::hash2::siphash_64>);
 static_assert(not xstd::hash_algorithm<int>);
 ```
 
-See [the design notes](doc/design.md) for rationale, and
-[CONTRIBUTING.md](CONTRIBUTING.md) to build the library itself.
+See [the reference](doc/reference.md) for each entity's specification and the test behind each element of it,
+[the design notes](doc/design.md) for rationale, and [CONTRIBUTING.md](CONTRIBUTING.md) to build the library itself.
 
 ## Headers
 
