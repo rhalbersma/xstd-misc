@@ -261,8 +261,9 @@ struct empty_member_type {
 - Its comparisons reach a class derived from it, and not a class that holds it as a member.
   *Test:* `type_traits/empty_member_type.cpp: ItsComparisonReachesADerivedTypeAndNotAnEnclosingOne`.
 - The variadic constructor ignores its arguments, so an enclosing class can construct the member as it would the
-  type it stands in for. *Constraints:* no `Args` is the class itself, so copy and move construction are not taken
-  over. *Definition only:* the copy and move constructors are trivial either way, so no existing type observes it.
+  type it stands in for. *Constraints:* no `Args` is the class itself, so copying from a mutable lvalue stays the
+  trivial copy rather than the variadic constructor, which would match that lvalue better.
+  *Test:* `type_traits/empty_member_type.cpp: IsTrivial`.
 
 ### `conditional_data_member`, `conditional_data_member_t`
 
