@@ -128,8 +128,10 @@ type, preserving the value at the type level.
 
 A second overload takes a plain enum, so `xstd::` is one spelling over both
 forms rather than a name a caller has to remember to switch away from for the
-unwrapped case. It is an overload rather than a using-declaration because the
-constraint is then written where it applies, as the wrapped one writes its own.
+unwrapped case. It is declared as the standard declares `std::to_underlying`, with
+no constraint of its own: `underlying_type_t<Enum>` in its return type already makes
+any other type a substitution failure. The wrapped overload deduces its return type,
+so it writes its constraint.
 
 It performs the cast rather than calling `std::to_underlying`, which would put
 the library's baseline at [C++23](https://wg21.link/N4950) for one function. The

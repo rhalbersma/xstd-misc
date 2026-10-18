@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(IsConstrainedToEnumerations)
 {
         XSTD_CONSTEXPR_CHECK(has_to_underlying<e1_<e1{}>>);
 
-        // the constraint precedes the return type, so a non-enum is a substitution failure
+        // the wrapped form's constraint precedes its deduced return type, so a non-enum is a substitution failure
         XSTD_CONSTEXPR_CHECK((not has_to_underlying<std::integral_constant<int, 0>>));
         XSTD_CONSTEXPR_CHECK(not has_to_underlying<double>);
 }
