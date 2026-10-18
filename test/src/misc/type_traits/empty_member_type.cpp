@@ -46,6 +46,9 @@ BOOST_AUTO_TEST_CASE(IsTrivial)
         XSTD_CONSTEXPR_CHECK(std::is_trivially_copy_assignable_v<empty>);
         XSTD_CONSTEXPR_CHECK(std::is_trivially_move_constructible_v<empty>);
         XSTD_CONSTEXPR_CHECK(std::is_trivially_move_assignable_v<empty>);
+
+        // A mutable lvalue matches a forwarding constructor better than the copy constructor's const reference.
+        XSTD_CONSTEXPR_CHECK((std::is_trivially_constructible_v<empty, empty&>));
 }
 
 BOOST_AUTO_TEST_CASE(IsNoThrow)
