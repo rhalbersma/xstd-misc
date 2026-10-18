@@ -9,13 +9,11 @@
 #include <xstd/misc/concepts/proxy_reference.hpp> // proxy_reference
 #include <iterator>                               // iter_value_t
 #include <type_traits>                            // integral_constant, is_enum_v, is_nothrow_convertible_v, underlying_type_t
-#include <utility>                                // declval
 
 namespace xstd {
 
 // Returns what N5054 [utility.underlying]/1 has std::to_underlying return, and does nothing more.
 template<class Enum>
-        requires std::is_enum_v<Enum>
 [[nodiscard]] constexpr auto to_underlying(Enum value) noexcept
         -> std::underlying_type_t<Enum>
 {
@@ -33,7 +31,6 @@ template<class Enum, Enum N>
 
 // Reads through a proxy for an enum, whose conversion the deduction of the first overload would never consider.
 template<proxy_reference R>
-        requires std::is_enum_v<std::iter_value_t<decltype(&std::declval<R&>())>>
 [[nodiscard]] constexpr auto to_underlying(R ref) noexcept(std::is_nothrow_convertible_v<R, std::iter_value_t<decltype(&ref)>>)
         -> std::underlying_type_t<std::iter_value_t<decltype(&ref)>>
 {

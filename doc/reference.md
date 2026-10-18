@@ -433,13 +433,11 @@ The umbrella exports it. *Test:* `format.cpp: ReExportsTheWholeDirectory`.
 ```cpp
 namespace xstd {
   template<class Enum>
-    requires is_enum_v<Enum>
     constexpr auto to_underlying(Enum value) noexcept -> underlying_type_t<Enum>;
   template<class Enum, Enum N>
     requires is_enum_v<Enum>
     constexpr auto to_underlying(integral_constant<Enum, N>) noexcept;
   template<proxy_reference R>
-    requires is_enum_v<iter_value_t<decltype(&declval<R&>())>>
     constexpr auto to_underlying(R ref) noexcept(see below) -> underlying_type_t<iter_value_t<decltype(&ref)>>;
 }
 ```
@@ -449,8 +447,8 @@ The umbrella exports it. *Test:* `utility.cpp: ReExportsTheWholeDirectory`.
 ### `to_underlying`
 
 - `to_underlying(Enum value)`:
-  - *Constraints:* `Enum` is an enumeration, and the constraint precedes the return type, so any other type is a
-    substitution failure. *Test:* `utility/to_underlying.cpp: IsConstrainedToEnumerations`.
+  - *Remarks:* A type `Enum` that is not an enumeration is a substitution failure, since `underlying_type_t<Enum>`
+    names no type for it. *Test:* `utility/to_underlying.cpp: IsConstrainedToEnumerations`.
   - *Returns:* `static_cast<underlying_type_t<Enum>>(value)`, the Returns element of [utility.underlying].
     *Test:* `utility/to_underlying.cpp: YieldsTheUnderlyingValue`. *Checked by* `tools/check-draft-wording.py`.
   - It is `noexcept`, as is the next form. *Test:* `utility/to_underlying.cpp: YieldsTheUnderlyingValue`.
@@ -460,9 +458,11 @@ The umbrella exports it. *Test:* `utility.cpp: ReExportsTheWholeDirectory`.
   - A non-enumeration constant is a substitution failure.
     *Test:* `utility/to_underlying.cpp: IsConstrainedToEnumerations`.
 - `to_underlying(R ref)`:
-  - *Constraints:* `R` models `proxy_reference`, and the value type its address names is an enumeration.
+  - *Constraints:* `R` models `proxy_reference`.
     *Test:* `utility/to_underlying.cpp: IsConstrainedToProxiesForEnumerations`.
   - *Returns:* `to_underlying(static_cast<V>(ref))`, where `V` is that value type.
     *Test:* `utility/to_underlying.cpp: ReadsThroughAProxyForAnEnumeration`.
-  - *Remarks:* The exception specification is `is_nothrow_convertible_v<R, V>`.
+  - *Remarks:* A value type `V` that is not an enumeration is a substitution failure, through the return type
+    `underlying_type_t<V>`. *Test:* `utility/to_underlying.cpp: IsConstrainedToProxiesForEnumerations`.
+    The exception specification is `is_nothrow_convertible_v<R, V>`.
     *Test:* `utility/to_underlying.cpp: ReadsThroughAProxyForAnEnumeration`.
