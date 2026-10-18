@@ -12,8 +12,8 @@
 #include <boost/hash2/fnv1a.hpp>                                   // fnv1a_64
 #include <boost/hash2/get_integral_result.hpp>                     // get_integral_result
 #include <boost/hash2/hash_append.hpp>                             // hash_append
-#include <boost/hash2/siphash.hpp>                                 // siphash_64
-#include <boost/hash2/xxhash.hpp>                                  // xxhash_64
+#include <boost/hash2/siphash.hpp>                                 // siphash_32, siphash_64
+#include <boost/hash2/xxhash.hpp>                                  // xxhash_32, xxhash_64
 #include <boost/test/unit_test.hpp>                                // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL, BOOST_CHECK_GT, BOOST_CHECK_LT, BOOST_CHECK_NE
 #include <array>                                                   // array
 #include <bit>                                                     // endian, has_single_bit
@@ -27,7 +27,7 @@
 #include <string>                                                  // string
 #include <string_view>                                             // string_view
 #include <thread>                                                  // thread
-#include <type_traits>                                             // is_constructible_v, is_convertible_v
+#include <type_traits>                                             // conditional_t, is_constructible_v, is_convertible_v
 #include <unordered_set>                                           // unordered_set
 #include <utility>                                                 // declval, pair
 #include <vector>                                                  // vector
@@ -45,9 +45,20 @@ constexpr auto seed       = std::uint64_t{0x9e37'79b9'7f4a'7c15};
 constexpr auto other_seed = std::uint64_t{0xc2b2'ae3d'27d4'eb4f};
 constexpr auto key        = std::array<unsigned char, 16>{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
+// A seed that fits in 32 bits, which Hash2's xxhash_32 takes as reference XXH32 does, without mixing in a high half.
+constexpr auto narrow_seed = std::uint64_t{0x7f4a'7c15};
+
+// Which of a pair of algorithms is as wide as the target's std::size_t.
+template<class H32, class H64>
+using native = std::conditional_t<std::numeric_limits<std::size_t>::digits <= 32, H32, H64>;
+
 // Whether a hash over H can be named at all, rather than failing to compile.
 template<class H>
 concept algorithm_argument = requires { typename xstd::hash<int, H>; };
+
+// Whether a hash over a pair of algorithms can be named at all.
+template<class H32, class H64>
+concept algorithm_pair = requires { typename xstd::hash<int, H32, H64>; };
 
 template<class Hash>
 concept transparent = requires { typename Hash::is_transparent; };
@@ -99,10 +110,36 @@ BOOST_AUTO_TEST_CASE(AHashIsNotAHashAlgorithm)
         XSTD_CONSTEXPR_CHECK(not xstd::hash_algorithm<xstd::hash<int>>);
 }
 
-// A table's hash never leaves the process, so it appends in the target's own byte order.
-BOOST_AUTO_TEST_CASE(TheDefaultAlgorithmIsXxhash64InNativeBytes)
+// A table's hash never leaves the process, so it runs the xxHash as wide as std::size_t, in the target's byte order.
+BOOST_AUTO_TEST_CASE(TheDefaultIsTheXxhashAsWideAsSizeTInNativeBytes)
 {
-        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<int>, xstd::hash<int, boost::hash2::xxhash_64, boost::hash2::default_flavor>>));
+        using xxhash = native<boost::hash2::xxhash_32, boost::hash2::xxhash_64>;
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<int>, xstd::hash<int, boost::hash2::xxhash_32, boost::hash2::xxhash_64, boost::hash2::default_flavor>>));
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<int>::hash_type, xxhash>));
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<std::string>::hash_type, xxhash>));
+}
+
+// One algorithm named alone runs on every target, so a seeded SipHash is SipHash wherever the table is built.
+BOOST_AUTO_TEST_CASE(OneAlgorithmNamedAloneRunsOnEveryTarget)
+{
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::wide_hash_algorithm_t<boost::hash2::siphash_64>, boost::hash2::siphash_64>));
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<std::string, boost::hash2::siphash_64>::hash_type, boost::hash2::siphash_64>));
+        // Named alone, xxhash_32 is the default's own first algorithm, so it names the default pair; written twice, it alone.
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<int, boost::hash2::xxhash_32>, xstd::hash<int>>));
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<int, boost::hash2::xxhash_32, boost::hash2::xxhash_32>::hash_type, boost::hash2::xxhash_32>));
+        // Named alone, siphash_32 keeps its own width rather than taking its 64-bit sibling's.
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::wide_hash_algorithm_t<boost::hash2::siphash_32>, boost::hash2::siphash_32>));
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<std::string, boost::hash2::siphash_32>::hash_type, boost::hash2::siphash_32>));
+}
+
+// A pair runs the one as wide as std::size_t; given wider first, as two names read in either order, it is rejected.
+BOOST_AUTO_TEST_CASE(APairRunsTheAlgorithmAsWideAsSizeT)
+{
+        using siphash = native<boost::hash2::siphash_32, boost::hash2::siphash_64>;
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<std::string, boost::hash2::siphash_32, boost::hash2::siphash_64>::hash_type, siphash>));
+        XSTD_CONSTEXPR_CHECK((algorithm_pair<boost::hash2::siphash_32, boost::hash2::siphash_64>));
+        XSTD_CONSTEXPR_CHECK((not algorithm_pair<boost::hash2::siphash_64, boost::hash2::siphash_32>));
+        XSTD_CONSTEXPR_CHECK((not algorithm_pair<boost::hash2::xxhash_64, boost::hash2::xxhash_32>));
 }
 
 // FNV-1a carries no bit of a byte down to the bits below it, so masking its 64-bit hash erases the tag.
@@ -130,21 +167,21 @@ BOOST_AUTO_TEST_CASE(TaggedIdsShareABucketUnderFnv1aWhereATableMasksTheirHash)
         BOOST_CHECK_GT(default_buckets, bucket_count / 2);
 }
 
-// The 64-bit digest itself where std::size_t holds it, and get_integral_result's multiply-high fold where it is 32.
+// Reference xxHash of the bytes appended: XXH64 where std::size_t is 64 bits, and XXH32 where it is 32.
 BOOST_AUTO_TEST_CASE(IsOneValuePerWidthOfSizeT)
 {
         if constexpr (std::endian::native == std::endian::little) {
-                auto const integer = xstd::hash<std::uint64_t>(seed);
-                auto const string  = xstd::hash<std::string>(seed);
-                auto const at_size = [](std::uint64_t digest, std::uint32_t fold) -> std::size_t {
+                auto const integer = xstd::hash<std::uint64_t>(narrow_seed);
+                auto const string  = xstd::hash<std::string>(narrow_seed);
+                auto const at_size = [](std::uint64_t xxh64, std::uint32_t xxh32) -> std::size_t {
                         if constexpr (std::numeric_limits<std::size_t>::digits >= 64) {
-                                return static_cast<std::size_t>(digest);
+                                return static_cast<std::size_t>(xxh64);
                         } else {
-                                return fold;
+                                return xxh32;
                         }
                 };
-                BOOST_CHECK_EQUAL(integer(std::uint64_t{42}), at_size(0xf92a'4389'bd62'ee57, 0xb9d9'e2fa));
-                BOOST_CHECK_EQUAL(string("r1/p1/..."), at_size(0xd7e9'ed42'f1d4'b1ce, 0xab90'41e8));
+                BOOST_CHECK_EQUAL(integer(std::uint64_t{42}), at_size(0x4e48'7a7d'0132'7b00, 0xd71c'dec8));
+                BOOST_CHECK_EQUAL(string("r1/p1/..."), at_size(0x972a'1300'8c74'a2d0, 0x935a'4719));
         } else {
                 BOOST_CHECK(true); // silence Boost.Test's "test case did not check any assertions"
         }
@@ -153,9 +190,9 @@ BOOST_AUTO_TEST_CASE(IsOneValuePerWidthOfSizeT)
 // Boost.Unordered reads the algorithm's answer through the hash, and skips its post-mix only where it is true.
 BOOST_AUTO_TEST_CASE_TEMPLATE(ReportsWhetherItsAlgorithmAvalanches, H, test::algorithms)
 {
-        XSTD_CONSTEXPR_CHECK((xstd::hash<int, H>::is_avalanching::value == xstd::hash_algorithm_is_avalanching_v<H>));
+        XSTD_CONSTEXPR_CHECK((xstd::hash<int, H, H>::is_avalanching::value == xstd::hash_algorithm_is_avalanching_v<H>));
 #ifdef TEST_HAS_BOOST_UNORDERED
-        XSTD_CONSTEXPR_CHECK((boost::hash_is_avalanching<xstd::hash<int, H>>::value == xstd::hash_algorithm_is_avalanching_v<H>));
+        XSTD_CONSTEXPR_CHECK((boost::hash_is_avalanching<xstd::hash<int, H, H>>::value == xstd::hash_algorithm_is_avalanching_v<H>));
 #endif
 }
 
@@ -191,11 +228,11 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(HashesItsKeyAsHash2Does, H, test::algorithms)
         auto const numbers = std::vector<int>{1, 2, 3};
         auto const entry   = std::pair<int, std::string>(42, "word");
 
-        BOOST_CHECK_EQUAL((xstd::hash<int, H>(seed)(42)), hash2_of(H(seed), 42));
-        BOOST_CHECK_EQUAL((xstd::hash<double, H>(seed)(2.5)), hash2_of(H(seed), 2.5));
-        BOOST_CHECK_EQUAL((xstd::hash<std::string, H>(seed)(word)), hash2_of(H(seed), word));
-        BOOST_CHECK_EQUAL((xstd::hash<std::vector<int>, H>(seed)(numbers)), hash2_of(H(seed), numbers));
-        BOOST_CHECK_EQUAL((xstd::hash<std::pair<int, std::string>, H>(seed)(entry)), hash2_of(H(seed), entry));
+        BOOST_CHECK_EQUAL((xstd::hash<int, H, H>(seed)(42)), hash2_of(H(seed), 42));
+        BOOST_CHECK_EQUAL((xstd::hash<double, H, H>(seed)(2.5)), hash2_of(H(seed), 2.5));
+        BOOST_CHECK_EQUAL((xstd::hash<std::string, H, H>(seed)(word)), hash2_of(H(seed), word));
+        BOOST_CHECK_EQUAL((xstd::hash<std::vector<int>, H, H>(seed)(numbers)), hash2_of(H(seed), numbers));
+        BOOST_CHECK_EQUAL((xstd::hash<std::pair<int, std::string>, H, H>(seed)(entry)), hash2_of(H(seed), entry));
 }
 
 // Hash2 declares hash_append void for every key, so a constraint on the call admits std::thread::id, which it rejects.
@@ -207,11 +244,12 @@ BOOST_AUTO_TEST_CASE(HashAppendIsDeclaredForKeysHash2CannotHash)
 // 42 converts to the key's type first, so it hashes as the std::int64_t{42} a table holds, not as four bytes.
 BOOST_AUTO_TEST_CASE(ConvertsEachArgumentToItsKeyType)
 {
-        auto const h = xstd::hash<std::int64_t>();
+        using hash   = xstd::hash<std::int64_t>;
+        auto const h = hash();
 
         BOOST_CHECK_EQUAL(h(42), h(std::int64_t{42}));
-        BOOST_CHECK_EQUAL(h(42), hash2_of(boost::hash2::xxhash_64(), std::int64_t{42}));
-        BOOST_CHECK_NE(h(42), hash2_of(boost::hash2::xxhash_64(), 42));
+        BOOST_CHECK_EQUAL(h(42), hash2_of(hash::hash_type(), std::int64_t{42}));
+        BOOST_CHECK_NE(h(42), hash2_of(hash::hash_type(), 42));
 }
 
 // Only a string key is transparent: elsewhere equal values of other types need not append the same bytes.
@@ -226,7 +264,7 @@ BOOST_AUTO_TEST_CASE(IsTransparentOverStringsOnly)
 // A string, its view and a C string append the same characters, under every algorithm.
 BOOST_AUTO_TEST_CASE_TEMPLATE(AStringHashesAsItsViewAndItsCString, H, test::algorithms)
 {
-        auto const h      = xstd::hash<std::string, H>(seed);
+        auto const h      = xstd::hash<std::string, H, H>(seed);
         auto const string = std::string("piece");
 
         BOOST_CHECK_EQUAL(h(std::string_view(string)), h(string));
@@ -240,7 +278,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(EqualValuesHashEqual, H, test::algorithms)
         auto built         = std::string("the quick");
         built += " brown fox";
 
-        for (auto const& h : {xstd::hash<std::string, H>(), xstd::hash<std::string, H>(seed), xstd::hash<std::string, H>(key.data(), key.size())}) {
+        for (auto const& h : {xstd::hash<std::string, H, H>(), xstd::hash<std::string, H, H>(seed), xstd::hash<std::string, H, H>(key.data(), key.size())}) {
                 BOOST_CHECK_EQUAL(h(literal), h(built));
         }
 }
@@ -248,7 +286,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(EqualValuesHashEqual, H, test::algorithms)
 // The prototype is copied, not consumed: a second call, or a copy of the hash, starts where the first did.
 BOOST_AUTO_TEST_CASE_TEMPLATE(EachCallStartsFromThePrototype, H, test::algorithms)
 {
-        auto const h    = xstd::hash<int, H>(seed);
+        auto const h    = xstd::hash<int, H, H>(seed);
         auto const copy = h;
 
         BOOST_CHECK_EQUAL(h(42), h(42));
@@ -257,10 +295,10 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(EachCallStartsFromThePrototype, H, test::algorithm
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(SeedsChangeTheResult, H, test::algorithms)
 {
-        auto const unseeded_hash = xstd::hash<int, H>();
-        auto const seeded_hash   = xstd::hash<int, H>(seed);
-        auto const reseeded_hash = xstd::hash<int, H>(other_seed);
-        auto const keyed_hash    = xstd::hash<int, H>(key.data(), key.size());
+        auto const unseeded_hash = xstd::hash<int, H, H>();
+        auto const seeded_hash   = xstd::hash<int, H, H>(seed);
+        auto const reseeded_hash = xstd::hash<int, H, H>(other_seed);
+        auto const keyed_hash    = xstd::hash<int, H, H>(key.data(), key.size());
 
         auto const unseeded = unseeded_hash(42);
         auto const seeded   = seeded_hash(42);
@@ -275,9 +313,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(SeedsChangeTheResult, H, test::algorithms)
 // Each constructor is a constant expression; the call is not, as Hash2 1.92 has no constexpr get_integral_result.
 BOOST_AUTO_TEST_CASE_TEMPLATE(IsConstructibleInConstantExpressions, H, test::constexpr_algorithms)
 {
-        [[maybe_unused]] constexpr auto unseeded = xstd::hash<int, H>();
-        [[maybe_unused]] constexpr auto seeded   = xstd::hash<int, H>(seed);
-        [[maybe_unused]] constexpr auto keyed    = xstd::hash<int, H>(key.data(), key.size());
+        [[maybe_unused]] constexpr auto unseeded = xstd::hash<int, H, H>();
+        [[maybe_unused]] constexpr auto seeded   = xstd::hash<int, H, H>(seed);
+        [[maybe_unused]] constexpr auto keyed    = xstd::hash<int, H, H>(key.data(), key.size());
 
         BOOST_CHECK(true); // silence Boost.Test's "test case did not check any assertions"
 }
