@@ -152,11 +152,26 @@ A fixture that runs a component over a user-shaped argument probes no concept, a
 
 ## Checking your work
 
-Compile with the **stable rung** of [README.md](README.md)'s matrix, never with whatever `g++` or `clang++`
-happen to resolve to. Ubuntu 24.04 ships GCC 13, which rejects `-std=c++2c` outright, so the default compiler
-cannot build this library at all, and a check that quietly falls back to a cut-down reproduction proves less than
-it appears to. [`tools/setup-toolchain.sh`](tools/setup-toolchain.sh) installs the rung;
-`XSTD_TOOLCHAIN_FULL=1` adds the qualification rung, which a leg carrying a newer standard library needs.
+Break things here, not on CI's runners, where a push waits hours for its first result. Two scripts make that
+possible, and the work relies on them rather than on whatever happens to be installed:
+
+- [`tools/setup-toolchain.sh`](tools/setup-toolchain.sh) installs what CI builds with: every rung of
+  [README.md](README.md)'s matrix, clang-tidy for each of the three clangs, the format gate's clang-format 22, the
+  CMake the workflows pin and the Boost CI resolves. Run it once per container; it is idempotent.
+- [`tools/ci-local.sh`](tools/ci-local.sh) runs the ladders' Linux legs on that toolchain. Run the legs a change can
+  break while iterating, and every leg before a push. Push only what it reports green: CI is there to confirm,
+  not to discover.
+
+Run every job that takes more than a moment in the background: the setup script, a `ci-local.sh` run, a build, a
+test suite, clang-tidy. A leg takes minutes and a full run far longer, and a conversation waiting on one in the
+foreground cannot answer the question that arrives meanwhile. Start it, keep working or answering, and read its log
+when it reports back.
+
+Never build with whatever `g++` or `clang++` happen to resolve to. Ubuntu 24.04 ships GCC 13, which rejects
+`-std=c++2c` outright, so the default compiler cannot build this library at all, and a check that quietly falls
+back to a cut-down reproduction proves less than it appears to. What `ci-local.sh` cannot cover, MSVC, clang-cl,
+MinGW, Apple Clang, Emscripten and the libc++ legs of the two newer rungs, is CI's alone; say so rather than claim
+it was checked.
 
 A comment or formatting change is not exempt, because two gates read lines rather than syntax. `NOLINT` and
 `GCOVR_EXCL_LINE` suppress the line they sit on, so a formatter that splits that line leaves the marker behind on
@@ -180,7 +195,7 @@ long, in each repository.
   `main` into it, never rebasing, so its one run is against the `main` it will land on. A stack costs the same runs
   and adds a restack whenever a lower pull request changes; pull requests in parallel make every merge put the rest
   out of date.
-- **Push once per round.** Reproduce a failure and fix it locally, on the stable rung as above, and push when
+- **Push once per round.** Reproduce a failure and fix it locally, with `ci-local.sh` as above, and push when
   everything passes. A push cancels the run before it, but not the jobs that already took their slots.
 - **Merge on green, then start the next.** A green, conflict-free pull request is squash-merged at once. The next
   one opens once the merge has landed. Runs on a pull request that will be updated before it merges are cancelled
