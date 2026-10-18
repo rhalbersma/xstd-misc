@@ -197,8 +197,11 @@ static_assert(xstd::container_compatible_range<std::vector<int>, long>);
 `hash<T, H>` hashes a key of type `T` through `hash_append` with the Boost.Hash2 algorithm `H`,
 holding a seeded prototype of `H` and copying it on every call, and returns the `std::size_t` an
 unordered container asks for. The default is `boost::hash2::xxhash_64` on every platform: it
-avalanches at any key length, where FNV-1a leaves the low bits a masked table takes blind to the
-high bits of the last byte. For keys an adversary chooses, name SipHash and seed it per container,
+passes SMHasher3's Avalanche test at every key length from 3 to 128 bytes, where FNV-1a leaves the
+low bits a masked table takes blind to the high bits of the last byte. Each call pays a fixed cost
+for copying that prototype and appending through Hash2: about 15–19 ns on x86-64 for strings up
+to 64 bytes, against 4–15 ns for `std::hash` and `boost::hash`, which a set of short strings feels
+as inserts and lookups about three times slower. The gap closes at about 256 bytes. For keys an adversary chooses, name SipHash and seed it per container,
 as Hash2 advises. Without a secret seed, an attacker who knows the hash searches offline for keys
 that share a slot: 2.7·10⁸ hashes find 32,768 that lengthen a `boost::unordered_flat_map`'s
 average insertion probe from 1.07 groups to 786, and 7·10⁷ find 8,192 that fill one bucket of a
@@ -257,8 +260,10 @@ for a key, such as a transposition table's, is as wide on a 32-bit target as on 
 should be wide enough that two keys colliding is never the likeliest bug, at any table size, so the
 default is `boost::hash2::xxh3_128`, whose result is a 16-byte `digest<16>`, as
 [xxHash](https://github.com/Cyan4973/xxHash) recommends where a 128-bit hash is required. Its
-per-call cost is two to four times xxHash64's on short keys, which a table hashing every lookup
-would feel and a digest computed once does not. Name `xxhash_64` for a 64-bit one:
+per-call cost is three to five times xxHash64's on x86-64, and 1.3 to 3 times on a 32-bit
+target, which a table hashing every lookup would feel and a digest computed once does not.
+Its 128 bits keep the birthday bound out of reach: 2³² keys collide with probability 2⁻⁶⁵, where
+64 bits would collide more often than not. Name `xxhash_64` for a 64-bit one:
 
 ```cpp
 #include <xstd/misc/functional.hpp>
