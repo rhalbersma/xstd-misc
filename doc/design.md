@@ -263,15 +263,24 @@ group from a hash's high bits instead, and FNV-1a leaves those alike for the sam
 last byte meets a single multiply, which carries its high bits only part of the way up. The
 table mixes FNV-1a's hash before taking the group, and no insertion then probes past its first. That it hides on the most common
 toolchain is what makes it easy to miss. Measured over 24-byte keys, FNV-1a has input/output bit pairs that never flip
-together, where xxHash is at the sampling noise. FNV-1a is faster on a key of about a word,
-by a few nanoseconds, and slower once keys reach a few words; xxHash consumes the input a word per lane with a constant finalization, so its
-worst case is a fixed overhead on a key of a few bytes. There is no second alias for short
+together, where xxHash is at the sampling noise. Measured with nanobench on one core of an x86-64
+Xeon at `-O2`, FNV-1a is faster by 3–14 ns on keys of up to 16 bytes, and four to eight times
+slower from 64 bytes. xxHash consumes the input a word per lane with a constant finalization, so
+its cost through `hash` is a fixed 15–19 ns a call for strings up to 64 bytes, 8.5 ns for a
+64-bit integer, and 37 ns at 256 bytes, where it meets `std::hash` and `boost::hash`. There is no second alias for short
 keys: a choice between a fast default and a safe one is the misuse this rules out, and a
 caller who wants FNV-1a names `boost::hash2::fnv1a_64`. One algorithm on every platform
 also makes the value one function of the key at each width of `size_t`: the 64-bit digest
 itself where `size_t` holds it, and `get_integral_result`'s multiply-high fold of that digest
 where it is 32 bits, which the tests pin with literal values. The cost is that a 32-bit CPU
-emulates xxHash's 64-bit multiplies. The default is not SipHash either: a default-constructed hasher is unseeded, and keyed
+emulates xxHash's 64-bit multiplies, about 34–50 ns a call on i686 up to 16 bytes.
+
+**The fixed cost in a table.** Copying the seeded prototype and appending through Hash2 costs
+6–15 ns a call more than `boost::hash` on strings of up to 64 bytes. A `boost::unordered_flat_set`
+of 1024 16-byte strings that inserts and then finds every key runs 2.9 times slower under `hash`
+than under `boost::hash` on x86-64, and 3.6 times on i686, which is more than the per-call gap
+alone. It is the price of a seed and of one appending path for every key type. The method, the
+build and the per-length tables are in [#53](https://github.com/rhalbersma/xstd-misc/issues/53#issuecomment-6250956313). The default is not SipHash either: a default-constructed hasher is unseeded, and keyed
 resistance without a key buys nothing. Hash2's own advice for keys an adversary chooses is
 `siphash_64` with a seed drawn per container, which is a choice the caller makes and
 spells out.
@@ -323,8 +332,14 @@ almost never flipping with some key bit. In a `boost::unordered_flat_set` of 163
 strided or common-prefix keys, xxHash, XXH3 and SipHash have the same probe lengths without the
 mix as with it, while FNV-1a declared avalanching lengthens insertion probes by five to eight
 percent. That second measurement is evidence rather than a test: probes in an
-open-addressing table are not independent, so no threshold on it is calibrated. SMHasher3 gives
-the fuller verdict, and once Hash2 publishes the property the hasher reads it instead.
+open-addressing table are not independent, so no threshold on it is calibrated. SMHasher3's
+Avalanche test, run through `hash`'s whole path at both widths of `std::size_t` and at every key
+length from 3 to 128 bytes, agrees with the trait for all 28 Hash2 algorithms. Its stricter BIC
+test fails XXH3-128, and both Murmur3 variants mildly, on 3-byte keys only. SMHasher3's own
+reference XXH3 fails it worse, so this is XXH3's short-input path rather than Hash2's or this
+library's, and bit independence is no part of what the trait claims. The method and the
+per-algorithm table are in [#53](https://github.com/rhalbersma/xstd-misc/issues/53#issuecomment-6250933037). Once Hash2 publishes
+the property, the hasher reads it instead.
 
 **`constexpr`, `noexcept`.** All three constructors and the call operator are `constexpr`.
 The constructors are constant expressions for every algorithm outside `legacy/`, which the
@@ -353,10 +368,12 @@ A table hashes on every lookup and needs only `size_t`'s width; a digest is comp
 and its width is the point, as wide as makes two keys colliding never the likeliest bug at any
 table size. The default is therefore `boost::hash2::xxh3_128`, which
 [xxHash](https://github.com/Cyan4973/xxHash) recommends where a 128-bit hash is required, while
-`hash` keeps `xxhash_64`. Measured through these classes on x86-64 at `-O2`, Hash2's
-`xxh3_128` costs two to four times what `xxhash_64` does per call on keys up to 256 bytes, 18 to
-47 ns against 8 to 17 on short ones; its state is 560 bytes against 80, and the prototype is
-copied on every call. That is a price a digest pays once and a table would pay on every lookup.
+`hash` keeps `xxhash_64`. Measured through these classes with nanobench at `-O2`, Hash2's
+`xxh3_128` costs 3.4 to 4.6 times what `xxhash_64` does per call on x86-64, 39 to 67 ns against
+8.5 to 19 on keys up to 64 bytes, and 1.3 to 3 times on i686. Its state is 560 bytes against 80,
+and the prototype is copied on every call. That is a price a digest pays once and a table would pay on every lookup.
+The width buys the birthday bound: n keys under a b-bit digest collide with probability about
+n²/2^(b+1), so 2³² keys collide with probability 2⁻⁶⁵ at 128 bits and 0.39 at 64.
 A digest that persists still does better to name its algorithm, so that no change of default
 could invalidate what was stored.
 
