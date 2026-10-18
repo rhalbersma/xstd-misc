@@ -28,6 +28,7 @@
 [![MSVC-Analyze](https://github.com/rhalbersma/xstd-misc/actions/workflows/msvc-analyze.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/msvc-analyze.yml)
 [![CodeQL](https://github.com/rhalbersma/xstd-misc/actions/workflows/codeql.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/codeql.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/rhalbersma/xstd-misc/badge)](https://scorecard.dev/viewer/?uri=github.com/rhalbersma/xstd-misc)
+[![Documentation](https://github.com/rhalbersma/xstd-misc/actions/workflows/pages.yml/badge.svg)](https://rhalbersma.github.io/xstd-misc/)
 
 xstd-misc is a header-only collection of small extensions to the C++ standard
 library: what the xstd family needs beyond integers, which
@@ -85,13 +86,20 @@ concepts recognize proxies, in two strengths:
 ```cpp
 #include <xstd/misc/concepts.hpp>
 #include <xstd/misc/utility.hpp>
+#include <ranges>
 #include <vector>
 
 static_assert(xstd::proxy_semi_iterator<std::vector<bool>::iterator>);
 static_assert(xstd::proxy_semi_reference<std::vector<bool>::reference, bool>);
 
-for (auto element : packed_enums) {
-    auto n = xstd::to_underlying(element); // element is the container's proxy, not the enum
+template<std::ranges::input_range R>
+auto sum_of_underlying(R const& packed_enums)
+{
+    auto sum = 0;
+    for (auto element : packed_enums) {
+        sum += xstd::to_underlying(element); // element is the container's proxy, not the enum
+    }
+    return sum;
 }
 ```
 
@@ -128,14 +136,15 @@ collapse:
 
 ```cpp
 #include <xstd/misc/type_traits.hpp>
+#include <memory>
 
-template<bool Stateful>
+template<bool Stateful, class Allocator = std::allocator<int>>
 struct storage {
-    [[XSTD_NO_UNIQUE_ADDRESS]] xstd::conditional_data_member_t<Stateful, allocator_type, struct alloc> allocator;
-    value_type value;
+    [[XSTD_NO_UNIQUE_ADDRESS]] xstd::conditional_data_member_t<Stateful, Allocator, struct alloc> allocator;
+    int value;
 };
 
-static_assert(sizeof(storage<false>) == sizeof(value_type));
+static_assert(sizeof(storage<false>) == sizeof(int));
 ```
 
 Use `XSTD_NO_UNIQUE_ADDRESS` inside an attribute-specifier. It expands to
@@ -198,10 +207,9 @@ static_assert(xstd::container_compatible_range<std::vector<int>, long>);
 holding a seeded prototype of `H` and copying it on every call, and returns the `std::size_t` an
 unordered container asks for. The default is `boost::hash2::xxhash_64` on every platform: it
 passes SMHasher3's Avalanche test at every key length from 3 to 128 bytes, where FNV-1a leaves the
-low bits a masked table takes blind to the high bits of the last byte. Each call pays a fixed cost
-for copying that prototype and appending through Hash2: about 15–19 ns on x86-64 for strings up
-to 64 bytes, against 4–15 ns for `std::hash` and `boost::hash`, which a set of short strings feels
-as inserts and lookups about three times slower. The gap closes at about 256 bytes. For keys an adversary chooses, name SipHash and seed it per container,
+low bits a masked table takes blind to the high bits of the last byte. Each call costs about
+15–19 ns on x86-64 for strings up to 64 bytes, most of it fixed, and 37 ns at 256 bytes. For keys
+an adversary chooses, name SipHash and seed it per container,
 as Hash2 advises. Without a secret seed, an attacker who knows the hash searches offline for keys
 that share a slot: 2.7·10⁸ hashes find 32,768 that lengthen a `boost::unordered_flat_map`'s
 average insertion probe from 1.07 groups to 786, and 7·10⁷ find 8,192 that fill one bucket of a
@@ -250,8 +258,18 @@ algorithm. An algorithm written outside Hash2 is false until its author says oth
 definition, and deriving from an avalanching algorithm does not inherit the answer:
 
 ```cpp
+#include <xstd/misc/type_traits.hpp>
+#include <boost/hash2/xxhash.hpp>
+#include <type_traits>
+
+struct my_algorithm : boost::hash2::xxhash_64 {
+    using xxhash_64::xxhash_64;
+};
+
 template<>
 struct xstd::hash_algorithm_is_avalanching<my_algorithm> : std::true_type {};
+
+static_assert(xstd::hash_algorithm_is_avalanching_v<my_algorithm>);
 ```
 
 `digest<T, H>` runs the same seeded prototype over the same `hash_append`, but returns the
@@ -303,6 +321,9 @@ auto const text = std::format("{}", xstd::digest<std::string>()("r1/p1/..."));  
 so an algorithm written outside Hash2 is checked where it is named:
 
 ```cpp
+#include <xstd/misc/concepts.hpp>
+#include <boost/hash2/siphash.hpp>
+
 static_assert(xstd::hash_algorithm<boost::hash2::siphash_64>);
 static_assert(not xstd::hash_algorithm<int>);
 ```

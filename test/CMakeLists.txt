@@ -134,6 +134,50 @@ foreach(h ${public_headers})
     cmake_language(CALL ${project_id}_add_header_self_sufficiency_test ${h})
 endforeach()
 
+# Each C++ example in the README is compiled as its own translation unit, so the documentation cannot drift from the
+# code: readme.example<n> is the README's n-th ```cpp block, with an empty main appended.
+set(readme ${PROJECT_SOURCE_DIR}/README.md)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${readme})
+file(READ ${readme} readme_text)
+# A Windows checkout may carry CRLF line endings, which the fences below are matched without.
+string(REPLACE "\r\n" "\n" readme_text "${readme_text}")
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/readme)
+set(readme_example 0)
+while(TRUE)
+    string(FIND "${readme_text}" "\n```cpp\n" fence)
+    if(fence EQUAL -1)
+        break()
+    endif()
+    math(EXPR fence "${fence} + 8")
+    string(SUBSTRING "${readme_text}" ${fence} -1 readme_text)
+    string(FIND "${readme_text}" "\n```\n" fence)
+    if(fence EQUAL -1)
+        message(FATAL_ERROR "README.md: a ```cpp block is never closed")
+    endif()
+    math(EXPR fence "${fence} + 1")
+    string(SUBSTRING "${readme_text}" 0 ${fence} example_code)
+    string(SUBSTRING "${readme_text}" ${fence} -1 readme_text)
+    math(EXPR readme_example "${readme_example} + 1")
+
+    set(example_source ${CMAKE_CURRENT_BINARY_DIR}/readme/example${readme_example}.cpp)
+    file(WRITE ${example_source} "${example_code}\nauto main() -> int {}\n")
+    add_executable(readme.example${readme_example} ${example_source})
+    target_link_libraries(
+        readme.example${readme_example} PRIVATE
+        xstd::misc
+        ${project_id}_test_options
+    )
+    # An example declares its variables at namespace scope, where a reader would declare them in a function.
+    target_compile_options(
+        readme.example${readme_example} PRIVATE
+        $<$<CXX_COMPILER_ID:Clang>:-Wno-missing-variable-declarations -Wno-exit-time-destructors -Wno-unused-const-variable>
+    )
+    add_test(NAME readme.example${readme_example} COMMAND readme.example${readme_example})
+endwhile()
+if(readme_example EQUAL 0)
+    message(FATAL_ERROR "README.md has no ```cpp block, so no example of it is compiled")
+endif()
+
 # A header under a detail/ directory is machinery, not a public header: what includes it specifies it, and tests it.
 list(FILTER public_headers EXCLUDE REGEX "/detail/")
 
