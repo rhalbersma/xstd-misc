@@ -28,6 +28,7 @@
 [![MSVC-Analyze](https://github.com/rhalbersma/xstd-misc/actions/workflows/msvc-analyze.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/msvc-analyze.yml)
 [![CodeQL](https://github.com/rhalbersma/xstd-misc/actions/workflows/codeql.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/codeql.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/rhalbersma/xstd-misc/badge)](https://scorecard.dev/viewer/?uri=github.com/rhalbersma/xstd-misc)
+[![Documentation](https://github.com/rhalbersma/xstd-misc/actions/workflows/pages.yml/badge.svg)](https://rhalbersma.github.io/xstd-misc/)
 
 xstd-misc is a header-only collection of small extensions to the C++ standard
 library: what the xstd family needs beyond integers, which

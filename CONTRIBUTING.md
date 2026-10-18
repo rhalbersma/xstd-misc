@@ -7,7 +7,8 @@ When adding or changing a public utility:
 1. Add or update the relevant header under `include/xstd/`.
 2. Add or update matching tests under `test/src/`; CMake creates one test executable per `.cpp` file in that directory.
 3. Build and test locally (see below).
-4. Update the feature table and examples in [README.md](README.md) when the public API changes.
+4. Update the feature table and examples in [README.md](README.md) when the public API changes. Each ```` ```cpp ```` block
+   there is compiled as a test, so an example includes what it uses and declares what it names.
 
 ## What a PR must satisfy before it can merge
 
@@ -18,6 +19,8 @@ This repository enforces its quality bar through CI rather than through review d
 - **Line and branch coverage stay at 100%, project-wide and for the PR's own diff.** [`codecov.yml`](.github/codecov.yml) sets both the `project` and `patch` Codecov status checks to a 100% target with zero tolerance, backed by the [Coverage workflow](.github/workflows/coverage.yml)'s own `gcovr --fail-under-line 100 --fail-under-branch 100` gate. New code needs a test that exercises every line and branch it adds; existing coverage may not regress. Excluded from this bar: `assert(...)` contract checks (their failure path is undefined behavior by design, not something a correct test can hit), compiler-synthesized `= default;` special members (gcov cannot attribute a hit counter to them regardless of how often they run), and the exception-unwinding branch gcc/gcov attaches to any call that could throw (`--exclude-throw-branches`/`--exclude-unreachable-branches`) - not a code path a test can meaningfully hit either.
 - **No new sanitizer failures.** The [sanitizers workflow](.github/workflows/sanitizers.yml) must stay green.
 - **The public headers stay self-sufficient.** Each header is compiled as its own translation unit (see `test/CMakeLists.txt`); don't rely on include order from another header.
+- **The README's examples compile.** `test/CMakeLists.txt` writes each ```` ```cpp ```` block of [README.md](README.md) to a translation unit of its own, `readme.example<n>`, built with the tests' warnings on every leg.
+- **The documentation site builds.** The [Pages workflow](.github/workflows/pages.yml) runs `mkdocs build --strict` over the README and `doc/`, which fails on a link to a page or an anchor that does not exist, and deploys the site from `main`.
 - **The library stays a leaf.** `test/CMakeLists.txt` fails the configure step if any public header includes `<xstd/ints/...>` or `<xstd/bits/...>`. A facility that needs one of them belongs in that library, not here.
 - **`clang-format` is clean.** The [Clang-Format workflow](.github/workflows/clang-format.yml) runs `clang-format --dry-run --Werror` over every header and test source against [`.clang-format`](.clang-format), so any diff fails the job. Run `clang-format -i` on changed files before pushing.
 - **Workflow files pass `actionlint`.** The [Actionlint workflow](.github/workflows/actionlint.yml) validates GitHub Actions syntax and expressions.
@@ -41,6 +44,7 @@ The library itself needs one dependency, the header-only [Boost.Hash2](https://w
 | [gcovr](https://gcovr.com/) | reproducing the coverage gate | `setup-toolchain.sh` installs the coverage job's version, hash-pinned in [`tools/gcovr-requirements.txt`](tools/gcovr-requirements.txt) |
 | `clang-tidy` and `run-clang-tidy` | reproducing the clang-tidy gate | Only for the workflow below |
 | `clang-format` | the formatting gate | Run `clang-format -i` on changed files before pushing |
+| [MkDocs Material](https://squidfunk.github.io/mkdocs-material/) | building the documentation site | Hash-pinned in [`tools/mkdocs-requirements.txt`](tools/mkdocs-requirements.txt); `ci-local.sh`'s site leg installs it into a virtual environment of its own |
 
 ## Getting a toolchain
 
@@ -138,7 +142,8 @@ Before a push, [`tools/ci-local.sh`](tools/ci-local.sh) runs the GitHub Actions 
 - the format gate;
 - the draft check, which no workflow runs: it fetches the working draft the headers cite from
   [cplusplus/draft](https://github.com/cplusplus/draft), at that draft's tag, and `tools/check-draft-wording.py` checks
-  that each definition copied from it still reads as the cited paragraph does, token for token.
+  that each definition copied from it still reads as the cited paragraph does, token for token;
+- the site, built as the Pages workflow builds it.
 
 It takes a list of legs, or runs them all, one after another, with every core each; `--list` names them. Each leg
 logs to `build/ci-local/<leg>.log`, and the run ends in one line per leg. The suite legs build in Debug, or in
@@ -195,6 +200,17 @@ cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 run-clang-tidy -quiet -p build "$PWD/build/test/header_self_sufficiency/.*"
 ```
 
+### Building the documentation
+
+[`mkdocs.yml`](mkdocs.yml) serves the README as the site's index and the pages under `doc/` beside it, and
+[`tools/mkdocs_hooks.py`](tools/mkdocs_hooks.py) points each relative link, written for GitHub, at the page the site
+serves for it, or at its file on GitHub. To preview the site as it is edited:
+
+```sh
+python3 -m venv build/mkdocs && build/mkdocs/bin/pip install --require-hashes -r tools/mkdocs-requirements.txt
+build/mkdocs/bin/mkdocs serve --strict
+```
+
 ## Standards-paper tracking
 
 Implementation-relevant proposals must record the paper number, the revision-pinned wording reviewed by xstd, the corresponding live `cplusplus/papers` tracking issue, the last-reviewed date, and a short statement saying whether xstd implements, partially follows, extends, or merely references the paper. Unversioned `wg21.link/P####` links are reserved for links explicitly described as the latest revision; implementation and conformance claims use pinned `P####R#` links. Durable prose does not copy volatile WG21 status labels.
@@ -227,6 +243,7 @@ The names to tick under branch protection, exactly as GitHub reports them:
 | `msvc / all` | cl on VS 2022, 2026 and 2026-Preview |
 | `msvc_analyze / all` | `/analyze` on the same three rungs |
 | `sanitizers / all` | all fifteen sanitizer legs |
+| `site` | `mkdocs build --strict`: every page and anchor a link names exists |
 
 Codecov posts two more, `codecov/project` and `codecov/patch`, which carry the same 100% bar for the whole
 tree and for the diff.
