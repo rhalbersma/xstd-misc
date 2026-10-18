@@ -207,10 +207,9 @@ static_assert(xstd::container_compatible_range<std::vector<int>, long>);
 holding a seeded prototype of `H` and copying it on every call, and returns the `std::size_t` an
 unordered container asks for. The default is `boost::hash2::xxhash_64` on every platform: it
 passes SMHasher3's Avalanche test at every key length from 3 to 128 bytes, where FNV-1a leaves the
-low bits a masked table takes blind to the high bits of the last byte. Each call pays a fixed cost
-for copying that prototype and appending through Hash2: about 15–19 ns on x86-64 for strings up
-to 64 bytes, against 4–15 ns for `std::hash` and `boost::hash`, which a set of short strings feels
-as inserts and lookups about three times slower. The gap closes at about 256 bytes. For keys an adversary chooses, name SipHash and seed it per container,
+low bits a masked table takes blind to the high bits of the last byte. Each call costs about
+15–19 ns on x86-64 for strings up to 64 bytes, most of it fixed, and 37 ns at 256 bytes. For keys
+an adversary chooses, name SipHash and seed it per container,
 as Hash2 advises. Without a secret seed, an attacker who knows the hash searches offline for keys
 that share a slot: 2.7·10⁸ hashes find 32,768 that lengthen a `boost::unordered_flat_map`'s
 average insertion probe from 1.07 groups to 786, and 7·10⁷ find 8,192 that fill one bucket of a
