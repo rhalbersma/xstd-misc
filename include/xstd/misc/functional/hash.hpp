@@ -9,20 +9,15 @@
 #include <xstd/misc/concepts/hash_algorithm.hpp>  // hash_algorithm
 #include <xstd/misc/functional/detail/hasher.hpp> // hasher
 #include <boost/hash2/flavor.hpp>                 // default_flavor
-#include <boost/hash2/xxhash.hpp>                 // xxhash_32, xxhash_64
+#include <boost/hash2/xxhash.hpp>                 // xxhash_64
 #include <cstddef>                                // size_t
 #include <string>                                 // basic_string
 #include <string_view>                            // basic_string_view
-#include <type_traits>                            // conditional_t, is_same_v
 
 namespace xstd {
 
-// The default H32: H64 itself, so an algorithm named alone runs everywhere; xxhash_32 beside the default xxhash_64.
-template<hash_algorithm H64>
-using narrow_hash_algorithm_t = std::conditional_t<std::is_same_v<H64, boost::hash2::xxhash_64>, boost::hash2::xxhash_32, H64>;
-
 // xxHash passes SMHasher3's Avalanche test at 3 to 128 bytes; FNV-1a's last byte's high bits never reach the low bits.
-template<class T, hash_algorithm H64 = boost::hash2::xxhash_64, hash_algorithm H32 = narrow_hash_algorithm_t<H64>, class Flavor = boost::hash2::default_flavor>
+template<class T, hash_algorithm H64 = boost::hash2::xxhash_64, hash_algorithm H32 = H64, class Flavor = boost::hash2::default_flavor>
         // A pair given in the wrong order would run the wider algorithm where std::size_t is the narrower one.
         requires(sizeof(typename H32::result_type) <= sizeof(typename H64::result_type))
 class hash
