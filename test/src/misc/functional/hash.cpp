@@ -49,16 +49,16 @@ constexpr auto key        = std::array<unsigned char, 16>{1, 2, 3, 4, 5, 6, 7, 8
 constexpr auto narrow_seed = std::uint64_t{0x7f4a'7c15};
 
 // Which of a pair of algorithms is as wide as the target's std::size_t.
-template<class H32, class H64>
+template<class H64, class H32>
 using native = std::conditional_t<std::numeric_limits<std::size_t>::digits <= 32, H32, H64>;
 
 // Whether a hash over H can be named at all, rather than failing to compile.
 template<class H>
 concept algorithm_argument = requires { typename xstd::hash<int, H>; };
 
-// Whether a hash over a pair of algorithms can be named at all.
-template<class H32, class H64>
-concept algorithm_pair = requires { typename xstd::hash<int, H32, H64>; };
+// Whether a hash over a pair of algorithms, the 64-bit one first, can be named at all.
+template<class H64, class H32>
+concept algorithm_pair = requires { typename xstd::hash<int, H64, H32>; };
 
 template<class Hash>
 concept transparent = requires { typename Hash::is_transparent; };
@@ -113,8 +113,8 @@ BOOST_AUTO_TEST_CASE(AHashIsNotAHashAlgorithm)
 // A table's hash never leaves the process, so it runs the xxHash as wide as std::size_t, in the target's byte order.
 BOOST_AUTO_TEST_CASE(TheDefaultIsTheXxhashAsWideAsSizeTInNativeBytes)
 {
-        using xxhash = native<boost::hash2::xxhash_32, boost::hash2::xxhash_64>;
-        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<int>, xstd::hash<int, boost::hash2::xxhash_32, boost::hash2::xxhash_64, boost::hash2::default_flavor>>));
+        using xxhash = native<boost::hash2::xxhash_64, boost::hash2::xxhash_32>;
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<int>, xstd::hash<int, boost::hash2::xxhash_64, boost::hash2::xxhash_32, boost::hash2::default_flavor>>));
         XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<int>::hash_type, xxhash>));
         XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<std::string>::hash_type, xxhash>));
 }
@@ -122,24 +122,23 @@ BOOST_AUTO_TEST_CASE(TheDefaultIsTheXxhashAsWideAsSizeTInNativeBytes)
 // One algorithm named alone runs on every target, so a seeded SipHash is SipHash wherever the table is built.
 BOOST_AUTO_TEST_CASE(OneAlgorithmNamedAloneRunsOnEveryTarget)
 {
-        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::wide_hash_algorithm_t<boost::hash2::siphash_64>, boost::hash2::siphash_64>));
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::narrow_hash_algorithm_t<boost::hash2::siphash_64>, boost::hash2::siphash_64>));
         XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<std::string, boost::hash2::siphash_64>::hash_type, boost::hash2::siphash_64>));
-        // Named alone, xxhash_32 is the default's own first algorithm, so it names the default pair; written twice, it alone.
-        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<int, boost::hash2::xxhash_32>, xstd::hash<int>>));
-        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<int, boost::hash2::xxhash_32, boost::hash2::xxhash_32>::hash_type, boost::hash2::xxhash_32>));
+        // Named alone, xxhash_64 is the default's own first algorithm, so it names the default pair; written twice, it alone.
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<int, boost::hash2::xxhash_64>, xstd::hash<int>>));
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<int, boost::hash2::xxhash_64, boost::hash2::xxhash_64>::hash_type, boost::hash2::xxhash_64>));
         // Named alone, siphash_32 keeps its own width rather than taking its 64-bit sibling's.
-        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::wide_hash_algorithm_t<boost::hash2::siphash_32>, boost::hash2::siphash_32>));
         XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<std::string, boost::hash2::siphash_32>::hash_type, boost::hash2::siphash_32>));
 }
 
-// A pair runs the one as wide as std::size_t; given wider first, as two names read in either order, it is rejected.
+// A pair runs the one as wide as std::size_t; given narrower first, as two names read in either order, it is rejected.
 BOOST_AUTO_TEST_CASE(APairRunsTheAlgorithmAsWideAsSizeT)
 {
-        using siphash = native<boost::hash2::siphash_32, boost::hash2::siphash_64>;
-        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<std::string, boost::hash2::siphash_32, boost::hash2::siphash_64>::hash_type, siphash>));
-        XSTD_CONSTEXPR_CHECK((algorithm_pair<boost::hash2::siphash_32, boost::hash2::siphash_64>));
-        XSTD_CONSTEXPR_CHECK((not algorithm_pair<boost::hash2::siphash_64, boost::hash2::siphash_32>));
-        XSTD_CONSTEXPR_CHECK((not algorithm_pair<boost::hash2::xxhash_64, boost::hash2::xxhash_32>));
+        using siphash = native<boost::hash2::siphash_64, boost::hash2::siphash_32>;
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<std::string, boost::hash2::siphash_64, boost::hash2::siphash_32>::hash_type, siphash>));
+        XSTD_CONSTEXPR_CHECK((algorithm_pair<boost::hash2::siphash_64, boost::hash2::siphash_32>));
+        XSTD_CONSTEXPR_CHECK((not algorithm_pair<boost::hash2::siphash_32, boost::hash2::siphash_64>));
+        XSTD_CONSTEXPR_CHECK((not algorithm_pair<boost::hash2::xxhash_32, boost::hash2::xxhash_64>));
 }
 
 // FNV-1a carries no bit of a byte down to the bits below it, so masking its 64-bit hash erases the tag.

@@ -78,7 +78,7 @@ public:
 };
 
 // The algorithm a hash runs at the target's width of std::size_t: H32 where it is at most 32 bits, and H64 otherwise.
-template<hash_algorithm H32, hash_algorithm H64>
+template<hash_algorithm H64, hash_algorithm H32>
 using native_hash_algorithm_t = std::conditional_t<std::numeric_limits<std::size_t>::digits <= 32, H32, H64>;
 
 } // namespace xstd::detail
