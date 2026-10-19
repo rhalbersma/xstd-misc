@@ -173,6 +173,37 @@ an algorithm parameter on `std::hash` would change the type of every `std::hash<
 ABI of every unordered container over one, and a specialization per key computes its value
 itself, so no algorithm could reach the key's bytes through it.
 
+**What the copy costs.** Measured with nanobench on GCC 15 at `-O2`, on one core of a 2.8 GHz
+Xeon, copying `xxhash_64`'s 80-byte prototype takes about 1 ns of a call that costs 11–18 ns on
+x64 for a 64-bit integer or a 16-byte string; `llvm-mca` puts its five 16-byte loads and stores at
+5 cycles. Starting each call from a default-constructed algorithm instead, or seeding one per call,
+takes as long as the whole call does with the copy, so the fixed cost over `std::hash` is Hash2's
+buffered `update` and its `result`, not the copy. `xxh3_128`'s 560-byte state is another matter:
+its copy takes 19–23 ns of a 40–63 ns call on x64, and 17–28 ns of 55–105 on i686. Building that
+state any other way costs as much or more, so the copy is still the cheapest start a seeded call
+has.
+
+**Its successors.** Two later papers took the problem elsewhere. [P0029R0](https://wg21.link/P0029R0)
+unifies it with [N3333](https://wg21.link/n3333): a type's `hash_value` takes the algorithm's state by value and returns it
+through `hash_combine`, the algorithm gets that broad interface rather than the bytes `uhash`'s algorithms take, and
+`std::hash`'s primary template calls `hash_value`, so a type becomes hashable in every container
+without naming a hasher. It permits other algorithms but expects most users never to need one, warns that
+the choice may prove a foot-gun, and asks that the default be randomized at program startup; it states
+that `hash_value`'s contract is not strong enough for fingerprinting or serialization. Abseil's
+`absl::Hash` has that shape, an `AbslHashValue(H, T const&)` returning `H::combine(...)`, and its
+values change between runs. This library follows [N3980](https://wg21.link/n3980) and Hash2 on both counts the paper argues
+against. The algorithm is the user's, named and seeded per container, because containers differ in
+what they need: a secretly seeded SipHash where an adversary chooses the keys, and xxHash where
+none does. And the bytes `hash_append` writes are fixed by the flavor, which is what lets `digest`
+persist. A library outside the standard cannot extend `std::hash`, so a container names
+`xstd::hash`, the explicit choice that paper observes users are reluctant to make.
+[P0814R2](https://github.com/cplusplus/papers/issues/253) proposes `std::hash_combine(args...)`,
+Boost's `hash_combine` as a standard function: it hashes each argument through `std::hash` to a
+`size_t` and mixes the results, and promises the same value only within one execution. That
+reduces each member to a `size_t` before the next begins, the repeated step [P0029R0](https://wg21.link/P0029R0) names as what
+makes composing `std::hash` inefficient; `hash_append` feeds every member to one algorithm state
+instead, so the library has no `hash_combine`.
+
 **Where it lives.** Under `functional/`, the directory mirroring `<functional>`, which holds
 `std::hash`, beside [`digest`](#digest); the concept goes under `concepts/` and the avalanching
 trait under `type_traits/`, as every other concept and trait here does. Each header holds one
