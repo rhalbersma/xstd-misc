@@ -32,7 +32,7 @@ need one third-party library, Boost.Hash2, which the hashing facilities are buil
 The type utilities intentionally remain narrow:
 
 - `is_specialization_of` and `specialization_of` recognize specializations of
-  class templates whose parameters are all types, under p2098's spelling. Only that
+  class templates whose parameters are all types, under [P2098](https://github.com/cplusplus/papers/issues/812)'s spelling. Only that
   shape is offered. The kinds are part of a template's type and no one template
   template parameter binds them all, so every other shape needs its own name, and
   the one consumer that had a template with a value parameter is better served by a
@@ -40,8 +40,8 @@ The type utilities intentionally remain narrow:
   trait is the exact question; the concept strips a `const`, because an adaptor over
   a const owner names `Container const`.
 - `simple_allocator` and `container_compatible_range` are the standard's
-  exposition-only *simple-allocator* ([allocator.requirements.general]) and
-  *container-compatible-range* ([container.intro.reqmts]), spelled out word for word
+  exposition-only *simple-allocator* ([[allocator.requirements.general]/99](https://eel.is/c++draft/allocator.requirements.general#99)) and
+  *container-compatible-range* ([[container.intro.reqmts]/2](https://eel.is/c++draft/container.intro.reqmts#2)), spelled out word for word
   so that a container outside the standard library can constrain its allocator
   arguments and `from_range` constructors exactly as the standard's containers are
   specified to. Each header cites the working draft and paragraph it copies, and
@@ -120,8 +120,8 @@ The [original 2016 sketch](ideas.md#1-convenient-underlying-types-for-scoped-enu
 motivated `to_underlying` with scoped enums used as named tuple and array
 indices. Rein Halbersma developed the idea and initial usage evidence with
 Walter E. Brown; JeanHeyd Meneide then authored
-[P1682R1](https://wg21.link/P1682R1) and carried `std::to_underlying` through
-WG21 for [C++23](https://wg21.link/N4950). P1682's acknowledgements record those
+[P1682R1](https://github.com/cplusplus/papers/issues/460) and carried `std::to_underlying` through
+WG21 for [C++23](https://wg21.link/N4950). [P1682](https://github.com/cplusplus/papers/issues/460)'s acknowledgements record those
 roles. The xstd overload complements it: given an enum value wrapped in
 `std::integral_constant`, it returns an `integral_constant` of the underlying
 type, preserving the value at the type level.
@@ -136,7 +136,7 @@ so it writes its constraint.
 It performs the cast rather than calling `std::to_underlying`, which would put
 the library's baseline at [C++23](https://wg21.link/N4950) for one function. The
 cast is not an approximation of that function: its Returns element,
-[utility.underlying]/1, is `static_cast<underlying_type_t<T>>(value)` and nothing
+[[utility.underlying]/1](https://eel.is/c++draft/utility.underlying#1), is `static_cast<underlying_type_t<T>>(value)` and nothing
 more, so this is the standard's own wording rather than a reimplementation of it.
 `tools/check-draft-wording.py` holds the cast to that paragraph of the working
 draft the header cites. Selecting between
@@ -159,14 +159,14 @@ own code -- their configuration is not ours to fix.
 ### `hash`
 
 `xstd::hash<T, H>` is the hasher the
-[Boost.Hash2 documentation](https://www.boost.org/doc/libs/release/libs/hash2/)
+[Boost.Hash2 documentation](https://www.boost.org/doc/libs/latest/libs/hash2/)
 sketches for an unordered container: it holds a prototype of the algorithm `H`, seeded
 once, and copies it on every call, so that `hash_append` of the key starts from the same
 state each time and a `const` call operator mutates nothing. Hash2 separates *what* a type
 hashes, its `tag_invoke` hook, from *which algorithm* hashes it; this is the piece that
 lets a user choose the algorithm per container, and seed it per container. Its call returns
-`std::size_t`, as the standard's *Cpp17Hash* requirements and Boost.Unordered ask, through
-Hash2's `get_integral_result`. It descends from [N3980](https://wg21.link/n3980)'s `uhash`, which
+`std::size_t`, as the standard's [*Cpp17Hash*](https://eel.is/c++draft/hash.requirements) requirements and [Boost.Unordered](https://www.boost.org/doc/libs/latest/libs/unordered/) ask, through
+Hash2's [`get_integral_result`](https://www.boost.org/doc/libs/latest/libs/hash2/doc/html/hash2.html#ref_get_integral_result). It descends from [N3980](https://wg21.link/n3980)'s `uhash`, which
 takes its key per call, default-constructs its algorithm on every one and returns the whole
 result. The paper sets `uhash` beside `std::hash` rather than in it, as this library sets `hash`:
 an algorithm parameter on `std::hash` would change the type of every `std::hash<Key>`, and so the
@@ -218,7 +218,7 @@ instantiation; the constraint belongs in Hash2, and the call operator can take i
 
 **`hash_algorithm`.** The algorithm parameter is constrained by a public concept, because a
 user has a reason to name it: to check that an algorithm they wrote conforms, and to
-constrain their own templates on one. It states Boost.Hash2 1.92's documented requirements
+constrain their own templates on one. It states Boost.Hash2 1.92's [documented requirements](https://www.boost.org/doc/libs/latest/libs/hash2/doc/html/hash2.html#hashing_bytes_hash_algorithm_requirements)
 for a hash algorithm, and only those, since a concept stricter or looser than Hash2's own
 contract would mislead the user it answers:
 
@@ -228,7 +228,7 @@ contract would mislead the user it answers:
 - `update(void const*, std::size_t)` on a non-`const` object;
 - `result()` on a non-`const` object, returning `result_type`;
 - `result_type` an unsigned integer type other than `bool`, or an array-like type of
-  `unsigned char` whose size is fixed at compile time, as Hash2's `has_constant_size` reports;
+  `unsigned char` whose size is fixed at compile time, as Hash2's [`has_constant_size`](https://www.boost.org/doc/libs/latest/libs/hash2/doc/html/hash2.html#ref_has_constant_size) reports;
 - `block_size`, where it is declared at all, of type `std::size_t`.
 
 Three of those lines are drawn where the documentation is ambiguous. The byte seed is
@@ -265,7 +265,7 @@ group from a hash's high bits instead, and FNV-1a leaves those alike for the sam
 last byte meets a single multiply, which carries its high bits only part of the way up. The
 table mixes FNV-1a's hash before taking the group, and no insertion then probes past its first. That it hides on the most common
 toolchain is what makes it easy to miss. Measured over 24-byte keys, FNV-1a has input/output bit pairs that never flip
-together, where xxHash is at the sampling noise. Measured with nanobench on one core of an x86-64
+together, where xxHash is at the sampling noise. Measured with [nanobench](https://github.com/martinus/nanobench) on one core of an x86-64
 Xeon at `-O2`, FNV-1a is faster by 3–14 ns on keys of up to 16 bytes, and four to eight times
 slower from 64 bytes. xxHash consumes the input a word per lane with a constant finalization, so
 its cost through `hash` is a fixed 15–19 ns a call for strings up to 64 bytes, 8.5 ns for a
@@ -294,7 +294,7 @@ Aumasson and Bernstein found for MurmurHash and CityHash in 2012, which this mea
 not attempt. The method, its source and the full results are in
 [#63](https://github.com/rhalbersma/xstd-misc/issues/63#issuecomment-6247746524).
 
-**`is_avalanching`.** Boost.Unordered's open-addressing containers mix every hash value again
+**`is_avalanching`.** Boost.Unordered's open-addressing containers [mix every hash value again](https://www.boost.org/doc/libs/latest/libs/unordered/doc/html/unordered/hash_quality.html)
 before using it, unless `boost::hash_is_avalanching` reports the hasher avalanching, which it
 reads from a nested `is_avalanching`. `hash<T, H>` declares it from
 `hash_algorithm_is_avalanching<H>`, a public trait, because Hash2 records no such property on
@@ -329,7 +329,7 @@ almost never flipping with some key bit. In a `boost::unordered_flat_set` of 163
 strided or common-prefix keys, xxHash, XXH3 and SipHash have the same probe lengths without the
 mix as with it, while FNV-1a declared avalanching lengthens insertion probes by five to eight
 percent. That second measurement is evidence rather than a test: probes in an
-open-addressing table are not independent, so no threshold on it is calibrated. SMHasher3's
+open-addressing table are not independent, so no threshold on it is calibrated. [SMHasher3](https://gitlab.com/fwojcik/smhasher3)'s
 Avalanche test, run through `hash`'s whole path at both widths of `std::size_t` and at every key
 length from 3 to 128 bytes, agrees with the trait for all 28 Hash2 algorithms. Its stricter BIC
 test fails XXH3-128, and both Murmur3 variants mildly, on 3-byte keys only. SMHasher3's own
@@ -374,7 +374,7 @@ n²/2^(b+1), so 2³² keys collide with probability 2⁻⁶⁵ at 128 bits and 0
 A digest that persists still does better to name its algorithm, so that no change of default
 could invalidate what was stored.
 
-**Flavor.** Both classes take Hash2's flavor as a third parameter, the byte order in which
+**Flavor.** Both classes take Hash2's [flavor](https://www.boost.org/doc/libs/latest/libs/hash2/doc/html/hash2.html#ref_flavor) as a third parameter, the byte order in which
 `hash_append` writes integers and the type in which it writes a range's size. `digest` defaults to
 `little_endian_flavor`, so a persisted digest is the same on a big-endian target as on a
 little-endian one; there it writes the native bytes, at no cost, so every digest the tests pin
@@ -388,7 +388,7 @@ result of XXH3-128 and every other algorithm with an array-like result, so that 
 `std::print` write it as `boost::hash2::to_string` does: two lowercase hex digits per byte, in byte
 order, with `X` for uppercase. Any other specification is a `std::format_error`, and so a compile
 error in a checked format string: a width or a base is the habit from integers, and a digest is
-none. [namespace.std] admits the specialization because it depends on a type the standard library
+none. [[namespace.std]](https://eel.is/c++draft/namespace.std) admits the specialization because it depends on a type the standard library
 does not define; Hash2 1.92 ships no formatter of its own, and one that a later release ships
 would collide with this one at compile time rather than replace it in silence.
 
@@ -396,7 +396,7 @@ would collide with this one at compile time rather than replace it in silence.
 
 `misc-include-cleaner` is not asked about `boost/.*` at all, in the root
 `.clang-tidy` and so in the test tree that inherits it. No Boost library ships
-IWYU pragmas -- Boost.Hana has none across 450 headers -- and Boost.Test's macros
+IWYU pragmas -- [Boost.Hana](https://www.boost.org/doc/libs/latest/libs/hana/) has none across 450 headers -- and [Boost.Test](https://www.boost.org/doc/libs/latest/libs/test/)'s macros
 expand through private implementation headers, so the check reports that nothing
 provides the names the tests write. Of Boost, the library includes only Hash2; this is
 about the test tree, about the hashing headers, and about any project that lints its own sources while using

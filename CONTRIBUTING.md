@@ -33,14 +33,14 @@ Match the surrounding code's style by eye where `.clang-format` doesn't have an 
 
 Keep a focused test source for each public function, concept, and trait, mirroring its header path under `test/src/`. A source matching an umbrella header (for example, `concepts.cpp`, `type_traits.cpp`, or `utility.cpp`) tests only identities that span several focused facilities.
 
-The library itself needs one dependency, the header-only [Boost.Hash2](https://www.boost.org/doc/libs/release/libs/hash2/) 1.88+, which [`vcpkg.json`](vcpkg.json) lists and the CMake project finds. Its test suite has a few more, and none of those are needed to *use* xstd-misc:
+The library itself needs one dependency, the header-only [Boost.Hash2](https://www.boost.org/doc/libs/latest/libs/hash2/) 1.88+, which [`vcpkg.json`](vcpkg.json) lists and the CMake project finds. Its test suite has a few more, and none of those are needed to *use* xstd-misc:
 
 | Tool | Needed for | Notes |
 | :--- | :--------- | :---- |
 | A conforming C++20 compiler | everything | Same requirement as the library; see the table in [README.md](README.md) for the versions under CI |
 | [CMake](https://cmake.org/) 3.30+ | configuring and building | `cmake_minimum_required` in [`CMakeLists.txt`](CMakeLists.txt); CTest ships with it. Noble's is 3.28; `setup-toolchain.sh` installs the version the workflows pin, from [`tools/cmake-requirements.txt`](tools/cmake-requirements.txt) |
-| [Boost.Test](https://www.boost.org/doc/libs/release/libs/test/) 1.70+ | the unit tests under `test/src/` | The floor the CMake project asks for, shared with the other xstd repositories; declared in the checked-in [`vcpkg.json`](vcpkg.json) manifest, the `*-vcpkg` presets pick it up from a `VCPKG_ROOT`-configured vcpkg, or install it with your system package manager |
-| [Boost.Unordered](https://www.boost.org/doc/libs/release/libs/unordered/) | the tests running `xstd::hasher` in an open-addressing container | Found quietly: without it those tests compile to a placeholder, so CI installs it through the [`vcpkg.json`](vcpkg.json) `test` feature |
+| [Boost.Test](https://www.boost.org/doc/libs/latest/libs/test/) 1.70+ | the unit tests under `test/src/` | The floor the CMake project asks for, shared with the other xstd repositories; declared in the checked-in [`vcpkg.json`](vcpkg.json) manifest, the `*-vcpkg` presets pick it up from a `VCPKG_ROOT`-configured vcpkg, or install it with your system package manager |
+| [Boost.Unordered](https://www.boost.org/doc/libs/latest/libs/unordered/) | the tests running `xstd::hasher` in an open-addressing container | Found quietly: without it those tests compile to a placeholder, so CI installs it through the [`vcpkg.json`](vcpkg.json) `test` feature |
 | [gcovr](https://gcovr.com/) | reproducing the coverage gate | `setup-toolchain.sh` installs the coverage job's version, hash-pinned in [`tools/gcovr-requirements.txt`](tools/gcovr-requirements.txt) |
 | `clang-tidy` and `run-clang-tidy` | reproducing the clang-tidy gate | Only for the workflow below |
 | `clang-format` | the formatting gate | Run `clang-format -i` on changed files before pushing |
@@ -70,9 +70,12 @@ tools/setup-toolchain.sh
 apt's libc++ packages exclude one another, so libc++ stays at 22; the script names the command that swaps in another
 for a libc++ leg of a newer rung. The script is idempotent, so re-running it on a warm container is safe.
 
-In a [Claude Code cloud](https://code.claude.com/docs/en/claude-code-on-the-web) environment, the environment's
-setup script runs it, so every session starts with the rung already in place. That field holds a script rather than
-a command, and it runs from outside the checkout, so it needs a shebang and an absolute path:
+In a [Claude Code cloud](https://code.claude.com/docs/en/claude-code-on-the-web) session, the repository's
+SessionStart hook, [`.claude/hooks/session-start.sh`](.claude/hooks/session-start.sh), runs it before the session
+starts, so every session starts with the rung in place and nothing has to be configured. Its output goes to
+`/tmp/xstd-setup-toolchain.log`. An environment's setup script can run it too, once per container before any session,
+and the hook then finds the rung installed. That field holds a script rather than a command, and it runs from outside
+the checkout, so it needs a shebang and an absolute path:
 
 ```sh
 #!/usr/bin/env bash
@@ -161,7 +164,7 @@ either; the coverage and clang-tidy commands are also given on their own in the 
 ### Deleting clauses
 
 Full coverage says a line ran, not that a test would fail if it were wrong, and a concept or a requires-clause
-emits no code for a mutation tester such as Mull to change. [`tools/delete-clauses.py`](tools/delete-clauses.py)
+emits no code for a mutation tester such as [Mull](https://github.com/mull-project/mull) to change. [`tools/delete-clauses.py`](tools/delete-clauses.py)
 makes those mutants itself:
 
 - for every concept and requires-clause in a public header, it deletes, one at a time, each operand of an `and`
@@ -204,7 +207,11 @@ run-clang-tidy -quiet -p build "$PWD/build/test/header_self_sufficiency/.*"
 
 [`mkdocs.yml`](mkdocs.yml) serves the README as the site's index and the pages under `doc/` beside it, and
 [`tools/mkdocs_hooks.py`](tools/mkdocs_hooks.py) points each relative link, written for GitHub, at the page the site
-serves for it, or at its file on GitHub. To preview the site as it is edited:
+serves for it, or at its file on GitHub. The hook also fails the build on a citation left unlinked in prose: a section
+of the working draft, such as `[utility.underlying]/1`, links to it at [eel.is/c++draft](https://eel.is/c++draft/), a
+WG21 paper to its [cplusplus/papers](https://github.com/cplusplus/papers) issue (`wg21.link/P1682/github` finds it),
+and a paper without one, or an N-numbered document, to `wg21.link`. A Boost library links to its documentation under
+`boost.org/doc/libs/latest/`. To preview the site as it is edited:
 
 ```sh
 python3 -m venv build/mkdocs && build/mkdocs/bin/pip install --require-hashes -r tools/mkdocs-requirements.txt
