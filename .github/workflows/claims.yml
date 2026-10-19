@@ -1,0 +1,146 @@
+#          Copyright Rein Halbersma 2014-2026.
+# Distributed under the Boost Software License, Version 1.0.
+#    (See accompanying file LICENSE_1_0.txt or copy at
+#          http://www.boost.org/LICENSE_1_0.txt)
+
+name: Claims
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Weekly, the day after the canary: what this repository claims can go false with nothing here changing, when Hash2,
+# the C++ working draft or cpp-ci's toolchain table moves. A failure opens an issue, or comments on the open one.
+on:
+  schedule:
+    - cron: '41 6 * * 2'
+  workflow_dispatch:
+
+jobs:
+  # The suite at the stable rung, against Boost's newest release with Hash2 at the head of its develop branch. A Hash2
+  # change that renames an algorithm class the avalanching trait declares, or alters the bytes a flavor writes and the
+  # known-answer digests pin, fails here before it ships in a release.
+  hash2-develop:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: rhalbersma/cpp-ci/.github/actions/install-gcc@2a7b3577168d22d62a9119b1913c6e0122e78994 # main after rhalbersma/cpp-ci#76, whose clang-tidy action counts every header's result rather than the last one's
+        with:
+          version: "15"
+          trunk: "false"
+
+      - name: Build Boost's newest release, with Hash2 at develop
+        run: |
+          set -euo pipefail
+          tag="$(git ls-remote --tags https://github.com/boostorg/boost.git 'refs/tags/boost-*' \
+            | sed -n 's|.*refs/tags/\(boost-[0-9]*\.[0-9]*\.[0-9]*\)$|\1|p' | sort -V | tail -1)"
+          src="${RUNNER_TEMP}/boost-src"
+          mkdir -p "${src}"
+          curl -fsSL --retry 3 "https://github.com/boostorg/boost/releases/download/${tag}/${tag}-cmake.tar.xz" \
+            | tar -xJ -C "${src}" --strip-components=1
+          rm -rf "${src}/libs/hash2"
+          git clone --quiet --depth 1 --branch develop https://github.com/boostorg/hash2.git "${src}/libs/hash2"
+          echo "::notice::${tag}, with Hash2 at develop $(git -C "${src}/libs/hash2" rev-parse --short HEAD)"
+          cmake -S "${src}" -B "${RUNNER_TEMP}/boost-build" -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_COMPILER=g++-15 -DBOOST_INCLUDE_LIBRARIES="hash2;test;unordered"
+          cmake --build "${RUNNER_TEMP}/boost-build" --parallel
+          cmake --install "${RUNNER_TEMP}/boost-build" --prefix "${RUNNER_TEMP}/boost" > /dev/null
+
+      - name: Build and test the suite
+        run: |
+          set -euo pipefail
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++-15 \
+            -DCMAKE_PREFIX_PATH="${RUNNER_TEMP}/boost" -DCMAKE_CXX_SCAN_FOR_MODULES=OFF -DCMAKE_CXX_FLAGS_DEBUG=-g1
+          cmake --build build --parallel
+          ctest --test-dir build --output-on-failure --parallel
+
+  # What the headers copy from the working draft, against the newest draft and against the draft repository's main
+  # branch, which runs ahead of it: a paragraph that moves or changes fails here, not when a reader follows the link.
+  draft:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check the copied wording against the newest draft and the working draft
+        run: |
+          set -uo pipefail
+          cited="$(python3 -I tools/check-draft-wording.py --docno)"
+          newest="$(git ls-remote --tags https://github.com/cplusplus/draft.git 'refs/tags/n*' \
+            | sed -n 's|.*refs/tags/\(n[0-9]*\)$|\1|p' | sort -V | tail -1)"
+          if [ "${newest}" != "${cited}" ]; then
+            echo "::warning::the headers cite ${cited^^}, and the newest draft is ${newest^^}"
+          fi
+          status=0
+          for ref in "${newest}" main; do
+            dir="${RUNNER_TEMP}/draft-${ref}"
+            git -c advice.detachedHead=false clone --quiet --depth 1 --branch "${ref}" https://github.com/cplusplus/draft.git "${dir}" || { status=1; continue; }
+            echo "== cplusplus/draft at ${ref}"
+            python3 -I tools/check-draft-wording.py --any-draft "${dir}" || status=1
+          done
+          exit "${status}"
+
+  # The README's CI matrix against the toolchain table cpp-ci's ladders resolve, at the commit every workflow here calls
+  # and at cpp-ci's main: the first is what CI runs, the second what a repin would run.
+  matrix:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Compare the README's matrix with cpp-ci's toolchain table
+        run: |
+          set -uo pipefail
+          pins="$(grep -ho -E 'rhalbersma/cpp-ci/[^@ ]+@[0-9a-f]{40}' .github/workflows/*.yml | sed 's/.*@//' | sort -u)"
+          if [ "$(wc -l <<< "${pins}")" -ne 1 ]; then
+            echo "::error::the workflows call cpp-ci at more than one commit: $(tr '\n' ' ' <<< "${pins}")"
+            exit 1
+          fi
+          status=0
+          for ref in "${pins}" main; do
+            table="${RUNNER_TEMP}/toolchains-${ref}.json"
+            curl -fsSL --retry 3 "https://raw.githubusercontent.com/rhalbersma/cpp-ci/${ref}/.github/actions/toolchain/toolchains.json" \
+              -o "${table}" || { status=1; continue; }
+            echo "== cpp-ci at ${ref}"
+            python3 -I tools/check-readme-matrix.py "${table}" || status=1
+          done
+          exit "${status}"
+
+  report:
+    needs: [hash2-develop, draft, matrix]
+    if: failure() && github.event_name == 'schedule'
+    runs-on: ubuntu-24.04
+    permissions:
+      issues: write
+    steps:
+      - name: Open an issue, or comment on the open one
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          HASH2: ${{ needs.hash2-develop.result }}
+          DRAFT: ${{ needs.draft.result }}
+          MATRIX: ${{ needs.matrix.result }}
+        run: |
+          set -euo pipefail
+          title="The weekly claims check failed"
+          body="$(printf '[This run](%s) failed:\n\n- hash2-develop: %s\n- draft: %s\n- matrix: %s\n' "${RUN}" "${HASH2}" "${DRAFT}" "${MATRIX}")"
+          open="$(gh issue list --repo "${REPO}" --state open --search "in:title \"${title}\"" --json number --jq '.[0].number // empty')"
+          if [ -n "${open}" ]; then
+            gh issue comment "${open}" --repo "${REPO}" --body "${body}"
+          else
+            gh issue create --repo "${REPO}" --title "${title}" --body "${body}"
+          fi

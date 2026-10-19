@@ -23,4 +23,4 @@ jobs:
   # which for MinGW is two -- it drops the development rung with a notice
   # rather than failing, as it does for Apple Clang.
   mingw:
-    uses: rhalbersma/cpp-ci/.github/workflows/mingw.yml@0e9948a4bd9f844797ce5b1c9b4c915a94cd665a # main after rhalbersma/cpp-ci#68, whose install-gcc fails its step when the PPA did not serve the compiler
+    uses: rhalbersma/cpp-ci/.github/workflows/mingw.yml@2a7b3577168d22d62a9119b1913c6e0122e78994 # main after rhalbersma/cpp-ci#76, whose clang-tidy action counts every header's result rather than the last one's
