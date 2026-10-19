@@ -58,8 +58,14 @@ concept transparent = requires { typename Hash::is_transparent; };
 
 // Sixteen IDs that differ only in a tag in the high four bits of the byte hash_append writes last, in native order.
 constexpr auto tagged_ids = []() -> std::array<std::uint64_t, 16> {
-        constexpr auto tag_shift = std::endian::native == std::endian::little ? 60U : 4U;
-        auto ids                 = std::array<std::uint64_t, 16>();
+        constexpr auto tag_shift = []() -> unsigned {
+                if constexpr (std::endian::native == std::endian::little) {
+                        return 60U;
+                } else {
+                        return 4U;
+                }
+        }();
+        auto ids = std::array<std::uint64_t, 16>();
         for (auto i = std::size_t{0}; i < ids.size(); ++i) {
                 ids[i] = static_cast<std::uint64_t>(i) << tag_shift;
         }
