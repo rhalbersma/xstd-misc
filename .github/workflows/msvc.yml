@@ -15,13 +15,18 @@ concurrency:
 on:
   pull_request:
     branches: [ main ]
-  # canary.yml dispatches this weekly on main, the run its README badge shows.
+  # canary.yml dispatches this nightly on main, the run its README badge shows.
   workflow_dispatch:
 
 jobs:
-  # No inputs: the shared workflow defaults to the MSVC toolset.
+  # The shared workflow defaults to the MSVC toolset.
   msvc:
     uses: rhalbersma/cpp-ci/.github/workflows/visual-studio.yml@2a7b3577168d22d62a9119b1913c6e0122e78994 # main after rhalbersma/cpp-ci#76, whose clang-tidy action counts every header's result rather than the last one's
+    with:
+      # A pull request builds only the floor and ceiling rungs, in Debug. The
+      # all gate cannot see what was skipped, so the nightly canary covers it,
+      # building every rung and build type on main.
+      reduce_on_pr: true
 
   # 32-bit MSVC: 8-byte alignment for 64-bit members, and the STL's portable 128-bit integer. One rung in Debug, since what is under test is the target.
   msvc_x86:

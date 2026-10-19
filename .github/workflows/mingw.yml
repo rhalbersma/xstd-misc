@@ -15,12 +15,17 @@ concurrency:
 on:
   pull_request:
     branches: [ main ]
-  # canary.yml dispatches this weekly on main, the run its README badge shows.
+  # canary.yml dispatches this nightly on main, the run its README badge shows.
   workflow_dispatch:
 
 jobs:
-  # No inputs: this library builds on every rung the shared workflow offers,
-  # which for MinGW is two -- it drops the development rung with a notice
-  # rather than failing, as it does for Apple Clang.
+  # This library builds on every rung the shared workflow offers, which for
+  # MinGW is two -- it drops the development rung with a notice rather than
+  # failing, as it does for Apple Clang.
   mingw:
     uses: rhalbersma/cpp-ci/.github/workflows/mingw.yml@2a7b3577168d22d62a9119b1913c6e0122e78994 # main after rhalbersma/cpp-ci#76, whose clang-tidy action counts every header's result rather than the last one's
+    with:
+      # A pull request builds only the floor and ceiling rungs, in Debug. The
+      # all gate cannot see what was skipped, so the nightly canary covers it,
+      # building every rung and build type on main.
+      reduce_on_pr: true
