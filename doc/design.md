@@ -258,7 +258,9 @@ own -- then sees keys differing only in those bits collide. Which tables do depe
 standard library: libstdc++ rounds a bucket count up to a prime and Boost.Unordered mixes the
 hash again, which hide it, while MSVC's STL always masks a power-of-two count and libc++ masks
 one whenever it is asked for a power of two. The tests insert sixteen IDs differing only in a
-tag in their top four bits into a table asked for eight buckets: under a 64-bit FNV-1a all of
+tag in the high four bits of the byte `hash_append` writes last, the ID's top four bits on a
+little-endian target and bits 4 to 7 on a big-endian one, into a table asked for eight buckets,
+so both targets hash the same bytes: under a 64-bit FNV-1a all of
 them share one bucket where the table masks, and on a 32-bit target `get_integral_result`'s
 multiply-high fold to `std::size_t` spreads them again. A `boost::unordered_flat_set` takes a
 group from a hash's high bits instead, and FNV-1a leaves those alike for the same IDs too: the
