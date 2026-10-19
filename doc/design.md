@@ -173,6 +173,27 @@ an algorithm parameter on `std::hash` would change the type of every `std::hash<
 ABI of every unordered container over one, and a specialization per key computes its value
 itself, so no algorithm could reach the key's bytes through it.
 
+**Its successors.** Two later papers took the problem elsewhere. [P0029R0](https://wg21.link/P0029R0)
+unifies it with [N3333](https://wg21.link/n3333): a type's `hash_value` takes the algorithm's state by value and returns it
+through `hash_combine`, the algorithm gets that broad interface rather than the bytes `uhash`'s algorithms take, and
+`std::hash`'s primary template calls `hash_value`, so a type becomes hashable in every container
+without naming a hasher. It permits other algorithms but expects most users never to need one, warns that
+the choice may prove a foot-gun, and asks that the default be randomized at program startup; it states
+that `hash_value`'s contract is not strong enough for fingerprinting or serialization. Abseil's
+`absl::Hash` has that shape, an `AbslHashValue(H, T const&)` returning `H::combine(...)`, and its
+values change between runs. This library follows [N3980](https://wg21.link/n3980) and Hash2 on both counts the paper argues
+against. The algorithm is the user's, named and seeded per container, because containers differ in
+what they need: a secretly seeded SipHash where an adversary chooses the keys, and xxHash where
+none does. And the bytes `hash_append` writes are fixed by the flavor, which is what lets `digest`
+persist. A library outside the standard cannot extend `std::hash`, so a container names
+`xstd::hash`, the explicit choice that paper observes users are reluctant to make.
+[P0814R2](https://github.com/cplusplus/papers/issues/253) proposes `std::hash_combine(args...)`,
+Boost's `hash_combine` as a standard function: it hashes each argument through `std::hash` to a
+`size_t` and mixes the results, and promises the same value only within one execution. That
+reduces each member to a `size_t` before the next begins, the repeated step [P0029R0](https://wg21.link/P0029R0) names as what
+makes composing `std::hash` inefficient; `hash_append` feeds every member to one algorithm state
+instead, so the library has no `hash_combine`.
+
 **Where it lives.** Under `functional/`, the directory mirroring `<functional>`, which holds
 `std::hash`, beside [`digest`](#digest); the concept goes under `concepts/` and the avalanching
 trait under `type_traits/`, as every other concept and trait here does. Each header holds one
@@ -370,7 +391,7 @@ guarantee would be a promise about code this header does not see.
 `hash<T, H>`, and returns the algorithm's whole `result_type` where `hash` folds it to
 `std::size_t`. The fold is a function of the target, the 64-bit digest itself where `size_t`
 holds it and a multiply-high fold of it where `size_t` is 32 bits, so a value that stands in for a
-key across targets, runs or builds, such as a transposition table's or a stored one, is the
+key across targets, runs or builds, such as a position cache's or a stored one, is the
 digest rather than the hash. It cannot serve an unordered container, whose hash must return
 `std::size_t`, and so it declares neither `is_avalanching` nor `is_transparent`; over a
 `std::basic_string` its call still takes the view, so a literal digests without a string being
@@ -389,6 +410,20 @@ The width buys the birthday bound: n keys under a b-bit digest collide with prob
 n²/2^(b+1), so 2³² keys collide with probability 2⁻⁶⁵ at 128 bits and 0.39 at 64.
 A digest that persists still does better to name its algorithm, so that no change of default
 could invalidate what was stored.
+
+**In a search.** A digest is computed from the whole key on every call. That suits a key stored or
+persisted once, and suits less well one that changes a little per move: chess and draughts engines
+key their transposition tables by Zobrist hashing, where each piece on each square has a fixed
+random word, a position's key is the XOR of its pieces' words, and a move updates the key in a few
+XORs. One use `digest` serves is a checkers perft past 2·10¹⁹ counts, whose cache of 2³² entries
+is keyed by a 128-bit digest: 32 bits pick the entry and the other 96 are checked against it,
+beside the depth stored there. The two parts come from disjoint bits, so the check adds to the
+index rather than repeating it, and a false match needs all 96 to agree: even if every counted
+position probed the cache, about 2·10¹⁹/2⁹⁶ ≈ 2.5·10⁻¹⁰ would be expected. A 64-bit digest split
+the same way leaves a 32-bit check, and about 4.7·10⁹. What recomputing costs per node against a
+Zobrist update in such a search is not measured. A Zobrist key, its random words drawn from a seeded
+algorithm and its value updated per move, is a different facility from this one, and the library
+has none.
 
 **Flavor.** Both classes take Hash2's [flavor](https://www.boost.org/doc/libs/latest/libs/hash2/doc/html/hash2.html#ref_flavor) as a third parameter, the byte order in which
 `hash_append` writes integers and the type in which it writes a range's size. `digest` defaults to

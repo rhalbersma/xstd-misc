@@ -281,7 +281,7 @@ static_assert(xstd::hash_algorithm_is_avalanching_v<my_algorithm>);
 
 `digest<T, H>` runs the same seeded prototype over the same `hash_append`, but returns the
 algorithm's whole `result_type` where `hash` folds it to `std::size_t`: a digest that stands in
-for a key, such as a transposition table's, is as wide on a 32-bit target as on a 64-bit one. It
+for a key, such as a stored fingerprint or a position cache's, is as wide on a 32-bit target as on a 64-bit one. It
 should be wide enough that two keys colliding is never the likeliest bug, at any table size, so the
 default is `boost::hash2::xxh3_128`, whose result is a 16-byte `digest<16>`, as
 [xxHash](https://github.com/Cyan4973/xxHash) recommends where a 128-bit hash is required. Its
@@ -310,6 +310,43 @@ reference implementation, and the flavor is the same in every release from 1.88 
 defaults to `boost::hash2::default_flavor`, the target's own byte order, as a table's hash never
 leaves the process. A key of `long`, `std::size_t` or `wchar_t`, whose width differs between
 platforms, gives different bytes on each.
+
+A digest keys a cache as an index and a check, taken from disjoint bits. A checkers perft past
+2·10¹⁹ counts keeps 2³² entries: 32 bits of a position's digest pick its entry, and the other 96
+are checked against the entry, beside the depth stored there. Even if every counted position
+probed the cache, about 2·10¹⁹/2⁹⁶ ≈ 2.5·10⁻¹⁰ false matches would be expected; a 64-bit digest
+split the same way leaves a 32-bit check, and about 4.7·10⁹. `digest` computes from the whole key
+on every call, where an engine's search conventionally keys its transposition table by Zobrist
+hashing, updated in a few XORs per move; the cost of one against the other in a search is not
+measured here.
+
+```cpp
+#include <xstd/misc/functional.hpp>
+#include <boost/hash2/digest.hpp>
+#include <algorithm>
+#include <array>
+#include <cstdint>
+#include <ranges>
+#include <string>
+
+auto const entry_of = [](boost::hash2::digest<16> const& key_digest) -> std::uint32_t {
+        auto entry = std::uint32_t{};
+        for (auto const byte : key_digest | std::views::take(4) | std::views::reverse) {
+                entry = (entry << 8U) | std::uint32_t{byte};    // little-endian, so the same on every target
+        }
+        return entry;
+};
+
+auto const check_of = [](boost::hash2::digest<16> const& key_digest) -> std::array<unsigned char, 12> {
+        auto check = std::array<unsigned char, 12>{};
+        std::ranges::copy(key_digest | std::views::drop(4), check.begin());
+        return check;
+};
+
+auto const position = xstd::digest<std::string>(std::uint64_t{/* fixed */})("r1/p1/...");
+auto const entry    = entry_of(position);   // one of 2³² entries
+auto const check    = check_of(position);   // the 96 bits it is checked against
+```
 
 A `boost::hash2::digest<N>`, the result of XXH3-128 and every other algorithm with an array-like
 result, formats through `std::format` and `std::print` as hex, two digits per byte in byte order,
