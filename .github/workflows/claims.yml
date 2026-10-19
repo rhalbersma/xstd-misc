@@ -37,11 +37,10 @@ jobs:
           trunk: "false"
 
       - name: Build Boost's newest release, with Hash2 at develop
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          tag="$(gh release view --repo boostorg/boost --json tagName --jq .tagName)"
+          tag="$(git ls-remote --tags https://github.com/boostorg/boost.git 'refs/tags/boost-*' \
+            | sed -n 's|.*refs/tags/\(boost-[0-9]*\.[0-9]*\.[0-9]*\)$|\1|p' | sort -V | tail -1)"
           src="${RUNNER_TEMP}/boost-src"
           mkdir -p "${src}"
           curl -fsSL --retry 3 "https://github.com/boostorg/boost/releases/download/${tag}/${tag}-cmake.tar.xz" \
