@@ -258,6 +258,17 @@ tree and for the diff.
 The [Scorecard workflow](.github/workflows/scorecard.yml) cannot be required: it runs on pushes to `main` and
 on a schedule, never on a pull request.
 
+Nor can the [Claims workflow](.github/workflows/claims.yml), which runs on Tuesdays and by hand. It checks what can go
+false with nothing here changing:
+- **Hash2:** the suite at the stable rung, against Boost's newest release with Hash2 at the head of its `develop`
+  branch.
+- **The draft:** the wording the headers copy, against the newest draft and the draft repository's `main`, through
+  `tools/check-draft-wording.py --any-draft`.
+- **The matrix:** the README's CI matrix, against cpp-ci's toolchain table at the commit the workflows call and at
+  cpp-ci's `main`, through `tools/check-readme-matrix.py`.
+
+A scheduled run that fails opens an issue titled "The weekly claims check failed", or comments on the open one.
+
 Each ladder ends in an `all` job that is red unless every one of its legs succeeded, and that gate is what
 branch protection requires: a leg name changes whenever a rung moves, the gate name does not. This table is
 [xstd-bits](https://github.com/rhalbersma/xstd-bits/blob/main/CONTRIBUTING.md)' as well, less the C++26 legs

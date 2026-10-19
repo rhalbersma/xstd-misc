@@ -10,8 +10,10 @@ Each header below cites its source in a comment of the form `N5054 [stable.name]
 checkout is that draft, that the stable name and paragraph exist there and hold the text, and that the code matches
 it token for token once the namespaces, the alternative tokens and the exposition-only spellings are set aside.
 
-    tools/check-draft-wording.py --docno           the one draft the headers cite, such as n5054
-    tools/check-draft-wording.py <draft checkout>  the check, against a checkout of github.com/cplusplus/draft
+    tools/check-draft-wording.py --docno                       the one draft the headers cite, such as n5054
+    tools/check-draft-wording.py <draft checkout>              the check, against a checkout of github.com/cplusplus/draft
+    tools/check-draft-wording.py --any-draft <draft checkout>  the same against a later draft, whose stable name and
+                                                               paragraph must still hold the text the headers copy
 """
 
 import pathlib
@@ -89,13 +91,13 @@ def returns(text):
     return found.group(1) if found else None
 
 
-def check(draft, docno):
+def check(draft, docno, any_draft=False):
     failures = 0
     for header, what in CHECKS:
         cited, stable, number, code = citation(header)
-        where = f"{header}: {cited} [{stable}]/{number}"
+        where = f"{header}: {cited} [{stable}]/{number}" + (f" in {docno}" if cited != docno else "")
         text = paragraph(draft, stable, number)
-        if cited != docno:
+        if cited != docno and not any_draft:
             print(f"FAIL {where}: the checkout is {docno}")
         elif text is None:
             print(f"FAIL {where}: no such paragraph")
@@ -131,13 +133,16 @@ def main():
     if sys.argv[1:] == ["--docno"]:
         print(cited.pop().lower())
         return 0
-    if len(sys.argv) != 2:
+    any_draft = sys.argv[1:2] == ["--any-draft"]
+    arguments = sys.argv[2:] if any_draft else sys.argv[1:]
+    if len(arguments) != 1:
         sys.exit(__doc__)
-    draft = pathlib.Path(sys.argv[1])
-    found = re.search(r"\\newcommand\{\\docno\}\{(N\d+)\}", (draft / "source" / "config.tex").read_text())
+    draft = pathlib.Path(arguments[0])
+    # Between two drafts the repository's main branch carries a placeholder, such as Dxxxx, for the next number.
+    found = re.search(r"\\newcommand\{\\docno\}\{([ND][0-9x]+)\}", (draft / "source" / "config.tex").read_text())
     if not found:
         sys.exit(f"{draft}: no \\docno in source/config.tex")
-    return 1 if check(draft, found.group(1)) else 0
+    return 1 if check(draft, found.group(1), any_draft) else 0
 
 
 if __name__ == "__main__":
