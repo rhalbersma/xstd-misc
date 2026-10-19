@@ -274,8 +274,24 @@ keys: a choice between a fast default and a safe one is the misuse this rules ou
 caller who wants FNV-1a names `boost::hash2::fnv1a_64`. One algorithm on every platform
 also makes the value one function of the key at each width of `size_t`: the 64-bit digest
 itself where `size_t` holds it, and `get_integral_result`'s multiply-high fold of that digest
-where it is 32 bits, which the tests pin with literal values. The cost is that a 32-bit CPU
-emulates xxHash's 64-bit multiplies, about 34–50 ns a call on i686 up to 16 bytes.
+where it is 32 bits, which the tests pin with literal values. A 32-bit CPU emulates xxHash's
+64-bit multiplies, and still pays no more for them than for `xxhash_32`'s: measured through `hash`
+on i686 with GCC 15 at `-O2`, both cost 7.2 ns for a 64-bit integer, 16–19 ns for strings up to
+16 bytes, 25 ns at 64 and 59 ns at 256. On x86-64, `xxhash_32` costs 1.3 to 2.9 times what
+`xxhash_64` does from 16 bytes up.
+
+**A second algorithm.** `hash<T, H64, H32>` runs `H32` where `std::size_t` is at most 32 bits and
+`H64` elsewhere, and names the one that runs `hash_type`, after the hasher in
+[Hash2's documentation](https://www.boost.org/doc/libs/latest/libs/hash2/doc/html/hash2.html#example_use_with_unordered_containers).
+It serves a family whose two members differ in kind rather than in speed, such as `siphash_64` and
+`siphash_32`, HalfSipHash, which is keyed for a 32-bit word. `H32` defaults to `H64`, so one
+algorithm named alone runs on every target, and the default pair is `xxhash_64` twice, which the
+measurement above leaves no reason to split. The choice follows the width of `size_t` rather than,
+as in Hash2's example, whether `H64`'s result matches it, so the first slot runs wherever `size_t`
+is 64 bits even for an algorithm wider than that, such as `xxh3_128`. A requires-clause asks that `H32`'s result
+be no wider than `H64`'s: two names read as a pair are easily given in the other order, and would
+then run the wider algorithm where `size_t` is the narrower. `Flavor` comes after both, so code
+that names one spells the algorithm twice, as `hash<T, H, H, Flavor>`.
 
 The method, the build and the per-length tables are in [#53](https://github.com/rhalbersma/xstd-misc/issues/53#issuecomment-6250956313). The default is not SipHash either: a default-constructed hasher is unseeded, and keyed
 resistance without a key buys nothing. Hash2's own advice for keys an adversary chooses is

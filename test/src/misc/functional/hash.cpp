@@ -12,8 +12,8 @@
 #include <boost/hash2/fnv1a.hpp>                                   // fnv1a_64
 #include <boost/hash2/get_integral_result.hpp>                     // get_integral_result
 #include <boost/hash2/hash_append.hpp>                             // hash_append
-#include <boost/hash2/siphash.hpp>                                 // siphash_64
-#include <boost/hash2/xxhash.hpp>                                  // xxhash_64
+#include <boost/hash2/siphash.hpp>                                 // siphash_32, siphash_64
+#include <boost/hash2/xxhash.hpp>                                  // xxhash_32, xxhash_64
 #include <boost/test/unit_test.hpp>                                // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL, BOOST_CHECK_GT, BOOST_CHECK_LT, BOOST_CHECK_NE
 #include <array>                                                   // array
 #include <bit>                                                     // endian, has_single_bit
@@ -27,7 +27,7 @@
 #include <string>                                                  // string
 #include <string_view>                                             // string_view
 #include <thread>                                                  // thread
-#include <type_traits>                                             // is_constructible_v, is_convertible_v
+#include <type_traits>                                             // conditional_t, is_constructible_v, is_convertible_v
 #include <unordered_set>                                           // unordered_set
 #include <utility>                                                 // declval, pair
 #include <vector>                                                  // vector
@@ -48,6 +48,10 @@ constexpr auto key        = std::array<unsigned char, 16>{1, 2, 3, 4, 5, 6, 7, 8
 // Whether a hash over H can be named at all, rather than failing to compile.
 template<class H>
 concept algorithm_argument = requires { typename xstd::hash<int, H>; };
+
+// Whether a hash over a pair of algorithms, the 64-bit one first, can be named at all.
+template<class H64, class H32>
+concept algorithm_pair = requires { typename xstd::hash<int, H64, H32>; };
 
 template<class Hash>
 concept transparent = requires { typename Hash::is_transparent; };
@@ -102,7 +106,25 @@ BOOST_AUTO_TEST_CASE(AHashIsNotAHashAlgorithm)
 // A table's hash never leaves the process, so it appends in the target's own byte order.
 BOOST_AUTO_TEST_CASE(TheDefaultAlgorithmIsXxhash64InNativeBytes)
 {
-        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<int>, xstd::hash<int, boost::hash2::xxhash_64, boost::hash2::default_flavor>>));
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<int>, xstd::hash<int, boost::hash2::xxhash_64, boost::hash2::xxhash_64, boost::hash2::default_flavor>>));
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<int>::hash_type, boost::hash2::xxhash_64>));
+}
+
+// One algorithm named alone runs on every target, so a seeded SipHash is SipHash wherever the table is built.
+BOOST_AUTO_TEST_CASE(OneAlgorithmNamedAloneRunsOnEveryTarget)
+{
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<std::string, boost::hash2::siphash_64>::hash_type, boost::hash2::siphash_64>));
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<std::string, boost::hash2::siphash_32>::hash_type, boost::hash2::siphash_32>));
+}
+
+// A pair runs the one for the target's std::size_t; given 32-bit first, as two names may be read, it is rejected.
+BOOST_AUTO_TEST_CASE(APairRunsTheAlgorithmForTheTargetsSizeT)
+{
+        using siphash = std::conditional_t<std::numeric_limits<std::size_t>::digits <= 32, boost::hash2::siphash_32, boost::hash2::siphash_64>;
+        XSTD_CONSTEXPR_CHECK((std::same_as<xstd::hash<std::string, boost::hash2::siphash_64, boost::hash2::siphash_32>::hash_type, siphash>));
+        XSTD_CONSTEXPR_CHECK((algorithm_pair<boost::hash2::xxhash_64, boost::hash2::xxhash_32>));
+        XSTD_CONSTEXPR_CHECK((not algorithm_pair<boost::hash2::xxhash_32, boost::hash2::xxhash_64>));
+        XSTD_CONSTEXPR_CHECK((not algorithm_pair<boost::hash2::siphash_32, boost::hash2::siphash_64>));
 }
 
 // FNV-1a carries no bit of a byte down to the bits below it, so masking its 64-bit hash erases the tag.

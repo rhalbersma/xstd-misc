@@ -229,6 +229,13 @@ auto const seed = std::uint64_t{/* drawn at random, per container */};
 auto names      = std::unordered_set<std::string, siphasher>(0, siphasher(seed));
 ```
 
+A second algorithm, `hash<T, H64, H32>`, runs where `std::size_t` is at most 32 bits, as in
+[Hash2's own hasher](https://www.boost.org/doc/libs/latest/libs/hash2/doc/html/hash2.html#example_use_with_unordered_containers):
+`hash<std::string, siphash_64, siphash_32>` runs SipHash where `size_t` is 64 bits and HalfSipHash
+where it is 32, and `hash_type` names the one that runs. `H32` defaults to `H64`, so one algorithm
+named alone runs on every target, and the narrower result must come second. The default stays
+`xxhash_64` on both: on i686, `xxhash_32` costs what `xxhash_64` does at every key length.
+
 The constructors are the three every Hash2 algorithm has: none, a `std::uint64_t` seed, and a
 byte sequence `(unsigned char const*, std::size_t)`. Each argument converts to `T` before it is
 hashed, so `xstd::hash<std::int64_t>()(42)` hashes the 8 bytes of the key a table holds rather
@@ -295,8 +302,8 @@ auto const key64    = xstd::digest<int, boost::hash2::xxhash_64>()(42);   // std
 ```
 
 A digest persists across runs, builds and targets, for keys of fixed-width integer types,
-strings, and arrays of those. Both classes take a Boost.Hash2 [flavor](https://www.boost.org/doc/libs/latest/libs/hash2/doc/html/hash2.html#ref_flavor) as their third parameter,
-which fixes the bytes `hash_append` writes. `digest` defaults to `boost::hash2::little_endian_flavor`,
+strings, and arrays of those. Both classes take a Boost.Hash2 [flavor](https://www.boost.org/doc/libs/latest/libs/hash2/doc/html/hash2.html#ref_flavor), `digest` as its third
+parameter and `hash` as its fourth, after `H32`, which fixes the bytes `hash_append` writes. `digest` defaults to `boost::hash2::little_endian_flavor`,
 so an integer appends the same bytes on a big-endian target as on a little-endian one, and a
 range's size appends as a `std::uint32_t`; the tests check those bytes' digests against xxHash's
 reference implementation, and the flavor is the same in every release from 1.88 to 1.92. `hash`
