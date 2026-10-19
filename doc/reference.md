@@ -247,10 +247,13 @@ struct empty_member_type {
 
 ```cpp
 namespace xstd {
-  template<class T, hash_algorithm H = boost::hash2::xxhash_64, class Flavor = boost::hash2::default_flavor>
+  template<class T, hash_algorithm H64 = boost::hash2::xxhash_64, hash_algorithm H32 = H64,
+           class Flavor = boost::hash2::default_flavor>
+      requires (sizeof(typename H32::result_type) <= sizeof(typename H64::result_type))
     class hash;
-  template<class CharT, class Traits, class Allocator, hash_algorithm H, class Flavor>
-    class hash<basic_string<CharT, Traits, Allocator>, H, Flavor>;
+  template<class CharT, class Traits, class Allocator, hash_algorithm H64, hash_algorithm H32, class Flavor>
+      requires (sizeof(typename H32::result_type) <= sizeof(typename H64::result_type))
+    class hash<basic_string<CharT, Traits, Allocator>, H64, H32, Flavor>;
   template<class T, hash_algorithm H = boost::hash2::xxh3_128, class Flavor = boost::hash2::little_endian_flavor>
     class digest;
   template<class CharT, class Traits, class Allocator, hash_algorithm H, class Flavor>
@@ -263,10 +266,11 @@ Where the digest is as wide as `size_t`, the hash is the digest unchanged.
 ### `hash`
 
 ```cpp
-template<class T, hash_algorithm H, class Flavor>
+template<class T, hash_algorithm H64, hash_algorithm H32, class Flavor>
 class hash {
 public:
-  using is_avalanching = bool_constant<hash_algorithm_is_avalanching_v<H>>;
+  using hash_type      = conditional_t<numeric_limits<size_t>::digits <= 32, H32, H64>;
+  using is_avalanching = bool_constant<hash_algorithm_is_avalanching_v<hash_type>>;
 
   hash() = default;
   constexpr explicit hash(uint64_t seed);
@@ -276,10 +280,14 @@ public:
 };
 ```
 
-The class holds a prototype of `H`.
+The class holds a prototype of `hash_type`.
 
-- `H` is constrained to model `hash_algorithm`, so a second key type in its place is rejected.
-- `H` defaults to `xxhash_64` and `Flavor` to `default_flavor`, which appends in the target's own byte order.
+- `H64` and `H32` are constrained to model `hash_algorithm`, so a second key type in either place is rejected.
+- `H64` defaults to `xxhash_64`, `H32` to `H64` and `Flavor` to `default_flavor`, which appends in the target's own
+  byte order.
+- `hash_type` is `H32` where `size_t` is at most 32 bits, and `H64` otherwise. One algorithm named alone runs on
+  every target.
+- *Remarks:* A pair whose 32-bit algorithm is named first, such as `xxhash_32, xxhash_64`, is rejected.
 - `is_avalanching` is what [`boost::hash_is_avalanching`](https://www.boost.org/doc/libs/latest/libs/container_hash/doc/html/hash.html#ref_hash_is_avalanchinghash) reads.
 - *Constructors, Effects:* Value-initializes the prototype, or initializes it from `seed`, or from the `n` bytes at
   `p`. Each is a constant expression, and the integer one is `explicit`.
@@ -298,7 +306,7 @@ The class holds a prototype of `H`.
   in a `boost::unordered_flat_set`, which mixes it first.
 - It serves as the hash of `unordered_set` and `boost::unordered_flat_set`, seeded per container.
 
-### `hash<basic_string<CharT, Traits, Allocator>, H, Flavor>`
+### `hash<basic_string<CharT, Traits, Allocator>, H64, H32, Flavor>`
 
 As the primary template, with `is_transparent` declared and `operator()` taking `basic_string_view<CharT, Traits>`.
 
