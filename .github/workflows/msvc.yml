@@ -21,11 +21,11 @@ on:
 jobs:
   # No inputs: the shared workflow defaults to the MSVC toolset.
   msvc:
-    uses: rhalbersma/cpp-ci/.github/workflows/visual-studio.yml@0e9948a4bd9f844797ce5b1c9b4c915a94cd665a # main after rhalbersma/cpp-ci#68, whose install-gcc fails its step when the PPA did not serve the compiler
+    uses: rhalbersma/cpp-ci/.github/workflows/visual-studio.yml@2a7b3577168d22d62a9119b1913c6e0122e78994 # main after rhalbersma/cpp-ci#76, whose clang-tidy action counts every header's result rather than the last one's
 
   # 32-bit MSVC: 8-byte alignment for 64-bit members, and the STL's portable 128-bit integer. One rung in Debug, since what is under test is the target.
   msvc_x86:
-    uses: rhalbersma/cpp-ci/.github/workflows/visual-studio.yml@0e9948a4bd9f844797ce5b1c9b4c915a94cd665a # main after rhalbersma/cpp-ci#68, whose install-gcc fails its step when the PPA did not serve the compiler
+    uses: rhalbersma/cpp-ci/.github/workflows/visual-studio.yml@2a7b3577168d22d62a9119b1913c6e0122e78994 # main after rhalbersma/cpp-ci#76, whose clang-tidy action counts every header's result rather than the last one's
     with:
       arch: x86
       tiers: qualification
