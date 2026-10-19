@@ -269,7 +269,7 @@ Where the digest is as wide as `size_t`, the hash is the digest unchanged.
 template<class T, hash_algorithm H64, hash_algorithm H32, class Flavor>
 class hash {
 public:
-  using hash_type      = conditional_t<numeric_limits<size_t>::digits <= 32, H32, H64>;
+  using hash_type      = conditional_t<sizeof(size_t) <= sizeof(uint32_t), H32, H64>;
   using is_avalanching = bool_constant<hash_algorithm_is_avalanching_v<hash_type>>;
 
   hash() = default;

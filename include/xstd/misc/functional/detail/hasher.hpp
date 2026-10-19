@@ -11,8 +11,7 @@
 #include <boost/hash2/get_integral_result.hpp>                     // get_integral_result
 #include <boost/hash2/hash_append.hpp>                             // hash_append
 #include <cstddef>                                                 // size_t
-#include <cstdint>                                                 // uint64_t
-#include <limits>                                                  // numeric_limits
+#include <cstdint>                                                 // uint32_t, uint64_t
 #include <type_traits>                                             // bool_constant, conditional_t
 
 namespace xstd::detail {
@@ -79,7 +78,7 @@ public:
 
 // The algorithm a hash runs at the target's width of std::size_t: H32 where it is at most 32 bits, and H64 otherwise.
 template<hash_algorithm H64, hash_algorithm H32>
-using native_hash_algorithm_t = std::conditional_t<std::numeric_limits<std::size_t>::digits <= 32, H32, H64>;
+using native_hash_algorithm_t = std::conditional_t<sizeof(std::size_t) <= sizeof(std::uint32_t), H32, H64>;
 
 } // namespace xstd::detail
 
