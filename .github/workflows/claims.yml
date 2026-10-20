@@ -11,8 +11,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# Weekly, the day after the canary: what this repository claims can go false with nothing here changing, when Hash2,
-# the C++ working draft or cpp-ci's toolchain table moves. A failure opens an issue, or comments on the open one.
+# Weekly: what this repository claims can go false with nothing here changing, when Hash2, the C++ working draft or
+# cpp-ci's toolchain table moves. A failure opens an issue, or comments on the open one.
 on:
   schedule:
     - cron: '41 6 * * 2'
