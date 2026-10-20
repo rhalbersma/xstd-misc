@@ -120,7 +120,7 @@ Inspired by Item 10 of Scott Meyers' [*Effective Modern C++*](https://www.oreill
 (O'Reilly, 2014), whose `toUType` converts a scoped enumerator to its underlying type so that it can index a
 `std::tuple`, Rein Halbersma investigated how widely the idiom was used. The
 [original 2016 sketch](ideas.md#1-convenient-underlying-types-for-scoped-enums) motivated it with scoped enums as
-named tuple and array indices, and the evidence put to Walter E. Brown that December counted some 290 uses on GitHub,
+named tuple and array indices, and the evidence put to Walter E. Brown that December counted hundreds of uses on GitHub,
 most of them spelled `toUType` after Meyers. Walter E. Brown encouraged a paper, and JeanHeyd Meneide then authored
 [P1682R1](https://github.com/cplusplus/papers/issues/460) and carried `std::to_underlying` through WG21 for
 [C++23](https://wg21.link/N4950). [P1682](https://github.com/cplusplus/papers/issues/460)'s acknowledgements record
