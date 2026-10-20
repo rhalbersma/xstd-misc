@@ -1,6 +1,6 @@
 # `<xstd/misc/concepts/simple_allocator.hpp>`
 
-## `simple_allocator`
+## `xstd::simple_allocator`
 
 ```cpp
 template<class Alloc>
@@ -11,7 +11,18 @@ concept simple_allocator =
   } and copy_constructible<Alloc> and equality_comparable<Alloc>;
 ```
 
-- The definition is the working draft's exposition-only *simple-allocator*,
-  [[allocator.requirements.general]/99](https://eel.is/c++draft/allocator.requirements.general#99), word for word.
-- A type models it if it meets the requirements of
-  [[allocator.requirements.general]](https://eel.is/c++draft/allocator.requirements.general).
+An allocator, to the syntax the working draft checks. The definition is its exposition-only *simple-allocator*,
+[[allocator.requirements.general]/99](https://eel.is/c++draft/allocator.requirements.general#99), word for word,
+under a name users can spell.
+
+### Semantic requirements
+
+A type models it if it meets the requirements of
+[[allocator.requirements.general]](https://eel.is/c++draft/allocator.requirements.general).
+
+### See also
+
+| Entity | Relation |
+| :----- | :------- |
+| [`container_compatible_range`](container_compatible_range.md) | the other exposition-only concept copied from the working draft |
+| [`std::allocator_traits`](https://en.cppreference.com/w/cpp/memory/allocator_traits) | the standard's uniform interface to an allocator |
