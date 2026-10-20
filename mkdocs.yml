@@ -23,13 +23,45 @@ hooks:
 
 nav:
   - Overview: index.md
-  - Reference: reference.md
+  - Reference:
+    - reference/index.md
+    - concepts.hpp:
+      - reference/concepts/index.md
+      - container_compatible_range.hpp: reference/concepts/container_compatible_range.md
+      - hash_algorithm.hpp: reference/concepts/hash_algorithm.md
+      - proxy_iterator.hpp: reference/concepts/proxy_iterator.md
+      - proxy_reference.hpp: reference/concepts/proxy_reference.md
+      - proxy_semi_iterator.hpp: reference/concepts/proxy_semi_iterator.md
+      - proxy_semi_reference.hpp: reference/concepts/proxy_semi_reference.md
+      - simple_allocator.hpp: reference/concepts/simple_allocator.md
+      - specialization_of.hpp: reference/concepts/specialization_of.md
+    - type_traits.hpp:
+      - reference/type_traits/index.md
+      - empty_base_type.hpp: reference/type_traits/empty_base_type.md
+      - empty_member_type.hpp: reference/type_traits/empty_member_type.md
+      - no_unique_address.hpp: reference/type_traits/no_unique_address.md
+      - conditional_data_member.hpp: reference/type_traits/conditional_data_member.md
+      - hash_algorithm_is_avalanching.hpp: reference/type_traits/hash_algorithm_is_avalanching.md
+      - is_specialization_of.hpp: reference/type_traits/is_specialization_of.md
+    - functional.hpp:
+      - reference/functional/index.md
+      - digest.hpp: reference/functional/digest.md
+      - hash.hpp: reference/functional/hash.md
+    - format.hpp:
+      - reference/format/index.md
+      - digest.hpp: reference/format/digest.md
+    - utility.hpp:
+      - reference/utility/index.md
+      - to_underlying.hpp: reference/utility/to_underlying.md
   - Design: design.md
 
 theme:
   name: material
   features:
     - content.code.copy
+    # Each group's page is its section's index, and only the section open expands.
+    - navigation.indexes
+    - navigation.path
     - navigation.top
     - search.highlight
   palette:
