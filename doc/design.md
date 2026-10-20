@@ -366,7 +366,7 @@ hasher's `is_avalanching` inline two different probe sequences into one containe
 compiled in one misses an element inserted by the other. Answers given per algorithm header,
 opted into by including ours instead of Hash2's, would have put that one include away from every
 user. The forward declarations match Hash2's own, `class` in `boost::hash2` for each algorithm
-and `template<class H> class hmac`, from 1.88 to 1.92, so a change there fails to compile rather
+and `template<class H> class hmac`, from 1.89 to 1.92, so a change there fails to compile rather
 than going unnoticed. HMAC answers as the algorithm it keys does. An algorithm outside Hash2 gets
 its answer from a specialization its author writes beside its definition, as with `std::hash`.
 

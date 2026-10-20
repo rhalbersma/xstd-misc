@@ -67,7 +67,7 @@ What each entity builds on in C++, and, for an entity that introduces a name or 
   *Conversions from ranges to containers* (Corentin Jabot, Eric Niebler, Casey Carter), for `ranges::to` and the
   containers' `from_range` constructors.
 - **`to_underlying`:** [P1682R1](https://wg21.link/p1682r1), *`std::to_underlying` for enumerations* (JeanHeyd
-  Meneide), from an idea of Walter E. Brown's.
+  Meneide), from an idea of Rein Halbersma's, encouraged by Walter E. Brown, as the paper's acknowledgements record.
 - **`is_specialization_of`, `specialization_of`:** [P2098R1](https://wg21.link/p2098r1), *Proposing
   `std::is_specialization_of`* (Walter E. Brown, Bob Steagall), whose spelling and all-types scope these follow.
 - **`XSTD_NO_UNIQUE_ADDRESS`, `empty_base_type`, `empty_member_type`, `conditional_data_member`:**

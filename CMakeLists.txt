@@ -20,7 +20,7 @@ include(GNUInstallDirs)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Boost.Hash2 is a public dependency of the functional/ headers, and of the concept and trait they are built on.
-find_package(boost_hash2 CONFIG REQUIRED)
+find_package(boost_hash2 1.89 CONFIG REQUIRED)
 
 add_library(
     ${PROJECT_NAME} INTERFACE
