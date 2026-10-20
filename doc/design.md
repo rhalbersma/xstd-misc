@@ -378,8 +378,8 @@ reference implementations, separate them:
 
 So the default stays `xxhash_64`: one seed per container never meets its failures, and on short
 keys it takes a third of SipHash's time. A container whose keys come from outside the program, such
-as request headers or user names, names `siphash_64` and seeds it from a random device, with 16
-bytes where the whole key is wanted.
+as request headers or user names, names `siphash_64` and seeds it with 16 bytes from a random
+device, as the README's example does.
 
 **`is_avalanching`.** Boost.Unordered's open-addressing containers [mix every hash value again](https://www.boost.org/doc/libs/latest/libs/unordered/doc/html/unordered/hash_quality.html)
 before using it, unless `boost::hash_is_avalanching` reports the hasher avalanching, which it
