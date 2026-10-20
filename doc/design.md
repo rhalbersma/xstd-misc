@@ -479,17 +479,6 @@ none. [[namespace.std]](https://eel.is/c++draft/namespace.std) admits the specia
 does not define; Hash2 1.92 ships no formatter of its own, and one that a later release ships
 would collide with this one at compile time rather than replace it in silence.
 
-## Boost and include-cleaner
-
-`misc-include-cleaner` is not asked about `boost/.*` at all, in the root
-`.clang-tidy` and so in the test tree that inherits it. No Boost library ships
-IWYU pragmas -- [Boost.Hana](https://www.boost.org/doc/libs/latest/libs/hana/) has none across 450 headers -- and [Boost.Test](https://www.boost.org/doc/libs/latest/libs/test/)'s macros
-expand through private implementation headers, so the check reports that nothing
-provides the names the tests write. Of Boost, the library includes only Hash2; this is
-about the test tree, about the hashing headers, and about any project that lints its own sources while using
-Boost. No library can supply the line on their behalf: the option belongs to the
-linter, and CMake carries no usage requirement that could propagate one.
-
 ## Requirements and evolution
 
 xstd-misc requires a conforming [C++20](https://wg21.link/N4861) compiler, and the
@@ -499,16 +488,3 @@ stay small, portable and motivated by current practice; one that enters the
 standard library can be retired, and the baseline can advance once a later
 standard is a practical default. A facility that grows a domain of its own belongs in a
 library named for it rather than here.
-
-## CI policy
-
-The matrix follows the channel model used by
-[apt.llvm.org](https://apt.llvm.org/): **stable** is the established release,
-**qualification** the newest release still being qualified, and **development**
-the current development branch. These are tested across the three main compiler
-families, the three main standard libraries and the three main desktop platforms,
-with MinGW, Apple Clang and Clang-CL filling out the remaining combinations.
-Development jobs are required where a usable development compiler exists; the
-README records the versions currently assigned to each channel. Building the
-tests requires the dependencies documented in
-[CONTRIBUTING.md](../CONTRIBUTING.md).
