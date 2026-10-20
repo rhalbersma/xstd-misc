@@ -19,8 +19,7 @@ namespace xstd {
 // xxHash passes SMHasher3's Avalanche test at 3 to 128 bytes; FNV-1a's last byte's high bits never reach the low bits.
 template<class T, hash_algorithm H64 = boost::hash2::xxhash_64, hash_algorithm H32 = H64, class Flavor = boost::hash2::default_flavor>
         requires (sizeof(typename H32::result_type) <= sizeof(typename H64::result_type)) // A pair given in the wrong order would run the wider algorithm where std::size_t is narrower.
-class hash
-        : detail::hasher<detail::native_hash_algorithm_t<H64, H32>, Flavor>
+class hash : detail::hasher<detail::native_hash_algorithm_t<H64, H32>, Flavor>
 {
 public:
         using hash_type = detail::native_hash_algorithm_t<H64, H32>;
@@ -40,8 +39,7 @@ public:
 // A string, its view and a C string append the same characters, so a lookup by any of them finds the key.
 template<class CharT, class Traits, class Allocator, hash_algorithm H64, hash_algorithm H32, class Flavor>
         requires (sizeof(typename H32::result_type) <= sizeof(typename H64::result_type))
-class hash<std::basic_string<CharT, Traits, Allocator>, H64, H32, Flavor>
-        : detail::hasher<detail::native_hash_algorithm_t<H64, H32>, Flavor>
+class hash<std::basic_string<CharT, Traits, Allocator>, H64, H32, Flavor> : detail::hasher<detail::native_hash_algorithm_t<H64, H32>, Flavor>
 {
 public:
         using hash_type = detail::native_hash_algorithm_t<H64, H32>;

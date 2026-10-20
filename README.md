@@ -30,191 +30,49 @@
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/rhalbersma/xstd-misc/badge)](https://scorecard.dev/viewer/?uri=github.com/rhalbersma/xstd-misc)
 [![Documentation](https://github.com/rhalbersma/xstd-misc/actions/workflows/pages.yml/badge.svg)](https://rhalbersma.github.io/xstd-misc/)
 
-xstd-misc is a header-only collection of small extensions to the C++ standard
-library: what the xstd family needs beyond integers, which
-[xstd-ints](https://github.com/rhalbersma/xstd-ints) holds, and bit containers, which
-[xstd-bits](https://github.com/rhalbersma/xstd-bits) holds. Each lives under the standard header it extends, so the
-layout mirrors `<concepts>`, `<format>`, `<functional>`, `<type_traits>` and
-`<utility>`. It adds two pairs
-of a concept and a trait for recognizing a specialization of a class template --
-one naming the template, one naming an example of it -- tagged empty
-types that keep a place in a class layout, a data member present only when a
-condition holds, a portable spelling of `[[no_unique_address]]`, four
-concepts recognizing proxy iterators and proxy references, and `to_underlying`
-over a plain enum, one wrapped in `std::integral_constant`, and a proxy for one.
-Under `<functional>`, it adds `hash`, the hash function object of an unordered container, which
-runs a [Boost.Hash2](https://www.boost.org/doc/libs/latest/libs/hash2/) algorithm of the
-caller's choosing, seeded per container, and is transparent over strings; and `digest`, which
-runs one for a key's digest at the algorithm's own width. Beside them, `hash_algorithm` is the concept that
-algorithm satisfies, and `hash_algorithm_is_avalanching` tells [Boost.Unordered](https://www.boost.org/doc/libs/latest/libs/unordered/) whether
-the algorithm's hash can be used without mixing it again.
+xstd-misc is a header-only collection of small extensions to the C++ standard library: what the xstd family needs
+beyond integers, which [xstd-ints](https://github.com/rhalbersma/xstd-ints) holds, and bit containers, which
+[xstd-bits](https://github.com/rhalbersma/xstd-bits) holds. Each facility lives under the standard header it extends.
+[Boost.Hash2](https://www.boost.org/doc/libs/latest/libs/hash2/) is the one dependency. The library relies on the
+[C++20](https://wg21.link/N4861) standard and targets the draft [C++29](https://wg21.link/std) standard library, and
+every public API is in namespace `xstd`.
 
-Boost.Hash2 is the one dependency, and the CMake target and the installed package bring it
-along. It relies on the [C++20](https://wg21.link/N4861) standard and
-targets the draft [C++29](https://wg21.link/std) standard library. All public
-APIs are in namespace `xstd`.
+## Headers
+
+| Header | Description |
+| :----- | :---------- |
+| `<xstd/misc.hpp>` | Every header below, through one include. |
+| `<xstd/misc/concepts.hpp>` | The concepts below, through one include. |
+| `<xstd/misc/concepts/container_compatible_range.hpp>` | The standard's exposition-only *container-compatible-range*, word for word. |
+| `<xstd/misc/concepts/hash_algorithm.hpp>` | A Boost.Hash2 hash algorithm, to its documented requirements. |
+| `<xstd/misc/concepts/proxy_iterator.hpp>` | An iterator whose reference is a proxy reference. |
+| `<xstd/misc/concepts/proxy_reference.hpp>` | A proxy whose address is an iterator dereferencing back to it, and which writes through when `const`. |
+| `<xstd/misc/concepts/proxy_semi_iterator.hpp>` | An iterator whose reference is a proxy for its value type. |
+| `<xstd/misc/concepts/proxy_semi_reference.hpp>` | A class that converts implicitly to a value type the caller names. |
+| `<xstd/misc/concepts/simple_allocator.hpp>` | The standard's exposition-only *simple-allocator*, word for word. |
+| `<xstd/misc/concepts/specialization_of.hpp>` | A specialization of a class template whose parameters are all types, `const` or not. |
+| `<xstd/misc/format.hpp>` | The formatter below, through one include. |
+| `<xstd/misc/format/digest.hpp>` | A `std::formatter` that writes a Boost.Hash2 digest as hex. |
+| `<xstd/misc/functional.hpp>` | `hash` and `digest`, through one include. |
+| `<xstd/misc/functional/digest.hpp>` | A key's digest at its algorithm's own width, from a seeded Boost.Hash2 algorithm, XXH3-128 by default. |
+| `<xstd/misc/functional/hash.hpp>` | An unordered container's hash, from a seeded Boost.Hash2 algorithm, xxHash64 by default, transparent over strings. |
+| `<xstd/misc/type_traits.hpp>` | The traits below, through one include. |
+| `<xstd/misc/type_traits/conditional_data_member.hpp>` | A data member's type where a condition holds, and a tagged empty type where it does not. |
+| `<xstd/misc/type_traits/empty_base_type.hpp>` | A tagged empty type that keeps the place of a base class that is not there. |
+| `<xstd/misc/type_traits/empty_member_type.hpp>` | A tagged empty type that keeps the place of a data member that is not there. |
+| `<xstd/misc/type_traits/hash_algorithm_is_avalanching.hpp>` | Whether a hash algorithm avalanches, as Boost.Unordered asks: true for every Boost.Hash2 algorithm but FNV-1a. |
+| `<xstd/misc/type_traits/is_specialization_of.hpp>` | Whether a type is a specialization of a class template whose parameters are all types. |
+| `<xstd/misc/type_traits/no_unique_address.hpp>` | `XSTD_NO_UNIQUE_ADDRESS`, a portable spelling of `[[no_unique_address]]`. |
+| `<xstd/misc/utility.hpp>` | `to_underlying`, through one include. |
+| `<xstd/misc/utility/to_underlying.hpp>` | `std::to_underlying`, extended to an enumerator in `std::integral_constant` and to a proxy reference to one. |
+
+[The reference](doc/reference.md) specifies each entity, and [the design notes](doc/design.md) give the rationale and
+the measurements behind it. [CONTRIBUTING.md](CONTRIBUTING.md) builds the library itself.
 
 ## Usage
 
-
-`to_underlying` is one spelling over both forms of an enum value: it forwards a
-plain one to the standard's, and preserves a wrapped one at the type level.
-
-```cpp
-#include <xstd/misc/utility.hpp>
-#include <type_traits>
-
-enum class color : unsigned { red = 1 };
-
-static_assert(xstd::to_underlying(color::red) == 1u);
-static_assert(decltype(xstd::to_underlying(std::integral_constant<color, color::red>()))::value == 1u);
-```
-
-A proxy stands in for a value it converts to, as a packed container's element
-does, and that conversion is one a deduced parameter never considers. Four
-concepts recognize proxies, in two strengths:
-
-| Concept | Recognizes |
-|---|---|
-| `proxy_semi_reference<R, V>` | a class `R` that converts implicitly to the `V` the caller names |
-| `proxy_semi_iterator<I>` | an iterator whose reference is a semi-reference for its value type |
-| `proxy_reference<R>` | a proxy closed under `&` and `*`, and written through when `const`: its address is a semi-iterator dereferencing back to it, which names its value |
-| `proxy_iterator<I>` | a semi-iterator whose reference is a proxy reference |
-
-`to_underlying` reads through a proxy reference to an enumeration:
-
-```cpp
-#include <xstd/misc/concepts.hpp>
-#include <xstd/misc/utility.hpp>
-#include <ranges>
-#include <vector>
-
-static_assert(xstd::proxy_semi_iterator<std::vector<bool>::iterator>);
-static_assert(xstd::proxy_semi_reference<std::vector<bool>::reference, bool>);
-
-template<std::ranges::input_range R>
-auto sum_of_underlying(R const& packed_enums)
-{
-    auto sum = 0;
-    for (auto element : packed_enums) {
-        sum += xstd::to_underlying(element); // element is the container's proxy, not the enum
-    }
-    return sum;
-}
-```
-
-Every library's `std::vector<bool>::reference` and `std::bitset<N>::reference` is
-a semi-reference for `bool`, and `std::vector<bool>`'s iterator and `zip_view`'s
-are semi-iterators. Whether the bit references are also proxy references depends
-on the library: libc++ 22 gives them an `&` that leads to an iterator, and
-libstdc++ gives them none. The concepts otherwise ask what the standard asks:
-a semi-iterator is `std::indirectly_readable`, and a proxy reference's address is
-also `std::indirectly_writable`, which [P2321](https://github.com/cplusplus/papers/issues/1003) makes
-`std::vector<bool>`'s iterator by assignment through a `const` proxy. A read-only
-proxy, such as libc++'s `const_reference` or a set's element, is therefore a
-semi-reference only: convert it first, as
-`xstd::to_underlying(static_cast<E>(key))`. The round trip through `&` is the one
-clause the standard has no counterpart for.
-
-A concept cannot name itself, even through another, so the four are layered one
-way, each over those before it. That a proxy reference's address is a proxy
-iterator follows rather than being required: it is a semi-iterator whose
-reference is the proxy reference itself, which is a semi-reference for the value
-that address names.
-
-Only the iterators order by their constraints: an overload on `proxy_iterator`
-is taken over one on `proxy_semi_iterator`. A semi-reference is for a value the
-caller names, while a proxy reference reads its value from its address, so an
-overload on `proxy_semi_reference<R, bool>` and one on `proxy_reference<R>` are
-ambiguous for a type that is both. Set the weaker one aside with
-`requires xstd::proxy_semi_reference<R, bool> and (not xstd::proxy_reference<R>)`.
-
-`empty_member_type` and `conditional_data_member_t` give a member that is present only
-under a condition, and `XSTD_NO_UNIQUE_ADDRESS` costs it nothing when it is not.
-The tag keeps two absent members distinct, which their layout would otherwise
-collapse:
-
-```cpp
-#include <xstd/misc/type_traits.hpp>
-#include <memory>
-
-template<bool Stateful, class Allocator = std::allocator<int>>
-struct storage {
-    [[XSTD_NO_UNIQUE_ADDRESS]] xstd::conditional_data_member_t<Stateful, Allocator, struct alloc> allocator;
-    int value;
-};
-
-static_assert(sizeof(storage<false>) == sizeof(int));
-```
-
-Use `XSTD_NO_UNIQUE_ADDRESS` inside an attribute-specifier. It expands to
-`msvc::no_unique_address` with the MSVC-compatible frontend, which keeps the
-standard spelling layout-neutral, and to `no_unique_address` elsewhere.
-
-`is_specialization_of` answers whether a type is a specialization of a class
-template whose parameters are all types, and `specialization_of` is the same
-question where a constraint is what a caller writes:
-
-```cpp
-#include <xstd/misc/concepts.hpp>
-#include <xstd/misc/type_traits.hpp>
-#include <complex>
-
-static_assert(xstd::is_specialization_of_v<std::complex<double>, std::complex>);
-static_assert(xstd::specialization_of<std::complex<double>, std::complex>);
-```
-
-Only the all-types shape is offered, the one [P2098](https://github.com/cplusplus/papers/issues/812) names. A template with a value parameter,
-such as `std::array`, is not matched: the kinds are part of a template's type and no template
-template parameter binds them all, so a caller with such a template writes its own two-line
-trait over it.
-
-A constrained parameter is no obstacle: an unconstrained template template parameter does not
-consider the constraints on its argument, so a `template<std::integral Block>` storage binds
-where a `template<class>` one does.
-
-The trait is the exact question and the concept is the one a caller writes, which is why only
-the concept sees through a `const`: an adaptor over a const owner names `Container const`, and
-no specialization pattern matches that. A reference is a specialization of nothing either way.
-
-```cpp
-#include <xstd/misc/concepts.hpp>
-#include <vector>
-
-template<xstd::specialization_of<std::vector> Owner>
-class view { Owner* owner; };
-
-using mutable_view = view<std::vector<int>>;        // the owner as it is
-using const_view   = view<std::vector<int> const>;  // and a view over a const one
-```
-
-
-`simple_allocator` and `container_compatible_range` are the standard's exposition-only
-*simple-allocator* ([[allocator.requirements.general]/99](https://eel.is/c++draft/allocator.requirements.general#99)) and *container-compatible-range*
-([[container.intro.reqmts]/2](https://eel.is/c++draft/container.intro.reqmts#2)), word for word, for a container that constrains its allocator
-arguments and `from_range` constructors as the standard's do.
-
-```cpp
-#include <xstd/misc/concepts.hpp>
-#include <memory>
-#include <vector>
-
-static_assert(xstd::simple_allocator<std::allocator<int>>);
-static_assert(xstd::container_compatible_range<std::vector<int>, long>);
-```
-
-`hash<T, H>` hashes a key of type `T` through `hash_append` with the Boost.Hash2 algorithm `H`,
-holding a seeded prototype of `H` and copying it on every call, and returns the `std::size_t` an
-unordered container asks for. The default is `boost::hash2::xxhash_64` on every platform: it
-passes [SMHasher3](https://gitlab.com/fwojcik/smhasher3)'s Avalanche test at every key length from 3 to 128 bytes, where FNV-1a leaves the
-low bits a masked table takes blind to the high bits of the last byte. Each call costs about
-15–19 ns on x86-64 for strings up to 64 bytes, most of it fixed, and 37 ns at 256 bytes. For keys
-an adversary chooses, name SipHash and seed it per container,
-as [Hash2 advises](https://www.boost.org/doc/libs/latest/libs/hash2/doc/html/hash2.html#hashing_bytes_choosing_a_hash_algorithm). Without a secret seed, an attacker who knows the hash searches offline for keys
-that share a slot: 2.7·10⁸ hashes find 32,768 that lengthen a `boost::unordered_flat_map`'s
-average insertion probe from 1.07 groups to 786, and 7·10⁷ find 8,192 that fill one bucket of a
-reserved `std::unordered_map`, under xxHash, FNV-1a and a publicly seeded SipHash alike. A seed
-drawn per container leaves both tables as they are with random keys:
+An unordered container whose keys an adversary may choose takes SipHash, seeded per container, as
+[Hash2 advises](https://www.boost.org/doc/libs/latest/libs/hash2/doc/html/hash2.html#hashing_bytes_choosing_a_hash_algorithm):
 
 ```cpp
 #include <xstd/misc/functional.hpp>
@@ -228,139 +86,6 @@ using siphasher = xstd::hash<std::string, boost::hash2::siphash_64>;
 auto const seed = std::uint64_t{/* drawn at random, per container */};
 auto names      = std::unordered_set<std::string, siphasher>(0, siphasher(seed));
 ```
-
-A second algorithm, `hash<T, H64, H32>`, runs where `std::size_t` is at most 32 bits, as in
-[Hash2's own hasher](https://www.boost.org/doc/libs/latest/libs/hash2/doc/html/hash2.html#example_use_with_unordered_containers):
-`hash<std::string, siphash_64, siphash_32>` runs SipHash where `size_t` is 64 bits and HalfSipHash
-where it is 32, and `hash_type` names the one that runs. `H32` defaults to `H64`, so one algorithm
-named alone runs on every target, and the narrower result must come second. The default stays
-`xxhash_64` on both: on i686, `xxhash_32` costs what `xxhash_64` does at every key length.
-
-The constructors are the three every Hash2 algorithm has: none, a `std::uint64_t` seed, and a
-byte sequence `(unsigned char const*, std::size_t)`. Each argument converts to `T` before it is
-hashed, so `xstd::hash<std::int64_t>()(42)` hashes the 8 bytes of the key a table holds rather
-than the 4 of an `int`. Over a `std::basic_string` it is transparent, taking the string's view, so
-a string, a `std::string_view` and a C string with the same characters hash equal, and a set
-looks a key up by any of them without building a string:
-
-```cpp
-#include <xstd/misc/functional.hpp>
-#include <functional>
-#include <string>
-#include <string_view>
-#include <unordered_set>
-
-auto names = std::unordered_set<std::string, xstd::hash<std::string>, std::equal_to<>>{"one", "two"};
-auto found = names.contains(std::string_view("two"));                // no std::string is built
-```
-
-No other key is transparent: equal values of different types, such as `42` and
-`std::int64_t{42}`, need not append the same bytes, so a lookup by one would miss the other.
-
-`hash<T, H>` reports itself avalanching, through the nested `is_avalanching` that
-[`boost::hash_is_avalanching`](https://www.boost.org/doc/libs/latest/libs/container_hash/doc/html/hash.html#ref_hash_is_avalanchinghash) reads, wherever `xstd::hash_algorithm_is_avalanching<H>` holds, and
-Boost.Unordered's open-addressing containers then use its hash as it is. The trait holds for every
-Hash2 algorithm but FNV-1a, and every translation unit sees the same answer without including the
-algorithm. An algorithm written outside Hash2 is false until its author says otherwise, next to its
-definition, and deriving from an avalanching algorithm does not inherit the answer:
-
-```cpp
-#include <xstd/misc/type_traits.hpp>
-#include <boost/hash2/xxhash.hpp>
-#include <type_traits>
-
-struct my_algorithm : boost::hash2::xxhash_64 {
-    using xxhash_64::xxhash_64;
-};
-
-template<>
-struct xstd::hash_algorithm_is_avalanching<my_algorithm> : std::true_type {};
-
-static_assert(xstd::hash_algorithm_is_avalanching_v<my_algorithm>);
-```
-
-`digest<T, H>` runs the same seeded prototype over the same `hash_append`, but returns the
-algorithm's whole `result_type` where `hash` folds it to `std::size_t`: a digest that stands in
-for a key, such as a transposition table's, is as wide on a 32-bit target as on a 64-bit one. It
-should be wide enough that two keys colliding is never the likeliest bug, at any table size, so the
-default is `boost::hash2::xxh3_128`, whose result is a 16-byte `digest<16>`, as
-[xxHash](https://github.com/Cyan4973/xxHash) recommends where a 128-bit hash is required. Its
-per-call cost is three to five times xxHash64's on x86-64, and 1.3 to 3 times on a 32-bit
-target, which a table hashing every lookup would feel and a digest computed once does not.
-Its 128 bits keep the birthday bound out of reach: 2³² keys collide with probability 2⁻⁶⁵, where
-64 bits would collide more often than not. Name `xxhash_64` for a 64-bit one:
-
-```cpp
-#include <xstd/misc/functional.hpp>
-#include <boost/hash2/xxhash.hpp>
-#include <cstdint>
-#include <string>
-
-auto const position = xstd::digest<std::string>(std::uint64_t{/* fixed, so digests persist */});
-auto const stored   = position("r1/p1/...");                              // boost::hash2::digest<16>
-auto const key64    = xstd::digest<int, boost::hash2::xxhash_64>()(42);   // std::uint64_t everywhere
-```
-
-A digest persists across runs, builds and targets, for keys of fixed-width integer types,
-strings, and arrays of those. Both classes take a Boost.Hash2 [flavor](https://www.boost.org/doc/libs/latest/libs/hash2/doc/html/hash2.html#ref_flavor), `digest` as its third
-parameter and `hash` as its fourth, after `H32`, which fixes the bytes `hash_append` writes. `digest` defaults to `boost::hash2::little_endian_flavor`,
-so an integer appends the same bytes on a big-endian target as on a little-endian one, and a
-range's size appends as a `std::uint32_t`; the tests check those bytes' digests against xxHash's
-reference implementation, and the flavor is the same in every release from 1.88 to 1.92. `hash`
-defaults to `boost::hash2::default_flavor`, the target's own byte order, as a table's hash never
-leaves the process. A key of `long`, `std::size_t` or `wchar_t`, whose width differs between
-platforms, gives different bytes on each.
-
-A `boost::hash2::digest<N>`, the result of XXH3-128 and every other algorithm with an array-like
-result, formats through `std::format` and `std::print` as hex, two digits per byte in byte order,
-as `boost::hash2::to_string` writes it, with `{:X}` for uppercase:
-
-```cpp
-#include <xstd/misc/format.hpp>
-#include <xstd/misc/functional.hpp>
-#include <format>
-#include <string>
-
-auto const text = std::format("{}", xstd::digest<std::string>()("r1/p1/..."));   // 32 hex digits
-```
-
-`H` is any type satisfying `hash_algorithm`, Boost.Hash2's documented requirements as a concept,
-so an algorithm written outside Hash2 is checked where it is named:
-
-```cpp
-#include <xstd/misc/concepts.hpp>
-#include <boost/hash2/siphash.hpp>
-
-static_assert(xstd::hash_algorithm<boost::hash2::siphash_64>);
-static_assert(not xstd::hash_algorithm<int>);
-```
-
-See [the reference](doc/reference.md) for each entity's specification,
-[the design notes](doc/design.md) for rationale, and [CONTRIBUTING.md](CONTRIBUTING.md) to build the library itself.
-
-## Headers
-
-
-| Header | Additions | Description | Reference |
-| :----- | :-------- | :---------- | :-------- |
-| `<xstd/misc/concepts/specialization_of.hpp>` | `specialization_of` | Constraint form of `is_specialization_of`, seeing through a `const` owner | [P2098R1](https://github.com/cplusplus/papers/issues/812) (relationship documented) |
-| `<xstd/misc/type_traits/is_specialization_of.hpp>` | `is_specialization_of` | Is a type a specialization of a class template? | [P2098R1](https://github.com/cplusplus/papers/issues/812) (relationship documented) |
-| `<xstd/misc/type_traits/no_unique_address.hpp>` | `XSTD_NO_UNIQUE_ADDRESS` | Portable spelling of `no_unique_address` | none |
-| `<xstd/misc/type_traits/empty_base_type.hpp>` | `empty_base_type` | A tagged empty type for a base class that is not there | none |
-| `<xstd/misc/type_traits/empty_member_type.hpp>` | `empty_member_type` | A tagged empty type for a data member that is not there | none |
-| `<xstd/misc/type_traits/conditional_data_member.hpp>` | `conditional_data_member` | A conditionally present member | none |
-| `<xstd/misc/utility/to_underlying.hpp>` | `to_underlying` | `std::to_underlying`, plus an `std::integral_constant` overload | [P1682R1](https://github.com/cplusplus/papers/issues/460) (`std::to_underlying`) |
-| `<xstd/misc/concepts/hash_algorithm.hpp>` | `hash_algorithm` | A Boost.Hash2 hash algorithm, to its documented requirements | [Boost.Hash2](https://www.boost.org/doc/libs/latest/libs/hash2/) |
-| `<xstd/misc/type_traits/hash_algorithm_is_avalanching.hpp>` | `hash_algorithm_is_avalanching` | Whether a hash algorithm avalanches: true for every Boost.Hash2 algorithm but FNV-1a, and specializable for one's own | [Boost.Unordered](https://www.boost.org/doc/libs/latest/libs/unordered/) (`hash_is_avalanching`) |
-| `<xstd/misc/format/digest.hpp>` | `formatter<boost::hash2::digest<N>>` | Formats a Boost.Hash2 digest as hex | [Boost.Hash2](https://www.boost.org/doc/libs/latest/libs/hash2/) |
-| `<xstd/misc/format.hpp>` | `formatter<boost::hash2::digest<N>>` | The one above, through one include | none |
-| `<xstd/misc/functional/digest.hpp>` | `digest` | A key's digest at the algorithm's own width, from a seeded Boost.Hash2 algorithm, XXH3-128 by default | [Boost.Hash2](https://www.boost.org/doc/libs/latest/libs/hash2/) |
-| `<xstd/misc/functional/hash.hpp>` | `hash` | A key's hash for an unordered container, from a seeded Boost.Hash2 algorithm, xxHash64 by default, transparent over `std::basic_string` | [Boost.Hash2](https://www.boost.org/doc/libs/latest/libs/hash2/), [N3980](https://wg21.link/n3980) |
-| `<xstd/misc/functional.hpp>` | `digest` <br> `hash` | The two above, through one include | [Boost.Hash2](https://www.boost.org/doc/libs/latest/libs/hash2/) |
-
-Each directory has an umbrella exporting what is under it -- `<xstd/misc/concepts.hpp>`,
-`<xstd/misc/format.hpp>`, `<xstd/misc/functional.hpp>`, `<xstd/misc/type_traits.hpp>`,
-`<xstd/misc/utility.hpp>` -- and `<xstd/misc.hpp>` exports the five, so one include brings the whole surface.
 
 ## Requirements
 

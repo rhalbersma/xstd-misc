@@ -19,16 +19,38 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Whether this pull request can reach what the ladders build; see changes.yml.
+  changes:
+    uses: ./.github/workflows/changes.yml
+
   # No inputs: this library builds on every rung of the ladder, which is what
   # the shared workflow defaults to.
-  gcc:
-    uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@2a7b3577168d22d62a9119b1913c6e0122e78994 # main after rhalbersma/cpp-ci#76, whose clang-tidy action counts every header's result rather than the last one's
+  gcc_ladder:
+    needs: changes
+    if: needs.changes.outputs.build == 'true'
+    uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@2a7b3577168d22d62a9119b1913c6e0122e78994 # v0.14.0
 
   # 32-bit x86: a 32-bit size_t, 4-byte alignment for 64-bit integers, and no
   # __int128. One rung in Debug, since what is under test is the target.
   i686:
-    uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@2a7b3577168d22d62a9119b1913c6e0122e78994 # main after rhalbersma/cpp-ci#76, whose clang-tidy action counts every header's result rather than the last one's
+    needs: changes
+    if: needs.changes.outputs.build == 'true'
+    uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@2a7b3577168d22d62a9119b1913c6e0122e78994 # v0.14.0
     with:
       arch: x86
       tiers: stable
       build_types: Debug
+
+  # The name branch protection requires: green when the ladder passed, or when
+  # the pull request changes nothing the ladder builds.
+  all:
+    name: gcc / all
+    needs: [ changes, gcc_ladder ]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Every leg succeeded, or none was needed
+        env:
+          BUILD: ${{ needs.changes.outputs.build }}
+          RESULT: ${{ needs.gcc_ladder.result }}
+        run: test "${BUILD}" = false || test "${RESULT}" = success

@@ -16,8 +16,7 @@ namespace std {
 // Lowercase hex in byte order, as boost::hash2::to_string prints, or uppercase with X.
 template<std::size_t N>
 // NOLINTNEXTLINE(bugprone-std-namespace-modification): [namespace.std] admits specializations on program-defined types.
-struct formatter<boost::hash2::digest<N>>
-        : xstd::detail::hex_spec
+struct formatter<boost::hash2::digest<N>> : xstd::detail::hex_spec
 {
         template<class FormatContext>
         [[nodiscard]] auto format(boost::hash2::digest<N> const& d, FormatContext& ctx) const
