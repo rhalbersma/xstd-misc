@@ -69,7 +69,7 @@ CheckOptions:
 
 - A conforming [C++20](https://wg21.link/N4861) compiler
 - CMake 3.30 or later when using the supplied CMake project
-- [Boost.Hash2](https://www.boost.org/doc/libs/latest/libs/hash2/) 1.88 or later, header-only,
+- [Boost.Hash2](https://www.boost.org/doc/libs/latest/libs/hash2/) 1.89 or later, the first with `xxh3_128`, header-only,
   which the `xstd::misc` target links and its installed package finds
 
 CI covers the toolchains in the table below, and no older ones.
@@ -93,7 +93,7 @@ target_link_libraries(my_target PRIVATE xstd::misc)
 
 `find_package(xstd-misc CONFIG REQUIRED)` and `add_subdirectory(external/xstd-misc)` provide
 the same `xstd::misc` target. Each finds Boost.Hash2 with `find_package(boost_hash2 CONFIG)`, so it
-must be installed where CMake looks, as vcpkg's `boost-hash2` port or Boost 1.88+ puts it.
+must be installed where CMake looks, as vcpkg's `boost-hash2` port or Boost 1.89+ puts it.
 
 To build and install the headers alone, without the test suite and its [Boost.Test](https://www.boost.org/doc/libs/latest/libs/test/)
 dependency, configure with tests off:

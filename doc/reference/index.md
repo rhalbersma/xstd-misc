@@ -66,8 +66,10 @@ What each entity builds on in C++, and, for an entity that introduces a name or 
 - **`container_compatible_range`:** introduced as an exposition-only concept by [P1206R7](https://wg21.link/p1206r7),
   *Conversions from ranges to containers* (Corentin Jabot, Eric Niebler, Casey Carter), for `ranges::to` and the
   containers' `from_range` constructors.
-- **`to_underlying`:** [P1682R1](https://wg21.link/p1682r1), *`std::to_underlying` for enumerations* (JeanHeyd
-  Meneide), from an idea of Walter E. Brown's.
+- **`to_underlying`:** inspired by `toUType`, Item 10 of Scott Meyers'
+  [*Effective Modern C++*](https://www.oreilly.com/library/view/effective-modern-c/9781491908419/) (2014). Rein
+  Halbersma investigated its use and proposed it to Walter E. Brown, who encouraged a paper, and JeanHeyd Meneide
+  wrote [P1682R1](https://wg21.link/p1682r1), *`std::to_underlying` for enumerations*, as its acknowledgements record.
 - **`is_specialization_of`, `specialization_of`:** [P2098R1](https://wg21.link/p2098r1), *Proposing
   `std::is_specialization_of`* (Walter E. Brown, Bob Steagall), whose spelling and all-types scope these follow.
 - **`XSTD_NO_UNIQUE_ADDRESS`, `empty_base_type`, `empty_member_type`, `conditional_data_member`:**

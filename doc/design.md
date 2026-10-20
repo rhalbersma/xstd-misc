@@ -116,13 +116,15 @@ the point of use.
 
 ### `to_underlying`
 
-The [original 2016 sketch](ideas.md#1-convenient-underlying-types-for-scoped-enums)
-motivated `to_underlying` with scoped enums used as named tuple and array
-indices. Rein Halbersma developed the idea and initial usage evidence with
-Walter E. Brown; JeanHeyd Meneide then authored
-[P1682R1](https://github.com/cplusplus/papers/issues/460) and carried `std::to_underlying` through
-WG21 for [C++23](https://wg21.link/N4950). [P1682](https://github.com/cplusplus/papers/issues/460)'s acknowledgements record those
-roles. The xstd overload complements it: given an enum value wrapped in
+Inspired by Item 10 of Scott Meyers' [*Effective Modern C++*](https://www.oreilly.com/library/view/effective-modern-c/9781491908419/)
+(O'Reilly, 2014), whose `toUType` converts a scoped enumerator to its underlying type so that it can index a
+`std::tuple`, Rein Halbersma investigated how widely the idiom was used. The
+[original 2016 sketch](ideas.md#1-convenient-underlying-types-for-scoped-enums) motivated it with scoped enums as
+named tuple and array indices, and the evidence put to Walter E. Brown that December counted hundreds of uses on GitHub,
+most of them spelled `toUType` after Meyers. Walter E. Brown encouraged a paper, and JeanHeyd Meneide then authored
+[P1682R1](https://github.com/cplusplus/papers/issues/460) and carried `std::to_underlying` through WG21 for
+[C++23](https://wg21.link/N4950). [P1682](https://github.com/cplusplus/papers/issues/460)'s acknowledgements record
+those roles. The xstd overload complements it: given an enum value wrapped in
 `std::integral_constant`, it returns an `integral_constant` of the underlying
 type, preserving the value at the type level.
 
@@ -366,7 +368,7 @@ hasher's `is_avalanching` inline two different probe sequences into one containe
 compiled in one misses an element inserted by the other. Answers given per algorithm header,
 opted into by including ours instead of Hash2's, would have put that one include away from every
 user. The forward declarations match Hash2's own, `class` in `boost::hash2` for each algorithm
-and `template<class H> class hmac`, from 1.88 to 1.92, so a change there fails to compile rather
+and `template<class H> class hmac`, from 1.89 to 1.92, so a change there fails to compile rather
 than going unnoticed. HMAC answers as the algorithm it keys does. An algorithm outside Hash2 gets
 its answer from a specialization its author writes beside its definition, as with `std::hash`.
 
