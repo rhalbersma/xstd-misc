@@ -17,8 +17,7 @@ namespace xstd {
 
 // A digest stands in for its key on every target: XXH3-128 keeps two keys apart, little-endian bytes keep it portable.
 template<class T, hash_algorithm H = boost::hash2::xxh3_128, class Flavor = boost::hash2::little_endian_flavor>
-class digest
-        : detail::hasher<H, Flavor>
+class digest : detail::hasher<H, Flavor>
 {
 public:
         using detail::hasher<H, Flavor>::hasher;
@@ -34,8 +33,7 @@ public:
 
 // A string, its view and a C string append the same characters, so each digests as the key without building one.
 template<class CharT, class Traits, class Allocator, hash_algorithm H, class Flavor>
-class digest<std::basic_string<CharT, Traits, Allocator>, H, Flavor>
-        : detail::hasher<H, Flavor>
+class digest<std::basic_string<CharT, Traits, Allocator>, H, Flavor> : detail::hasher<H, Flavor>
 {
 public:
         using detail::hasher<H, Flavor>::hasher;
