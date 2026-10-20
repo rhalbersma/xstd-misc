@@ -15,7 +15,7 @@
 
 enum class color : unsigned
 {
-        red = 1
+        red = 1,
 };
 
 struct storage

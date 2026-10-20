@@ -12,7 +12,7 @@ BOOST_AUTO_TEST_SUITE(Utility)
 
 enum class shade : int
 {
-        one = 1
+        one = 1,
 };
 
 // The front door opens on every room behind it: reached through the umbrella alone.

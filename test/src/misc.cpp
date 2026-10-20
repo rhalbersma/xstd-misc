@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(AnAdaptorTakesAConstOwnerAndAMutableOne)
 // The tag empty_member_type carries is a type like any other, so the trait sees through the alias to it.
 enum class shade : int
 {
-        one = 1
+        one = 1,
 };
 
 BOOST_AUTO_TEST_CASE(TheUtilitiesMeetOverTheLibrarysOwnTemplates)
