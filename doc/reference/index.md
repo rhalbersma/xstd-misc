@@ -8,6 +8,23 @@ The synopses leave out `[[nodiscard]]`, as the standard's own have since [P2422R
 it a recommended practice rather than part of a library's specification. The code carries it on every function that
 returns a value and on every constructor, so discarding any result here draws a warning.
 
+## How to read this reference
+
+Each header's page opens with its synopsis, and `see below` there stands for what the text after it specifies. The
+elements that follow carry the meanings [[structure.specifications]](https://eel.is/c++draft/structure.specifications)
+gives them:
+
+| Element | What it tells the caller |
+| :------ | :----------------------- |
+| *Constraints:* | When the overload takes part in overload resolution. A call that fails one is not an error by itself: it finds another overload, or none. |
+| *Effects:* | What the call does. |
+| *Returns:* | The value the call returns. |
+| *Throws:* | The exceptions the call throws, and when. A function with none listed and no `noexcept` may still throw from what it calls. |
+| *Remarks:* | Anything else the caller can rely on, such as when the function is `noexcept` or a constant expression. |
+
+A bullet that names no element states a property the entity has, and for a concept, which types model it and which
+do not. Those types are real ones, taken from the standard library, Boost and the xstd libraries, and each is tested.
+
 ## Relation to the standard library
 
 Each entity is one of five kinds:
