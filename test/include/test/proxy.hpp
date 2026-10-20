@@ -11,7 +11,8 @@
 
 namespace test {
 
-enum class shade : unsigned char {
+enum class shade : unsigned char
+{
         light = 1,
         dark  = 2,
 };

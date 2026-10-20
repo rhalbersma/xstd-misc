@@ -19,11 +19,17 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Whether this pull request can reach what the ladder builds; see changes.yml.
+  changes:
+    uses: ./.github/workflows/changes.yml
+
   # The same Visual Studio ladder as msvc.yml, with clang-cl in front of the
   # MSVC STL instead of cl. Its own cache prefix, since the two callers build
   # the dependencies with different compilers.
-  clang_cl:
-    uses: rhalbersma/cpp-ci/.github/workflows/visual-studio.yml@2a7b3577168d22d62a9119b1913c6e0122e78994 # main after rhalbersma/cpp-ci#76, whose clang-tidy action counts every header's result rather than the last one's
+  clang_cl_ladder:
+    needs: changes
+    if: needs.changes.outputs.build == 'true'
+    uses: rhalbersma/cpp-ci/.github/workflows/visual-studio.yml@2a7b3577168d22d62a9119b1913c6e0122e78994 # v0.14.0
     with:
       toolset: ClangCL,host=x64
       preview_toolset_prefix: "ClangCL,"
@@ -32,3 +38,17 @@ jobs:
       # all gate cannot see what was skipped, so the nightly canary covers it,
       # building every rung and build type on main.
       reduce_on_pr: true
+
+  # The name branch protection requires: green when the ladder passed, or when
+  # the pull request changes nothing the ladder builds.
+  all:
+    name: clang_cl / all
+    needs: [ changes, clang_cl_ladder ]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Every leg succeeded, or none was needed
+        env:
+          BUILD: ${{ needs.changes.outputs.build }}
+          RESULT: ${{ needs.clang_cl_ladder.result }}
+        run: test "${BUILD}" = false || test "${RESULT}" = success

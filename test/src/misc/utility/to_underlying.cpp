@@ -18,11 +18,21 @@ BOOST_AUTO_TEST_SUITE(Misc)
 BOOST_AUTO_TEST_SUITE(Utility)
 BOOST_AUTO_TEST_SUITE(ToUnderlying)
 
-enum class e1 {};
-enum class e2 : bool {};
-enum class e3 : char {};
-enum class e4 : unsigned char {};
-enum class e5 : unsigned {};
+enum class e1
+{
+};
+enum class e2 : bool
+{
+};
+enum class e3 : char
+{
+};
+enum class e4 : unsigned char
+{
+};
+enum class e5 : unsigned
+{
+};
 
 template<e1 N>
 using e1_ = std::integral_constant<e1, N>;

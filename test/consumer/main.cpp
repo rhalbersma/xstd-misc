@@ -13,7 +13,10 @@
 #include <memory>
 #include <type_traits>
 
-enum class color : unsigned { red = 1 };
+enum class color : unsigned
+{
+        red = 1,
+};
 
 struct storage
 {
