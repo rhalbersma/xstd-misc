@@ -8,6 +8,32 @@ The synopses leave out `[[nodiscard]]`, as the standard's own have since [P2422R
 it a recommended practice rather than part of a library's specification. The code carries it on every function that
 returns a value and on every constructor, so discarding any result here draws a warning.
 
+## Relation to the standard library
+
+Each entity is one of five kinds:
+- **Copied:** the standard's own exposition-only wording, word for word, under a name users can spell.
+- **Extends:** a standard facility under its own name, giving the standard's answer wherever the standard gives one,
+  with overloads or specializations for more types.
+- **Generalizes:** the job of a standard facility, done for more types through an interface of its own.
+- **Spells:** a portable spelling of a standard attribute.
+- **Proposed** or **new:** no counterpart in the standard. A proposed entity follows a WG21 paper; a new one follows
+  none.
+
+| Entity | Kind | Counterpart |
+| :-- | :-- | :-- |
+| `container_compatible_range` | Copied | *container-compatible-range*, [[container.intro.reqmts]/2](https://eel.is/c++draft/container.intro.reqmts#2) |
+| `simple_allocator` | Copied | *simple-allocator*, [[allocator.requirements.general]/99](https://eel.is/c++draft/allocator.requirements.general#99) |
+| `to_underlying` | Extends | `to_underlying`, [[utility.underlying]](https://eel.is/c++draft/utility.underlying), from [P1682R1](https://github.com/cplusplus/papers/issues/460): an enumeration forwards to it, and the overloads add an enumerator kept in `integral_constant` and a proxy reference to an enumeration |
+| `formatter<boost::hash2::digest<N>>` | Extends | `formatter`, [[format.formatter.spec]](https://eel.is/c++draft/format.formatter.spec): a specialization for Boost.Hash2's digest, as [[namespace.std]](https://eel.is/c++draft/namespace.std) admits for a type the standard library does not declare |
+| `hash` | Generalizes | `hash`, [[unord.hash]](https://eel.is/c++draft/unord.hash), and the [*Cpp17Hash*](https://eel.is/c++draft/hash.requirements) requirements it meets: any key with a `hash_append`, under a Boost.Hash2 algorithm the caller names and seeds, after [N3980](https://wg21.link/n3980)'s `uhash` |
+| `XSTD_NO_UNIQUE_ADDRESS` | Spells | `[[no_unique_address]]`, [[dcl.attr.nouniqueaddr]](https://eel.is/c++draft/dcl.attr.nouniqueaddr), as `msvc::no_unique_address` where the MSVC-compatible frontend reads the standard one as layout-neutral |
+| `is_specialization_of`, `specialization_of` | Proposed | `is_specialization_of`, in [P2098R1](https://github.com/cplusplus/papers/issues/812)'s spelling, for class templates whose parameters are all types |
+| `digest` | Proposed | [N3980](https://wg21.link/n3980)'s `uhash`, which returns the algorithm's whole result as `digest` does, here with a seed |
+| `proxy_semi_reference`, `proxy_semi_iterator`, `proxy_reference`, `proxy_iterator` | New | none: the standard names no proxy concept; these are built on `indirectly_readable` and `indirectly_writable`, [[iterator.concepts]](https://eel.is/c++draft/iterator.concepts), and [P2321](https://github.com/cplusplus/papers/issues/1003)'s const-assignable proxies |
+| `hash_algorithm` | New | none in the standard: Boost.Hash2's documented requirements on a hash algorithm, as a concept |
+| `hash_algorithm_is_avalanching` | New | none in the standard: Boost.Unordered's `hash_is_avalanching` asks the same of a hasher, and this asks it of an algorithm |
+| `empty_base_type`, `empty_member_type`, `conditional_data_member` | New | none |
+
 ## `<xstd/misc/concepts.hpp>`
 
 ```cpp
