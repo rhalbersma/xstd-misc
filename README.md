@@ -33,8 +33,8 @@ every public API is in namespace `xstd`.
 | `<xstd/misc/type_traits.hpp>` | `is_specialization_of`, whether a hash algorithm avalanches, `XSTD_NO_UNIQUE_ADDRESS`, and the types that keep the place of a base or member that may be absent. |
 | `<xstd/misc/utility.hpp>` | `std::to_underlying`, extended to an enumerator in `std::integral_constant` and to a proxy reference to one. |
 
-[The reference](doc/reference/index.md) lists each group's headers and specifies each entity, and [the design notes](doc/design.md)
-give the rationale and the measurements behind it. [CONTRIBUTING.md](CONTRIBUTING.md) builds the library itself.
+[The reference](doc/reference/index.md) lists each group's headers and specifies each entity, [the design notes](doc/design.md)
+give the rationale, and [the measurements](doc/measurements.md) the evidence behind it. [CONTRIBUTING.md](CONTRIBUTING.md) builds the library itself.
 
 ## Usage
 
@@ -53,6 +53,15 @@ using siphasher = xstd::hash<std::string, boost::hash2::siphash_64>;
 
 auto const key = std::array<unsigned char, 16>{/* drawn at random, per container */};
 auto names     = std::unordered_set<std::string, siphasher>(0, siphasher(key.data(), key.size()));
+```
+
+If you lint with `clang-tidy`, `misc-include-cleaner` reports that nothing provides the Boost names you write, here and
+anywhere else you use Boost: no Boost library ships the IWYU pragmas the check reads. The answer is one line in your
+own `.clang-tidy`, which no library can supply for you:
+
+```yaml
+CheckOptions:
+  misc-include-cleaner.IgnoreHeaders: 'boost/.*'
 ```
 
 ## Requirements
@@ -115,11 +124,7 @@ libraries) in both Debug and Release mode:
 | Windows  | MSVC       | MSVC             | 2022 (17.11+)             | 2026                      | 2026-Preview                   | [![MSVC](https://github.com/rhalbersma/xstd-misc/actions/workflows/msvc.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/msvc.yml) |
 | Web      | Emscripten | libc++           | 6.0.12                    | —                         | —                              | [![Emscripten](https://github.com/rhalbersma/xstd-misc/actions/workflows/emscripten.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/emscripten.yml) |
 
-The `Web` row runs one Emscripten release on the stable rung, in Debug: wasm32 under node,
-where `size_t` is 32 bits but 64-bit integers keep their 8-byte alignment. The GCC workflow
-adds a second 32-bit leg, i686 with GCC `-m32`, where `size_t` is 32 bits and there is no
-`__int128`. The MSVC workflow adds a third, x86 with VS 2026 in Debug, where `size_t` is 32
-bits and 64-bit members keep their 8-byte alignment under MSVC's own ABI.
+[CONTRIBUTING.md](CONTRIBUTING.md#the-ci-matrix) says what each channel is, and which legs run beyond the table.
 
 Beyond the compilers, CI holds coverage at 100%, consumes the library through `find_package`, `add_subdirectory` and
 `FetchContent`, runs the sanitizers, analyzes the code with Clang-Tidy, MSVC's `/analyze` and CodeQL, and builds the

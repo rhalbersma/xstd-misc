@@ -29,6 +29,23 @@ This repository enforces its quality bar through CI rather than through review d
 
 Match the surrounding code's style by eye where `.clang-format` doesn't have an opinion, including the Boost Software License header comment at the top of every source and workflow file.
 
+## The CI matrix
+
+The matrix follows the channel model used by
+[apt.llvm.org](https://apt.llvm.org/): **stable** is the established release,
+**qualification** the newest release still being qualified, and **development**
+the current development branch. These are tested across the three main compiler
+families, the three main standard libraries and the three main desktop platforms,
+with MinGW, Apple Clang and Clang-CL filling out the remaining combinations.
+Development jobs are required where a usable development compiler exists; the
+[README](README.md#continuous-integration) records the versions currently assigned to each channel.
+
+The `Web` row runs one Emscripten release on the stable rung, in Debug: wasm32 under node,
+where `size_t` is 32 bits but 64-bit integers keep their 8-byte alignment. The GCC workflow
+adds a second 32-bit leg, i686 with GCC `-m32`, where `size_t` is 32 bits and there is no
+`__int128`. The MSVC workflow adds a third, x86 with VS 2026 in Debug, where `size_t` is 32
+bits and 64-bit members keep their 8-byte alignment under MSVC's own ABI.
+
 ## Test suite requirements
 
 Keep a focused test source for each public function, concept, and trait, mirroring its header path under `test/src/`. A source matching an umbrella header (for example, `concepts.cpp`, `type_traits.cpp`, or `utility.cpp`) tests only identities that span several focused facilities.

@@ -54,6 +54,7 @@ nav:
       - reference/utility/index.md
       - to_underlying.hpp: reference/utility/to_underlying.md
   - Design: design.md
+  - Measurements: measurements.md
 
 theme:
   name: material

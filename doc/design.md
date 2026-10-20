@@ -173,15 +173,10 @@ an algorithm parameter on `std::hash` would change the type of every `std::hash<
 ABI of every unordered container over one, and a specialization per key computes its value
 itself, so no algorithm could reach the key's bytes through it.
 
-**What the copy costs.** Measured with nanobench on GCC 15 at `-O2`, on one core of a 2.8 GHz
-Xeon, copying `xxhash_64`'s 80-byte prototype takes about 1 ns of a call that costs 11–18 ns on
-x64 for a 64-bit integer or a 16-byte string; `llvm-mca` puts its five 16-byte loads and stores at
-5 cycles. Starting each call from a default-constructed algorithm instead, or seeding one per call,
-takes as long as the whole call does with the copy, so the fixed cost over `std::hash` is Hash2's
-buffered `update` and its `result`, not the copy. `xxh3_128`'s 560-byte state is another matter:
-its copy takes 19–23 ns of a 40–63 ns call on x64, and 17–28 ns of 55–105 on i686. Building that
-state any other way costs as much or more, so the copy is still the cheapest start a seeded call
-has.
+**What the copy costs.** Copying `xxhash_64`'s 80-byte prototype takes about 1 ns of an 11–18 ns call, and starting
+from a default-constructed or freshly seeded algorithm costs as much as the whole call, so the copy is the cheapest
+start a seeded call has. `xxh3_128`'s 560-byte state makes its copy a third or more of the call, and still the
+cheapest start. [The measurements](measurements.md#the-prototype-copy) give the method and the figures.
 
 **Its successors.** Two later papers took the problem elsewhere. [P0029R0](https://wg21.link/P0029R0)
 unifies it with [N3333](https://wg21.link/n3333): a type's `hash_value` takes the algorithm's state by value and returns it
@@ -297,21 +292,18 @@ multiply-high fold to `std::size_t` spreads them again. A `boost::unordered_flat
 group from a hash's high bits instead, and FNV-1a leaves those alike for the same IDs too: the
 last byte meets a single multiply, which carries its high bits only part of the way up. The
 table mixes FNV-1a's hash before taking the group, and no insertion then probes past its first. That it hides on the most common
-toolchain is what makes it easy to miss. Measured over 24-byte keys, FNV-1a has input/output bit pairs that never flip
-together, where xxHash is at the sampling noise. Measured with [nanobench](https://github.com/martinus/nanobench) on one core of an x86-64
-Xeon at `-O2`, FNV-1a is faster by 3–14 ns on keys of up to 16 bytes, and four to eight times
-slower from 64 bytes. xxHash consumes the input a word per lane with a constant finalization, so
-its cost through `hash` is a fixed 15–19 ns a call for strings up to 64 bytes, 8.5 ns for a
-64-bit integer, and 37 ns at 256 bytes. There is no second alias for short
+toolchain is what makes it easy to miss. FNV-1a also has input and output bit pairs that never flip together, where
+xxHash is at the sampling noise ([measurements](measurements.md#avalanche)). It is faster only on keys of up to 16
+bytes, and several times slower from 64, while xxHash consumes the input a word per lane with a constant
+finalization, so its cost through `hash` is nearly flat up to 64 bytes ([measurements](measurements.md#the-cost-of-a-call)).
+There is no second alias for short
 keys: a choice between a fast default and a safe one is the misuse this rules out, and a
 caller who wants FNV-1a names `boost::hash2::fnv1a_64`. One algorithm on every platform
 also makes the value one function of the key at each width of `size_t`: the 64-bit digest
 itself where `size_t` holds it, and `get_integral_result`'s multiply-high fold of that digest
 where it is 32 bits, which the tests pin with literal values. A 32-bit CPU emulates xxHash's
-64-bit multiplies, and still pays no more for them than for `xxhash_32`'s: measured through `hash`
-on i686 with GCC 15 at `-O2`, both cost 7.2 ns for a 64-bit integer, 16–19 ns for strings up to
-16 bytes, 25 ns at 64 and 59 ns at 256. On x86-64, `xxhash_32` costs 1.3 to 2.9 times what
-`xxhash_64` does from 16 bytes up.
+64-bit multiplies, and still pays no more for them than for `xxhash_32`'s
+([measurements](measurements.md#on-a-32-bit-target)).
 
 **A second algorithm.** `hash<T, H64, H32>` runs `H32` where `std::size_t` is at most 32 bits and
 `H64` elsewhere, and names the one that runs `hash_type`, after the hasher in
@@ -326,55 +318,30 @@ be no wider than `H64`'s: two names read as a pair are easily given in the other
 then run the wider algorithm where `size_t` is the narrower. `Flavor` comes after both, so code
 that names one spells the algorithm twice, as `hash<T, H, H, Flavor>`.
 
-The method, the build and the per-length tables are in [#53](https://github.com/rhalbersma/xstd-misc/issues/53#issuecomment-6250956313). The default is not SipHash either: a default-constructed hasher is unseeded, and keyed
+The default is not SipHash either: a default-constructed hasher is unseeded, and keyed
 resistance without a key buys nothing. Hash2's own advice for keys an adversary chooses is
 `siphash_64` with a seed drawn per container, which is a choice the caller makes and
 spells out.
 
-**Flooding.** The seed is what defeats an attacker who knows the hash function. An offline
-search for keys that share a slot costs 2.7·10⁸ hashes for 32,768 keys in one group of a
-`boost::unordered_flat_map`, whose average insertion probe then goes from 1.07 groups to 786,
-and 7·10⁷ for 8,192 keys in one bucket of a `std::unordered_map` reserved to them. Insertion
-runs 17–40 and 105–177 times slower, on libstdc++ and libc++, under unseeded xxHash, unseeded
-FNV-1a and SipHash with a public seed alike. A secret seed per container leaves both tables as
-they are with random keys, under SipHash and under xxHash. That search does not tell the two
-apart: SipHash's half of the advice answers collisions found independently of the seed, as
-Aumasson and Bernstein found for MurmurHash and CityHash in 2012, which this measurement does
-not attempt. The method, its source and the full results are in
-[#63](https://github.com/rhalbersma/xstd-misc/issues/63#issuecomment-6247746524).
+**Flooding.** The seed is what defeats an attacker who knows the hash function. Keys found offline to share a slot
+slow insertion into a `boost::unordered_flat_map` and a `std::unordered_map` by one to two orders of magnitude under an
+unseeded or publicly seeded hash, whatever the algorithm, and a secret seed per container leaves both tables as they
+are with random keys, under SipHash and under xxHash ([measurements](measurements.md#hash-flooding)). SipHash's half
+of the advice answers what that search does not attempt: collisions found independently of the seed, as Aumasson and
+Bernstein found for MurmurHash and CityHash in 2012.
 
-**xxHash or SipHash.** The two halves of that advice trade speed for what the seed protects.
-[SMHasher3's results](https://gitlab.com/fwojcik/smhasher3/-/tree/main/results), measured on the
-reference implementations, separate them:
+**xxHash or SipHash.** The two halves of that advice trade speed for what the seed protects. In
+[SMHasher3](https://gitlab.com/fwojcik/smhasher3/-/tree/main/results), XXH-64 fails nine of its 250 tests, all of them
+seed tests, and passes every test that hashes keys under one seed, while SipHash-2-4 passes every test it runs, at
+about three times the cost on short keys ([measurements](measurements.md#xxhash-and-siphash-in-smhasher3)).
 
-| | `xxhash_64` (XXH-64) | `siphash_64` (SipHash-2-4) |
-| :-- | :-- | :-- |
-| SMHasher3 | 241 of its 250 tests passed | all 235 of its tests passed |
-| Cycles a call, keys of 1–32 bytes | 53 | 152 |
-| Bytes a cycle, long keys | 3.99 | 0.32 |
-| The seed | added to the state | the key of a keyed function |
-| For | keys the program makes itself | keys an adversary chooses |
-
-- **What XXH-64 fails:** all nine failures are seed tests, and it passes every test that hashes
-  keys under one seed.
-  - In [SeedBlockLen](https://gitlab.com/fwojcik/smhasher3/-/raw/main/results/raw/XXH-64.txt)
-    at 15, 19, 21, 26, 29 and 30 bytes, and SeedBlockOffset at offset 8, two pairs of seed and key,
-    each seed with at most two bits set, share all 64 bits. Every one of those keys is under 32
-    bytes, where the seed enters once, as `seed + P5`, and a small change in it can cancel a small
-    change in the key.
-  - In SeedBIC, flipping seed bit 39 of a 4-byte key, or bit 35 of an 8-byte one, flips output
-    bits 24 and 56 with a correlation of 0.82 and 0.94, where the worst pair at every other length
-    stays within 0.006.
-- **What that means here:** a container hashes every key under its one seed, so neither failure
-  reaches a table. Both show that XXH-64's seed is an offset rather than a key. Nothing in it
-  resists an attacker who learns hashes and works back towards the seed, or who looks for
-  collisions that hold under every seed, and SipHash is built to resist both.
-- **The cost:** on short keys, the length of most keys a table holds, SipHash takes about three
-  times as long as xxHash. Hash2's `xxhash_64(std::uint64_t)` seeds as the reference XXH64 does,
-  so its test results carry over.
-- **SipHash's key:** SipHash takes a 128-bit key, and Hash2's `siphash_64(std::uint64_t)` fills only
-  its low half, which leaves an attacker 64 bits to guess. Seeded from 16 bytes, as
-  `hash<T, siphash_64>(p, 16)`, it takes the whole key, as the reference does.
+- **What that means here:** a container hashes every key under its one seed, so none of XXH-64's failures reaches a
+  table. They show that its seed is an offset rather than a key. Nothing in it resists an attacker who learns hashes
+  and works back towards the seed, or who looks for collisions that hold under every seed, and SipHash is built to
+  resist both.
+- **SipHash's key:** SipHash takes a 128-bit key, and Hash2's `siphash_64(std::uint64_t)` fills only its low half,
+  which leaves an attacker 64 bits to guess. Seeded from 16 bytes, as `hash<T, siphash_64>(p, 16)`, it takes the whole
+  key, as the reference does.
 
 So the default stays `xxhash_64`: one seed per container never meets its failures, and on short
 keys it takes a third of SipHash's time. A container whose keys come from outside the program, such
@@ -403,27 +370,9 @@ and `template<class H> class hmac`, from 1.88 to 1.92, so a change there fails t
 than going unnoticed. HMAC answers as the algorithm it keys does. An algorithm outside Hash2 gets
 its answer from a specialization its author writes beside its definition, as with `std::hash`.
 
-The tests measure the Strict Avalanche Criterion (Webster and Tavares, CRYPTO '85) through the
-hasher's whole path: the seeded prototype, `hash_append` of a random 64-bit key, and the fold to
-`std::size_t`, and they check the trait against it for every Hash2 algorithm. For every key bit
-and hash bit, the rate at which flipping the one flips the other must lie within Hoeffding's
-bound of ½, union-bounded over every pair at a false-failure probability of 10⁻⁶. The algorithms
-a table runs are measured over 4096 keys, where the bound is about 0.053; the cryptographic ones
-avalanche by design and cost far more per hash, so 256 keys check them coarsely, against a bound
-of about 0.21. Measured over 4096 keys, every algorithm but FNV-1a stays near 0.03, the sampling
-noise of an ideal hash, at either width of `std::size_t`; FNV-1a comes close to 0.5, some hash bit
-almost never flipping with some key bit. In a `boost::unordered_flat_set` of 16384 sequential,
-strided or common-prefix keys, xxHash, XXH3 and SipHash have the same probe lengths without the
-mix as with it, while FNV-1a declared avalanching lengthens insertion probes by five to eight
-percent. That second measurement is evidence rather than a test: probes in an
-open-addressing table are not independent, so no threshold on it is calibrated. [SMHasher3](https://gitlab.com/fwojcik/smhasher3)'s
-Avalanche test, run through `hash`'s whole path at both widths of `std::size_t` and at every key
-length from 3 to 128 bytes, agrees with the trait for all 28 Hash2 algorithms. Its stricter BIC
-test fails XXH3-128, and both Murmur3 variants mildly, on 3-byte keys only. SMHasher3's own
-reference XXH3 fails it worse, so this is XXH3's short-input path rather than Hash2's or this
-library's, and bit independence is no part of what the trait claims. The method and the
-per-algorithm table are in [#53](https://github.com/rhalbersma/xstd-misc/issues/53#issuecomment-6250933037). Once Hash2 publishes
-the property, the hasher reads it instead.
+The tests check the trait against the Strict Avalanche Criterion, measured through the hasher's whole path for every
+Hash2 algorithm, and SMHasher3's Avalanche test agrees with it for all 28
+([measurements](measurements.md#avalanche)). Once Hash2 publishes the property, the hasher reads it instead.
 
 **`constexpr`, `noexcept`.** All three constructors and the call operator are `constexpr`.
 The constructors are constant expressions for every algorithm outside `legacy/`, which the
@@ -452,10 +401,9 @@ A table hashes on every lookup and needs only `size_t`'s width; a digest is comp
 and its width is the point, as wide as makes two keys colliding never the likeliest bug at any
 table size. The default is therefore `boost::hash2::xxh3_128`, which
 [xxHash](https://github.com/Cyan4973/xxHash) recommends where a 128-bit hash is required, while
-`hash` keeps `xxhash_64`. Measured through these classes with nanobench at `-O2`, Hash2's
-`xxh3_128` costs 3.4 to 4.6 times what `xxhash_64` does per call on x86-64, 39 to 67 ns against
-8.5 to 19 on keys up to 64 bytes, and 1.3 to 3 times on i686. Its state is 560 bytes against 80,
-and the prototype is copied on every call. That is a price a digest pays once and a table would pay on every lookup.
+`hash` keeps `xxhash_64`. Through these classes `xxh3_128` takes three to five times as long per call on x86-64
+([measurements](measurements.md#the-cost-of-a-call)), much of it the copy of its 560-byte state. That is a price a
+digest pays once and a table would pay on every lookup.
 The width buys the birthday bound: n keys under a b-bit digest collide with probability about
 n²/2^(b+1), so 2³² keys collide with probability 2⁻⁶⁵ at 128 bits and 0.39 at 64.
 A digest that persists still does better to name its algorithm, so that no change of default
@@ -479,17 +427,6 @@ none. [[namespace.std]](https://eel.is/c++draft/namespace.std) admits the specia
 does not define; Hash2 1.92 ships no formatter of its own, and one that a later release ships
 would collide with this one at compile time rather than replace it in silence.
 
-## Boost and include-cleaner
-
-`misc-include-cleaner` is not asked about `boost/.*` at all, in the root
-`.clang-tidy` and so in the test tree that inherits it. No Boost library ships
-IWYU pragmas -- [Boost.Hana](https://www.boost.org/doc/libs/latest/libs/hana/) has none across 450 headers -- and [Boost.Test](https://www.boost.org/doc/libs/latest/libs/test/)'s macros
-expand through private implementation headers, so the check reports that nothing
-provides the names the tests write. Of Boost, the library includes only Hash2; this is
-about the test tree, about the hashing headers, and about any project that lints its own sources while using
-Boost. No library can supply the line on their behalf: the option belongs to the
-linter, and CMake carries no usage requirement that could propagate one.
-
 ## Requirements and evolution
 
 xstd-misc requires a conforming [C++20](https://wg21.link/N4861) compiler, and the
@@ -499,16 +436,3 @@ stay small, portable and motivated by current practice; one that enters the
 standard library can be retired, and the baseline can advance once a later
 standard is a practical default. A facility that grows a domain of its own belongs in a
 library named for it rather than here.
-
-## CI policy
-
-The matrix follows the channel model used by
-[apt.llvm.org](https://apt.llvm.org/): **stable** is the established release,
-**qualification** the newest release still being qualified, and **development**
-the current development branch. These are tested across the three main compiler
-families, the three main standard libraries and the three main desktop platforms,
-with MinGW, Apple Clang and Clang-CL filling out the remaining combinations.
-Development jobs are required where a usable development compiler exists; the
-README records the versions currently assigned to each channel. Building the
-tests requires the dependencies documented in
-[CONTRIBUTING.md](../CONTRIBUTING.md).
