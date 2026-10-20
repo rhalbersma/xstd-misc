@@ -33,7 +33,7 @@ every public API is in namespace `xstd`.
 | `<xstd/misc/type_traits.hpp>` | `is_specialization_of`, whether a hash algorithm avalanches, `XSTD_NO_UNIQUE_ADDRESS`, and the types that keep the place of a base or member that may be absent. |
 | `<xstd/misc/utility.hpp>` | `std::to_underlying`, extended to an enumerator in `std::integral_constant` and to a proxy reference to one. |
 
-[The reference](doc/reference.md) lists each group's headers and specifies each entity, and [the design notes](doc/design.md)
+[The reference](doc/reference/index.md) lists each group's headers and specifies each entity, and [the design notes](doc/design.md)
 give the rationale and the measurements behind it. [CONTRIBUTING.md](CONTRIBUTING.md) builds the library itself.
 
 ## Usage
