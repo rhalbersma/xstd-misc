@@ -97,7 +97,16 @@ namespace xstd {
 }
 ```
 
-The umbrella exports each header below.
+| Header | Declares |
+| :----- | :------- |
+| `<xstd/misc/concepts/container_compatible_range.hpp>` | `container_compatible_range` |
+| `<xstd/misc/concepts/hash_algorithm.hpp>` | `hash_algorithm` |
+| `<xstd/misc/concepts/proxy_iterator.hpp>` | `proxy_iterator` |
+| `<xstd/misc/concepts/proxy_reference.hpp>` | `proxy_reference` |
+| `<xstd/misc/concepts/proxy_semi_iterator.hpp>` | `proxy_semi_iterator` |
+| `<xstd/misc/concepts/proxy_semi_reference.hpp>` | `proxy_semi_reference` |
+| `<xstd/misc/concepts/simple_allocator.hpp>` | `simple_allocator` |
+| `<xstd/misc/concepts/specialization_of.hpp>` | `specialization_of` |
 
 ### `container_compatible_range`
 
@@ -252,6 +261,15 @@ namespace xstd {
 }
 ```
 
+| Header | Declares |
+| :----- | :------- |
+| `<xstd/misc/type_traits/empty_base_type.hpp>` | `empty_base_type` |
+| `<xstd/misc/type_traits/empty_member_type.hpp>` | `empty_member_type` |
+| `<xstd/misc/type_traits/no_unique_address.hpp>` | `XSTD_NO_UNIQUE_ADDRESS` |
+| `<xstd/misc/type_traits/conditional_data_member.hpp>` | `conditional_data_member` |
+| `<xstd/misc/type_traits/hash_algorithm_is_avalanching.hpp>` | `hash_algorithm_is_avalanching` |
+| `<xstd/misc/type_traits/is_specialization_of.hpp>` | `is_specialization_of` |
+
 The umbrella's facilities compose into a member present only under a condition, and the trait recognises its absent
 branch.
 
@@ -327,6 +345,11 @@ namespace xstd {
     class digest<basic_string<CharT, Traits, Allocator>, H, Flavor>;
 }
 ```
+
+| Header | Declares |
+| :----- | :------- |
+| `<xstd/misc/functional/digest.hpp>` | `digest` |
+| `<xstd/misc/functional/hash.hpp>` | `hash` |
 
 Where the digest is as wide as `size_t`, the hash is the digest unchanged.
 
@@ -420,7 +443,9 @@ namespace std {
 }
 ```
 
-The umbrella exports it.
+| Header | Declares |
+| :----- | :------- |
+| `<xstd/misc/format/digest.hpp>` | `formatter<boost::hash2::digest<N>>` |
 
 ### `formatter<boost::hash2::digest<N>>`
 
@@ -444,7 +469,9 @@ namespace xstd {
 }
 ```
 
-The umbrella exports it.
+| Header | Declares |
+| :----- | :------- |
+| `<xstd/misc/utility/to_underlying.hpp>` | `to_underlying` |
 
 ### `to_underlying`
 

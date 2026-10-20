@@ -27,32 +27,14 @@ every public API is in namespace `xstd`.
 | Header | Description |
 | :----- | :---------- |
 | `<xstd/misc.hpp>` | Every header below, through one include. |
-| `<xstd/misc/concepts.hpp>` | The concepts below, through one include. |
-| `<xstd/misc/concepts/container_compatible_range.hpp>` | The standard's exposition-only *container-compatible-range*, word for word. |
-| `<xstd/misc/concepts/hash_algorithm.hpp>` | A Boost.Hash2 hash algorithm, to its documented requirements. |
-| `<xstd/misc/concepts/proxy_iterator.hpp>` | An iterator whose reference is a proxy reference. |
-| `<xstd/misc/concepts/proxy_reference.hpp>` | A proxy whose address is an iterator dereferencing back to it, and which writes through when `const`. |
-| `<xstd/misc/concepts/proxy_semi_iterator.hpp>` | An iterator whose reference is a proxy for its value type. |
-| `<xstd/misc/concepts/proxy_semi_reference.hpp>` | A class that converts implicitly to a value type the caller names. |
-| `<xstd/misc/concepts/simple_allocator.hpp>` | The standard's exposition-only *simple-allocator*, word for word. |
-| `<xstd/misc/concepts/specialization_of.hpp>` | A specialization of a class template whose parameters are all types, `const` or not. |
-| `<xstd/misc/format.hpp>` | The formatter below, through one include. |
-| `<xstd/misc/format/digest.hpp>` | A `std::formatter` that writes a Boost.Hash2 digest as hex. |
-| `<xstd/misc/functional.hpp>` | `hash` and `digest`, through one include. |
-| `<xstd/misc/functional/digest.hpp>` | A key's digest at its algorithm's own width, from a seeded Boost.Hash2 algorithm, XXH3-128 by default. |
-| `<xstd/misc/functional/hash.hpp>` | An unordered container's hash, from a seeded Boost.Hash2 algorithm, xxHash64 by default, transparent over strings. |
-| `<xstd/misc/type_traits.hpp>` | The traits below, through one include. |
-| `<xstd/misc/type_traits/conditional_data_member.hpp>` | A data member's type where a condition holds, and a tagged empty type where it does not. |
-| `<xstd/misc/type_traits/empty_base_type.hpp>` | A tagged empty type that keeps the place of a base class that is not there. |
-| `<xstd/misc/type_traits/empty_member_type.hpp>` | A tagged empty type that keeps the place of a data member that is not there. |
-| `<xstd/misc/type_traits/hash_algorithm_is_avalanching.hpp>` | Whether a hash algorithm avalanches, as Boost.Unordered asks: true for every Boost.Hash2 algorithm but FNV-1a. |
-| `<xstd/misc/type_traits/is_specialization_of.hpp>` | Whether a type is a specialization of a class template whose parameters are all types. |
-| `<xstd/misc/type_traits/no_unique_address.hpp>` | `XSTD_NO_UNIQUE_ADDRESS`, a portable spelling of `[[no_unique_address]]`. |
-| `<xstd/misc/utility.hpp>` | `to_underlying`, through one include. |
-| `<xstd/misc/utility/to_underlying.hpp>` | `std::to_underlying`, extended to an enumerator in `std::integral_constant` and to a proxy reference to one. |
+| `<xstd/misc/concepts.hpp>` | The proxy concepts, a Boost.Hash2 hash algorithm, `specialization_of`, and two exposition-only concepts copied from the standard. |
+| `<xstd/misc/format.hpp>` | A `std::formatter` that writes a Boost.Hash2 digest as hex. |
+| `<xstd/misc/functional.hpp>` | `hash` and `digest`: an unordered container's hash and a key's digest, from a seeded Boost.Hash2 algorithm. |
+| `<xstd/misc/type_traits.hpp>` | `is_specialization_of`, whether a hash algorithm avalanches, `XSTD_NO_UNIQUE_ADDRESS`, and the types that keep the place of a base or member that may be absent. |
+| `<xstd/misc/utility.hpp>` | `std::to_underlying`, extended to an enumerator in `std::integral_constant` and to a proxy reference to one. |
 
-[The reference](doc/reference.md) specifies each entity, and [the design notes](doc/design.md) give the rationale and
-the measurements behind it. [CONTRIBUTING.md](CONTRIBUTING.md) builds the library itself.
+[The reference](doc/reference.md) lists each group's headers and specifies each entity, and [the design notes](doc/design.md)
+give the rationale and the measurements behind it. [CONTRIBUTING.md](CONTRIBUTING.md) builds the library itself.
 
 ## Usage
 
