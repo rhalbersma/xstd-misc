@@ -30,4 +30,4 @@ jobs:
     permissions:
       contents: read
       security-events: write
-    uses: rhalbersma/cpp-ci/.github/workflows/codeql.yml@2a7b3577168d22d62a9119b1913c6e0122e78994 # main after rhalbersma/cpp-ci#76, whose clang-tidy action counts every header's result rather than the last one's
+    uses: rhalbersma/cpp-ci/.github/workflows/codeql.yml@2a7b3577168d22d62a9119b1913c6e0122e78994 # v0.14.0

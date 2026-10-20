@@ -25,4 +25,4 @@ jobs:
   # since v0.6.0. The C++ Core Guidelines checkers stay off until there is a
   # reason to turn them on.
   msvc_analyze:
-    uses: rhalbersma/cpp-ci/.github/workflows/msvc-analyze.yml@2a7b3577168d22d62a9119b1913c6e0122e78994 # main after rhalbersma/cpp-ci#76, whose clang-tidy action counts every header's result rather than the last one's
+    uses: rhalbersma/cpp-ci/.github/workflows/msvc-analyze.yml@2a7b3577168d22d62a9119b1913c6e0122e78994 # v0.14.0
