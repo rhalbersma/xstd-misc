@@ -19,8 +19,28 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Whether this pull request can reach what the ladder builds; see changes.yml.
+  changes:
+    uses: ./.github/workflows/changes.yml
+
   # No inputs: this library is C++20 and builds on every stable rung, which is
   # what the shared workflow defaults to. A repository needing a newer compiler
   # names the rung instead of the version, and this one may yet.
-  sanitizers:
+  sanitizers_ladder:
+    needs: changes
+    if: needs.changes.outputs.build == 'true'
     uses: rhalbersma/cpp-ci/.github/workflows/sanitizers.yml@2a7b3577168d22d62a9119b1913c6e0122e78994 # v0.14.0
+
+  # The name branch protection requires: green when the ladder passed, or when
+  # the pull request changes nothing the ladder builds.
+  all:
+    name: sanitizers / all
+    needs: [ changes, sanitizers_ladder ]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Every leg succeeded, or none was needed
+        env:
+          BUILD: ${{ needs.changes.outputs.build }}
+          RESULT: ${{ needs.sanitizers_ladder.result }}
+        run: test "${BUILD}" = false || test "${RESULT}" = success

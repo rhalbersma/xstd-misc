@@ -19,7 +19,13 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Whether this pull request can reach what the ladder builds; see changes.yml.
+  changes:
+    uses: ./.github/workflows/changes.yml
+
   # wasm32 under node: a 32-bit size_t like i686, but 8-byte alignment for
   # 64-bit integers and a native __int128, so it catches what i686 cannot.
   wasm32:
+    needs: changes
+    if: needs.changes.outputs.build == 'true'
     uses: rhalbersma/cpp-ci/.github/workflows/emscripten.yml@2a7b3577168d22d62a9119b1913c6e0122e78994 # v0.14.0
