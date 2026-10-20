@@ -39,19 +39,20 @@ give the rationale and the measurements behind it. [CONTRIBUTING.md](CONTRIBUTIN
 ## Usage
 
 An unordered container whose keys an adversary may choose takes SipHash, seeded per container, as
-[Hash2 advises](https://www.boost.org/doc/libs/latest/libs/hash2/doc/html/hash2.html#hashing_bytes_choosing_a_hash_algorithm):
+[Hash2 advises](https://www.boost.org/doc/libs/latest/libs/hash2/doc/html/hash2.html#hashing_bytes_choosing_a_hash_algorithm).
+SipHash's key is 128 bits, which a 16-byte seed fills and a `std::uint64_t` seed only half fills:
 
 ```cpp
 #include <xstd/misc/functional.hpp>
 #include <boost/hash2/siphash.hpp>
-#include <cstdint>
+#include <array>
 #include <string>
 #include <unordered_set>
 
 using siphasher = xstd::hash<std::string, boost::hash2::siphash_64>;
 
-auto const seed = std::uint64_t{/* drawn at random, per container */};
-auto names      = std::unordered_set<std::string, siphasher>(0, siphasher(seed));
+auto const key = std::array<unsigned char, 16>{/* drawn at random, per container */};
+auto names     = std::unordered_set<std::string, siphasher>(0, siphasher(key.data(), key.size()));
 ```
 
 ## Requirements
