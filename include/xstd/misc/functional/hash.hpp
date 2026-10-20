@@ -38,7 +38,6 @@ public:
 
 // A string, its view and a C string append the same characters, so a lookup by any of them finds the key.
 template<class CharT, class Traits, class Allocator, hash_algorithm H64, hash_algorithm H32, class Flavor>
-        requires (sizeof(typename H32::result_type) <= sizeof(typename H64::result_type))
 class hash<std::basic_string<CharT, Traits, Allocator>, H64, H32, Flavor> : detail::hasher<detail::native_hash_algorithm_t<H64, H32>, Flavor>
 {
 public:

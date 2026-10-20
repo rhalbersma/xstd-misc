@@ -1,0 +1,104 @@
+#          Copyright Rein Halbersma 2014-2026.
+# Distributed under the Boost Software License, Version 1.0.
+#    (See accompanying file LICENSE_1_0.txt or copy at
+#          http://www.boost.org/LICENSE_1_0.txt)
+
+# The clause deletions delete-clauses.py reports as surviving, each with the reason no test answers it. The tests use
+# existing types only, so a clause that no type from the standard library, Boost, Abseil or the xstd libraries fails
+# on its own is stated by its definition alone. An entry is a header and the deleted text with whitespace collapsed
+# and comments removed; a survivor without one, or an entry whose deletion a test now kills, fails the run.
+
+[[survivor]]
+header = "include/xstd/misc/concepts/container_compatible_range.hpp"
+deletes = "std::ranges::input_range<R> and"
+because = "range_reference_t<R> already asks for a range, and no existing range whose reference converts to T is an output-only one."
+
+[[survivor]]
+header = "include/xstd/misc/concepts/hash_algorithm.hpp"
+deletes = "std::semiregular<H> and"
+because = "Every type with Hash2's update and result is a Hash2 algorithm, and each one is semiregular; a hasher in its place fails the members first."
+
+[[survivor]]
+header = "include/xstd/misc/concepts/hash_algorithm.hpp"
+deletes = "std::constructible_from<H, std::uint64_t> and"
+because = "Every type with Hash2's update and result is a Hash2 algorithm, and Hash2 gives each one the integer seed."
+
+[[survivor]]
+header = "include/xstd/misc/concepts/hash_algorithm.hpp"
+deletes = "std::constructible_from<H, unsigned char const*, std::size_t> and"
+because = "Every type with Hash2's update and result is a Hash2 algorithm, and Hash2 gives each one the byte seed."
+
+[[survivor]]
+header = "include/xstd/misc/concepts/hash_algorithm.hpp"
+deletes = "typename H::result_type;"
+because = "The result requirement and the result disjunction both name H::result_type, so a type without one fails them instead."
+
+[[survivor]]
+header = "include/xstd/misc/concepts/hash_algorithm.hpp"
+deletes = "h.update(p, n);"
+because = "No existing type has Hash2's seeds, result_type and result but no update."
+
+[[survivor]]
+header = "include/xstd/misc/concepts/hash_algorithm.hpp"
+deletes = "{ h.result() } -> std::same_as<typename H::result_type>;"
+because = "No existing type has Hash2's seeds, result_type and update but no result returning that type."
+
+[[survivor]]
+header = "include/xstd/misc/concepts/hash_algorithm.hpp"
+deletes = "((std::unsigned_integral<typename H::result_type> and not std::same_as<typename H::result_type, bool>) or (boost::hash2::has_constant_size<typename H::result_type>::value and std::ranges::contiguous_range<typename H::result_type> and std::same_as<std::ranges::range_value_t<typename H::result_type>, unsigned char>)) and"
+because = "Every type with Hash2's members is a Hash2 algorithm, whose result is an unsigned integer or a fixed-size byte array."
+
+[[survivor]]
+header = "include/xstd/misc/concepts/hash_algorithm.hpp"
+deletes = "std::unsigned_integral<typename H::result_type> and"
+because = "No existing type with Hash2's members has a result that is neither an unsigned integer nor a fixed-size byte array."
+
+[[survivor]]
+header = "include/xstd/misc/concepts/hash_algorithm.hpp"
+deletes = "and not std::same_as<typename H::result_type, bool>"
+because = "No existing type with Hash2's members has a bool result; the clause states the exclusion Hash2 documents."
+
+[[survivor]]
+header = "include/xstd/misc/concepts/hash_algorithm.hpp"
+deletes = "boost::hash2::has_constant_size<typename H::result_type>::value and"
+because = "No existing type with Hash2's members returns a byte range whose size varies, such as a std::vector<unsigned char>."
+
+[[survivor]]
+header = "include/xstd/misc/concepts/hash_algorithm.hpp"
+deletes = "std::ranges::contiguous_range<typename H::result_type> and"
+because = "Every type has_constant_size admits, std::array, boost::array and Hash2's digest, is contiguous."
+
+[[survivor]]
+header = "include/xstd/misc/concepts/hash_algorithm.hpp"
+deletes = "and std::same_as<std::ranges::range_value_t<typename H::result_type>, unsigned char>"
+because = "No existing type with Hash2's members returns a fixed-size array of anything but unsigned char."
+
+[[survivor]]
+header = "include/xstd/misc/concepts/hash_algorithm.hpp"
+deletes = "and (not requires { H::block_size; } or std::same_as<std::remove_cv_t<decltype(H::block_size)>, std::size_t>)"
+because = "Hash2 declares every block_size as std::size_t, and no other existing type has its members; the clause states the documented type."
+
+[[survivor]]
+header = "include/xstd/misc/concepts/proxy_reference.hpp"
+deletes = "requires (R& ref) { { &ref } -> proxy_semi_iterator; } and"
+because = "Only a proxy overloads operator& to return an iterator whose reference is itself, and every existing one converts to its value type."
+
+[[survivor]]
+header = "include/xstd/misc/concepts/proxy_semi_iterator.hpp"
+deletes = "std::indirectly_readable<I> and"
+because = "No existing type dereferences to a semi-reference for its value type without being indirectly readable."
+
+[[survivor]]
+header = "include/xstd/misc/concepts/simple_allocator.hpp"
+deletes = "{ *alloc.allocate(n) } -> std::same_as<typename Alloc::value_type&>;"
+because = "No existing allocator's allocate returns anything but a pointer to its value_type."
+
+[[survivor]]
+header = "include/xstd/misc/concepts/simple_allocator.hpp"
+deletes = "std::copy_constructible<Alloc> and"
+because = "Every existing type with allocate and deallocate is an allocator, which the allocator requirements make copy constructible."
+
+[[survivor]]
+header = "include/xstd/misc/concepts/simple_allocator.hpp"
+deletes = "and std::equality_comparable<Alloc>"
+because = "Every existing type with allocate and deallocate is an allocator, which the allocator requirements make equality comparable."

@@ -10,7 +10,9 @@ A concept or a requires-clause emits no code for a mutation tester to change, so
 for every concept definition and requires-clause in a public header, each operand of an `and` or an `or`, each
 `not`, and each requirement of a requires-expression is deleted on its own. The test sources are then compiled,
 without being run, on each compiler named. A mutant is killed when one of them no longer compiles; one that every
-compiler accepts survives, and is either answered by a test with an existing type or explained.
+compiler accepts survives, and is either answered by a test with an existing type or accepted in
+tools/delete-clauses-survivors.toml, with the reason no existing type fails that clause alone. The run fails on a
+survivor the file does not accept, and on an accepted one that a test now kills or that no longer exists.
 
     tools/delete-clauses.py                         every header, on g++-15 and on clang++-22 with libc++
     tools/delete-clauses.py include/xstd/misc/concepts/proxy_reference.hpp
@@ -23,6 +25,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import tomllib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
@@ -32,6 +35,8 @@ COMPILERS = [
 ]
 
 OPEN, CLOSE = "({[", ")}]"
+
+SURVIVORS = ROOT / "tools" / "delete-clauses-survivors.toml"
 
 
 def blank_comments(text):
@@ -173,8 +178,16 @@ def verdict(header, text, span):
     return None
 
 
+def accepted():
+    """Each accepted survivor, as its header's path and its deleted text with whitespace collapsed."""
+    with SURVIVORS.open("rb") as file:
+        entries = tomllib.load(file)["survivor"]
+    return {(entry["header"], " ".join(entry["deletes"].split())) for entry in entries}
+
+
 def main():
     headers = [pathlib.Path(arg).resolve() for arg in sys.argv[1:]] or sorted((ROOT / "include").rglob("*.hpp"))
+    expected = {key for key in accepted() if ROOT / key[0] in headers}
     for compiler in COMPILERS:
         failing = [s for s in sources() if not compiles(compiler, s, ROOT / "include")]
         if failing:
@@ -183,18 +196,27 @@ def main():
     with concurrent.futures.ThreadPoolExecutor(max_workers=os.cpu_count()) as pool:
         for header in headers:
             text = header.read_text()
+            code = blank_comments(text)
             for span in mutants(text):
                 line = text.count("\n", 0, span[0]) + 1
-                deleted = " ".join(text[span[0]:span[1]].split())
+                deleted = " ".join(code[span[0]:span[1]].split())
                 jobs.append((header, line, deleted, pool.submit(verdict, header, text, span)))
-        survivors = 0
+        survived, unaccepted = set(), 0
         for header, line, deleted, job in jobs:
             result = job.result()
-            status = "SURVIVES" if result is None else "INVALID" if result.startswith("invalid") else "killed"
-            print(f"{status} {header.relative_to(ROOT)}:{line} deleting `{deleted}`" + (f": {result}" if result else ""))
-            survivors += result is None
-    print(f"{len(jobs)} mutants, {survivors} surviving")
-    return 1 if survivors else 0
+            key = (str(header.relative_to(ROOT)), deleted)
+            if result is None:
+                survived.add(key)
+                unaccepted += key not in expected
+                status = "accepted" if key in expected else "SURVIVES"
+            else:
+                status = "INVALID" if result.startswith("invalid") else "killed"
+            print(f"{status} {key[0]}:{line} deleting `{deleted}`" + (f": {result}" if result else ""))
+    stale = sorted(expected - survived)
+    for header, deleted in stale:
+        print(f"STALE {header} deleting `{deleted}`: no longer survives, so its entry in {SURVIVORS.name} goes")
+    print(f"{len(jobs)} mutants, {len(survived)} surviving, {unaccepted} of them unaccepted, {len(stale)} stale")
+    return 1 if unaccepted or stale else 0
 
 
 if __name__ == "__main__":

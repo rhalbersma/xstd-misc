@@ -49,9 +49,9 @@ constexpr auto key        = std::array<unsigned char, 16>{1, 2, 3, 4, 5, 6, 7, 8
 template<class H>
 concept algorithm_argument = requires { typename xstd::hash<int, H>; };
 
-// Whether a hash over a pair of algorithms, the 64-bit one first, can be named at all.
-template<class H64, class H32>
-concept algorithm_pair = requires { typename xstd::hash<int, H64, H32>; };
+// Whether a hash of Key over a pair of algorithms, the 64-bit one first, can be named at all.
+template<class H64, class H32, class Key = int>
+concept algorithm_pair = requires { typename xstd::hash<Key, H64, H32>; };
 
 template<class Hash>
 concept transparent = requires { typename Hash::is_transparent; };
@@ -132,6 +132,7 @@ BOOST_AUTO_TEST_CASE(APairRunsTheAlgorithmForTheTargetsSizeT)
         XSTD_CONSTEXPR_CHECK((algorithm_pair<boost::hash2::xxhash_64, boost::hash2::xxhash_32>));
         XSTD_CONSTEXPR_CHECK((not algorithm_pair<boost::hash2::xxhash_32, boost::hash2::xxhash_64>));
         XSTD_CONSTEXPR_CHECK((not algorithm_pair<boost::hash2::siphash_32, boost::hash2::siphash_64>));
+        XSTD_CONSTEXPR_CHECK((not algorithm_pair<boost::hash2::xxhash_32, boost::hash2::xxhash_64, std::string>));
 }
 
 // FNV-1a carries no bit of a byte down to the bits below it, so masking its 64-bit hash erases the tag.

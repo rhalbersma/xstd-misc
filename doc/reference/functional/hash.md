@@ -11,7 +11,6 @@ class hash;
 
 // (2)
 template<class CharT, class Traits, class Allocator, hash_algorithm H64, hash_algorithm H32, class Flavor>
-  requires (sizeof(typename H32::result_type) <= sizeof(typename H64::result_type))
 class hash<basic_string<CharT, Traits, Allocator>, H64, H32, Flavor>;
 ```
 

@@ -189,8 +189,13 @@ makes those mutants itself:
 - it then compiles every test source, without running it, on GCC 15 and on clang 22 with libc++.
 
 A mutant that some test no longer compiles under is killed. One the header itself rejects is reported as invalid.
-One that every compiler accepts survives, and is answered by a test with an existing type or explained. It takes
-about twenty minutes on four cores, and no workflow runs it.
+One that every compiler accepts survives, and is answered by a test with an existing type or accepted in
+[`tools/delete-clauses-survivors.toml`](tools/delete-clauses-survivors.toml), with the reason no existing type from the
+standard library, Boost, Abseil or the xstd libraries fails that clause alone. The run fails on a survivor the file
+does not accept, and on an accepted one that a test now kills, so the file stays the list of clauses the definition
+alone states. It takes about twenty minutes on four cores. The [Mutation workflow](.github/workflows/mutation.yml)
+runs it on Wednesdays and by hand, and a scheduled run that fails opens an issue titled "The weekly mutation check
+failed", or comments on the open one.
 
 ```sh
 tools/delete-clauses.py                                           # every header
