@@ -343,6 +343,44 @@ Aumasson and Bernstein found for MurmurHash and CityHash in 2012, which this mea
 not attempt. The method, its source and the full results are in
 [#63](https://github.com/rhalbersma/xstd-misc/issues/63#issuecomment-6247746524).
 
+**xxHash or SipHash.** The two halves of that advice trade speed for what the seed protects.
+[SMHasher3's results](https://gitlab.com/fwojcik/smhasher3/-/tree/main/results), measured on the
+reference implementations, separate them:
+
+| | `xxhash_64` (XXH-64) | `siphash_64` (SipHash-2-4) |
+| :-- | :-- | :-- |
+| SMHasher3 | 241 of its 250 tests passed | all 235 of its tests passed |
+| Cycles a call, keys of 1–32 bytes | 53 | 152 |
+| Bytes a cycle, long keys | 3.99 | 0.32 |
+| The seed | added to the state | the key of a keyed function |
+| For | keys the program makes itself | keys an adversary chooses |
+
+- **What XXH-64 fails:** all nine failures are seed tests, and it passes every test that hashes
+  keys under one seed.
+  - In [SeedBlockLen](https://gitlab.com/fwojcik/smhasher3/-/raw/main/results/raw/XXH-64.txt)
+    at 15, 19, 21, 26, 29 and 30 bytes, and SeedBlockOffset at offset 8, two pairs of seed and key,
+    each seed with at most two bits set, share all 64 bits. Every one of those keys is under 32
+    bytes, where the seed enters once, as `seed + P5`, and a small change in it can cancel a small
+    change in the key.
+  - In SeedBIC, flipping seed bit 39 of a 4-byte key, or bit 35 of an 8-byte one, flips output
+    bits 24 and 56 with a correlation of 0.82 and 0.94, where the worst pair at every other length
+    stays within 0.006.
+- **What that means here:** a container hashes every key under its one seed, so neither failure
+  reaches a table. Both show that XXH-64's seed is an offset rather than a key. Nothing in it
+  resists an attacker who learns hashes and works back towards the seed, or who looks for
+  collisions that hold under every seed, and SipHash is built to resist both.
+- **The cost:** on short keys, the length of most keys a table holds, SipHash takes about three
+  times as long as xxHash. Hash2's `xxhash_64(std::uint64_t)` seeds as the reference XXH64 does,
+  so its test results carry over.
+- **SipHash's key:** SipHash takes a 128-bit key, and Hash2's `siphash_64(std::uint64_t)` fills only
+  its low half, which leaves an attacker 64 bits to guess. Seeded from 16 bytes, as
+  `hash<T, siphash_64>(p, 16)`, it takes the whole key, as the reference does.
+
+So the default stays `xxhash_64`: one seed per container never meets its failures, and on short
+keys it takes a third of SipHash's time. A container whose keys come from outside the program, such
+as request headers or user names, names `siphash_64` and seeds it from a random device, with 16
+bytes where the whole key is wanted.
+
 **`is_avalanching`.** Boost.Unordered's open-addressing containers [mix every hash value again](https://www.boost.org/doc/libs/latest/libs/unordered/doc/html/unordered/hash_quality.html)
 before using it, unless `boost::hash_is_avalanching` reports the hasher avalanching, which it
 reads from a nested `is_avalanching`. `hash<T, H>` declares it from
