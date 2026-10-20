@@ -15,7 +15,7 @@ concurrency:
 on:
   pull_request:
     branches: [ main ]
-  # canary.yml dispatches this weekly on main, the run its README badge shows.
+  # canary.yml dispatches this nightly on main, the run its README badge shows.
   workflow_dispatch:
 
 jobs:
@@ -23,12 +23,17 @@ jobs:
   changes:
     uses: ./.github/workflows/changes.yml
 
-  # No inputs: this library builds on every rung of the ladder, which is what
+  # This library builds on every rung of the ladder, which is what
   # the shared workflow defaults to.
   gcc_ladder:
     needs: changes
     if: needs.changes.outputs.build == 'true'
     uses: rhalbersma/cpp-ci/.github/workflows/gcc.yml@2a7b3577168d22d62a9119b1913c6e0122e78994 # v0.14.0
+    with:
+      # A pull request builds only the floor and ceiling rungs, in Debug. The
+      # all gate cannot see what was skipped, so the nightly canary covers it,
+      # building every rung and build type on main.
+      reduce_on_pr: true
 
   # 32-bit x86: a 32-bit size_t, 4-byte alignment for 64-bit integers, and no
   # __int128. One rung in Debug, since what is under test is the target.
