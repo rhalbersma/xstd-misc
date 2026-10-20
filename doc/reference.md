@@ -36,56 +36,43 @@ Each entity is one of five kinds:
 
 ## Prior work
 
-What each entity builds on, in C++ and in other languages. Papers are linked through wg21.link.
+What each entity builds on in C++, and, for an entity that introduces a name or a concept of its own, its counterpart in another language where that counterpart shares its purpose. Papers are linked through wg21.link.
 
 - **`container_compatible_range`:** introduced as an exposition-only concept by [P1206R7](https://wg21.link/p1206r7),
   *Conversions from ranges to containers* (Corentin Jabot, Eric Niebler, Casey Carter), for `ranges::to` and the
   containers' `from_range` constructors.
 - **`to_underlying`:** [P1682R1](https://wg21.link/p1682r1), *`std::to_underlying` for enumerations* (JeanHeyd
   Meneide), from an idea of Walter E. Brown's.
-  - **Rust** casts a field-less enumeration to its integer with `as`
-    ([enumerations](https://doc.rust-lang.org/reference/items/enumerations.html)).
-  - **Swift** reads it as `rawValue` ([`RawRepresentable`](https://developer.apple.com/documentation/swift/rawrepresentable)).
 - **`is_specialization_of`, `specialization_of`:** [P2098R1](https://wg21.link/p2098r1), *Proposing
   `std::is_specialization_of`* (Walter E. Brown, Bob Steagall), whose spelling and all-types scope these follow.
 - **`XSTD_NO_UNIQUE_ADDRESS`, `empty_base_type`, `empty_member_type`, `conditional_data_member`:**
-  - **C++:** `[[no_unique_address]]` comes from [P0840R2](https://wg21.link/p0840r2), *Language support for empty
-    objects* (Richard Smith). It replaced the empty-base optimization that
-    [`boost::compressed_pair`](https://www.boost.org/doc/libs/latest/libs/utility/doc/html/utility/utilities/compressed_pair.html)
-    and the standard libraries' own compressed pairs rely on. MSVC documents its own spelling under
-    [attributes](https://learn.microsoft.com/en-us/cpp/cpp/attributes).
-  - **Rust** needs no attribute: a zero-sized type takes no space as a field
-    ([exotic sizes](https://doc.rust-lang.org/nomicon/exotic-sizes.html)).
-- **The proxy concepts:**
-  - **C++:** [P0022R2](https://wg21.link/p0022r2), *Proxy Iterators for the Ranges Extensions* (Eric Niebler), and
-    his [To Be or Not to Be (an Iterator)](https://ericniebler.com/2015/01/28/to-be-or-not-to-be-an-iterator/), set out
-    the problem `vector<bool>` poses. [P2321R2](https://wg21.link/p2321r2), *zip* (Tim Song), made its reference
-    assignable through `const`, which `proxy_reference` asks of a writable proxy.
-  - **Rust** meets the same problem in the [`bitvec`](https://docs.rs/bitvec/latest/bitvec/ptr/struct.BitRef.html)
-    crate, whose `BitRef` stands in for a `&mut bool` it cannot hand out.
+  `[[no_unique_address]]` comes from [P0840R2](https://wg21.link/p0840r2), *Language support for empty objects*
+  (Richard Smith). It replaced the empty-base optimization that
+  [`boost::compressed_pair`](https://www.boost.org/doc/libs/latest/libs/utility/doc/html/utility/utilities/compressed_pair.html)
+  and the standard libraries' own compressed pairs rely on. MSVC documents its own spelling under
+  [attributes](https://learn.microsoft.com/en-us/cpp/cpp/attributes).
+- **The proxy concepts:** [P0022R2](https://wg21.link/p0022r2), *Proxy Iterators for the Ranges Extensions* (Eric
+  Niebler), and his [To Be or Not to Be (an Iterator)](https://ericniebler.com/2015/01/28/to-be-or-not-to-be-an-iterator/),
+  set out the problem `vector<bool>` poses. [P2321R2](https://wg21.link/p2321r2), *zip* (Tim Song), made its reference
+  assignable through `const`, which `proxy_reference` asks of a writable proxy.
 - **`hash_algorithm`:**
   - **C++:** Boost.Hash2's documented requirements on a hash algorithm, which descend from [N3980](https://wg21.link/n3980).
   - **Rust** has the same separation in its [`Hasher`](https://doc.rust-lang.org/std/hash/trait.Hasher.html) trait:
     what a type hashes is its own, and the algorithm is a parameter.
 - **`hash`:**
-  - **C++:**
-    - [N3980](https://wg21.link/n3980), *Types Don't Know #* (Howard Hinnant, Vinnie Falco, John Bytheway), whose
-      `uhash` this follows.
-    - [P0029R0](https://wg21.link/p0029r0), *A Unified Proposal for Composable Hashing* (Geoff Romer, Chandler
-      Carruth), and [Abseil's `absl::Hash`](https://abseil.io/docs/cpp/guides/hash), which take the algorithm away
-      from the user instead.
-  - **Rust** seeds per container as this does: each `HashMap` takes a
-    [`BuildHasher`](https://doc.rust-lang.org/std/hash/trait.BuildHasher.html), by default a randomly seeded SipHash
-    [`RandomState`](https://doc.rust-lang.org/std/hash/struct.RandomState.html).
-  - **Go** seeds its [`hash/maphash`](https://pkg.go.dev/hash/maphash) the same way.
+  - [N3980](https://wg21.link/n3980), *Types Don't Know #* (Howard Hinnant, Vinnie Falco, John Bytheway), whose
+    `uhash` this follows.
+  - [P0029R0](https://wg21.link/p0029r0), *A Unified Proposal for Composable Hashing* (Geoff Romer, Chandler
+    Carruth), and [Abseil's `absl::Hash`](https://abseil.io/docs/cpp/guides/hash), which take the algorithm away from
+    the user instead.
 - **`hash_algorithm_is_avalanching`:** Boost.Unordered's
   [`hash_is_avalanching`](https://www.boost.org/doc/libs/latest/libs/unordered/doc/html/unordered/reference/hash_traits.html),
   which asks it of a hasher.
 - **`digest`, and its formatter:**
   - **C++:** [N3980](https://wg21.link/n3980)'s `uhash` returns the algorithm's whole result, as `digest` does.
     Boost.Hash2's `to_string` writes it as hex, as the formatter does.
-  - **Python's** [`hashlib`](https://docs.python.org/3/library/hashlib.html) gives the same pair as `digest()` and
-    `hexdigest()`.
+  - **Python's** [`hashlib`](https://docs.python.org/3/library/hashlib.html) `digest()` is the same fixed-width
+    fingerprint at the algorithm's own width.
 
 ## `<xstd/misc/concepts.hpp>`
 
