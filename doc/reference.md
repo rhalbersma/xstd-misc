@@ -233,6 +233,7 @@ struct empty_member_type {
   types.
 - A constrained primary template is no obstacle.
 - The question is exact: a `const` specialization is not one.
+- A primary template with a value parameter, such as `array`, cannot be named as `Primary`.
 - The concept and the trait agree.
 
 ### `hash_algorithm_is_avalanching`, `hash_algorithm_is_avalanching_v`
@@ -394,3 +395,5 @@ The umbrella exports it.
   - *Returns:* `to_underlying(static_cast<V>(ref))`, where `V` is that value type.
   - *Remarks:* A value type `V` that is not an enumeration is a substitution failure, through the return type
     `underlying_type_t<V>`. The exception specification is `is_nothrow_convertible_v<R, V>`.
+  - A read-only proxy, such as a set's element, models only `proxy_semi_reference`: convert it first, as
+    `to_underlying(static_cast<E>(key))`.
