@@ -1,0 +1,5 @@
+fnv1a_32("xstd")  = ff2ae354
+xxhash_32("xstd") = d49153c1
+hash_algorithm<boost::hash2::xxhash_32> is true
+hash_algorithm<std::hash<int>> is false
+hash_algorithm<xstd::hash<int>> is false

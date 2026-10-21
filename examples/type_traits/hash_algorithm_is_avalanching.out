@@ -1,0 +1,5 @@
+xxhash_64 avalanches: true
+fnv1a_64 avalanches: false
+hmac<sha2_256> avalanches: true
+hash<std::string>::is_avalanching: true
+hash<std::string, fnv1a_64>::is_avalanching: false

@@ -1,0 +1,3 @@
+42 7 nothing text
+is_specialization_of_v<std::string, std::basic_string> is true
+is_specialization_of_v<std::optional<int> const, std::optional> is false

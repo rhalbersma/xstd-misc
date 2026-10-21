@@ -178,6 +178,12 @@ if(readme_example EQUAL 0)
     message(FATAL_ERROR "README.md has no ```cpp block, so no example of it is compiled")
 endif()
 
+# Each reference page's example is built with the same warnings, run, and what it prints checked against the output
+# the page shows. Those written for this library are under its licence; those ported from cppreference.com are under
+# CC-BY-SA 3.0 and the GFDL, and so is the CMakeLists.txt beside them that builds them.
+add_subdirectory(${PROJECT_SOURCE_DIR}/examples ${CMAKE_CURRENT_BINARY_DIR}/examples)
+add_subdirectory(${PROJECT_SOURCE_DIR}/examples/cppreference ${CMAKE_CURRENT_BINARY_DIR}/examples/cppreference)
+
 # A header under a detail/ directory is machinery, not a public header: what includes it specifies it, and tests it.
 list(FILTER public_headers EXCLUDE REGEX "/detail/")
 
