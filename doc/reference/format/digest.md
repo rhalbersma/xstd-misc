@@ -19,10 +19,10 @@ Formats a Boost.Hash2 digest, such as the result of `xxh3_128` or of `xstd::dige
 ### Member functions
 
 - `parse`:
-  - *Effects:* Accepts an empty specification, `x` or `X`.
-  - *Throws:* `format_error` for any other specification.
+    - *Effects:* Accepts an empty specification, `x` or `X`.
+    - *Throws:* `format_error` for any other specification.
 - `format`:
-  - *Effects:* Writes two hexadecimal digits per byte, in byte order, lowercase unless the specification is `X`.
+    - *Effects:* Writes two hexadecimal digits per byte, in byte order, lowercase unless the specification is `X`.
 
 ### See also
 

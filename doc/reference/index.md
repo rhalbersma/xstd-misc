@@ -83,23 +83,23 @@ What each entity builds on in C++, and, for an entity that introduces a name or 
   set out the problem `vector<bool>` poses. [P2321R2](https://wg21.link/p2321r2), *zip* (Tim Song), made its reference
   assignable through `const`, which `proxy_reference` asks of a writable proxy.
 - **`hash_algorithm`:**
-  - **C++:** Boost.Hash2's documented requirements on a hash algorithm, which descend from [N3980](https://wg21.link/n3980).
-  - **Rust** has the same separation in its [`Hasher`](https://doc.rust-lang.org/std/hash/trait.Hasher.html) trait:
-    what a type hashes is its own, and the algorithm is a parameter.
+    - **C++:** Boost.Hash2's documented requirements on a hash algorithm, which descend from [N3980](https://wg21.link/n3980).
+    - **Rust** has the same separation in its [`Hasher`](https://doc.rust-lang.org/std/hash/trait.Hasher.html) trait:
+      what a type hashes is its own, and the algorithm is a parameter.
 - **`hash`:**
-  - [N3980](https://wg21.link/n3980), *Types Don't Know #* (Howard Hinnant, Vinnie Falco, John Bytheway), whose
-    `uhash` this follows.
-  - [P0029R0](https://wg21.link/p0029r0), *A Unified Proposal for Composable Hashing* (Geoff Romer, Chandler
-    Carruth), and [Abseil's `absl::Hash`](https://abseil.io/docs/cpp/guides/hash), which take the algorithm away from
-    the user instead.
+    - [N3980](https://wg21.link/n3980), *Types Don't Know #* (Howard Hinnant, Vinnie Falco, John Bytheway), whose
+      `uhash` this follows.
+    - [P0029R0](https://wg21.link/p0029r0), *A Unified Proposal for Composable Hashing* (Geoff Romer, Chandler
+      Carruth), and [Abseil's `absl::Hash`](https://abseil.io/docs/cpp/guides/hash), which take the algorithm away from
+      the user instead.
 - **`hash_algorithm_is_avalanching`:** Boost.Unordered's
   [`hash_is_avalanching`](https://www.boost.org/doc/libs/latest/libs/unordered/doc/html/unordered/reference/hash_traits.html),
   which asks it of a hasher.
 - **`digest`, and its formatter:**
-  - **C++:** [N3980](https://wg21.link/n3980)'s `uhash` returns the algorithm's whole result, as `digest` does.
-    Boost.Hash2's `to_string` writes it as hex, as the formatter does.
-  - **Python's** [`hashlib`](https://docs.python.org/3/library/hashlib.html) `digest()` is the same fixed-width
-    fingerprint at the algorithm's own width.
+    - **C++:** [N3980](https://wg21.link/n3980)'s `uhash` returns the algorithm's whole result, as `digest` does.
+      Boost.Hash2's `to_string` writes it as hex, as the formatter does.
+    - **Python's** [`hashlib`](https://docs.python.org/3/library/hashlib.html) `digest()` is the same fixed-width
+      fingerprint at the algorithm's own width.
 
 ## Headers
 
