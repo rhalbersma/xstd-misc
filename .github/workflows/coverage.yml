@@ -34,3 +34,5 @@ jobs:
     with:
       fail_under_line: 100
       fail_under_branch: 100
+      # The shared default, and the reference pages' examples, which run the library rather than test it.
+      exclude: test/.* build/.* examples/.*

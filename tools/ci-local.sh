@@ -87,7 +87,7 @@ coverage() {
         [ -d "${dir}" ] && find "${dir}" -name '*.gcda' -delete
         suite coverage g++-15 "--coverage -O0" Debug -DCMAKE_EXE_LINKER_FLAGS=--coverage || return 1
         (cd "${root}" && "${HOME:-/root}/.local/bin/gcovr" --root . --gcov-executable gcov-15 --merge-lines \
-                --exclude 'test/.*' --exclude 'build/.*' \
+                --exclude 'test/.*' --exclude 'build/.*' --exclude 'examples/.*' \
                 --exclude-lines-by-pattern '^\s*(assert|[A-Z][A-Z0-9_]*_ASSERT)\(' \
                 --exclude-lines-by-pattern '=\s*default;' \
                 --exclude-lines-by-pattern '\s*\}\s*$' \
@@ -97,9 +97,9 @@ coverage() {
                 --print-summary --fail-under-line 100 --fail-under-branch 100 "${dir}")
 }
 
-# The format gate: the stable rung's clang-format over include/ and test/, reporting rather than rewriting.
+# The format gate: the stable rung's clang-format over include/, test/ and examples/, reporting rather than rewriting.
 format() {
-        find "${root}/include" "${root}/test" -regex '.*\.\(hpp\|cpp\)' -print0 | xargs -0 clang-format-22 --dry-run --Werror
+        find "${root}/include" "${root}/test" "${root}/examples" -regex '.*\.\(hpp\|cpp\)' -print0 | xargs -0 clang-format-22 --dry-run --Werror
 }
 
 # The working draft at the tag the headers cite, from the draft's own repository, then the check of their wording.
