@@ -155,3 +155,7 @@ Distributed under the <a href="http://www.boost.org/users/license.html">Boost So
    (See accompanying file LICENSE_1_0.txt or copy at
          <a href="http://www.boost.org/LICENSE_1_0.txt">http://www.boost.org/LICENSE_1_0.txt</a>)
 </pre>
+
+The examples under `examples/cppreference/`, ported from [cppreference.com](https://en.cppreference.com/), are the
+exception: as that site's content is, they are under the Creative Commons Attribution-ShareAlike 3.0 Unported License
+and the GNU Free Documentation License, which [their licence file](examples/cppreference/LICENSE) gives in full.
