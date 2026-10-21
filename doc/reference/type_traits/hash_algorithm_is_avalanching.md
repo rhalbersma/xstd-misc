@@ -25,6 +25,18 @@ Boost.Hash2 algorithm but `fnv1a_32` and `fnv1a_64`, for `boost::hash2::hmac<H>`
 
 A program may specialize it for an algorithm of its own.
 
+### Example
+
+```cpp
+--8<-- "examples/type_traits/hash_algorithm_is_avalanching.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/type_traits/hash_algorithm_is_avalanching.out"
+```
+
 ### See also
 
 | Entity | Relation |

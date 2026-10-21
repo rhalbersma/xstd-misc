@@ -16,6 +16,18 @@ for word, under a name users can spell.
 
 - An input range of references that convert to `T` models it, and nothing else does.
 
+### Example
+
+```cpp
+--8<-- "examples/concepts/container_compatible_range.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/concepts/container_compatible_range.out"
+```
+
 ### See also
 
 | Entity | Relation |

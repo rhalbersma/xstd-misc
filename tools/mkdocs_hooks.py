@@ -12,6 +12,10 @@ site serves for that file, or at the file on GitHub where the site serves none, 
 A citation of the working draft, such as [utility.underlying]/1, links to its section at eel.is/c++draft, and a WG21
 paper or document, such as P1682R1 or N4861, links to its cplusplus/papers issue or to wg21.link. One left unlinked in
 prose is reported as a warning, which --strict makes a failure.
+
+Each header's page under reference/ shows an example, pulled in from examples/ by pymdownx.snippets with what it prints,
+and every example there is shown on a page. A page without an Example section, or an example no page shows, is
+reported as a warning too.
 """
 
 import logging
@@ -29,7 +33,12 @@ LINK = re.compile(r"\]\((?![a-z]+:)([^)#\s]+)(#[^)\s]*)?\)")
 NOT_PROSE = re.compile(r"^```.*?^```|`[^`\n]*`|\[(?:[^\[\]]|\[[^\[\]]*\])*\]\([^)]*\)|<[^>]+>", re.M | re.S)
 CITATION = re.compile(r"\[[a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+\](?:/\d+)?|\b[PN]\d{4}(?:R\d+)?\b", re.I)
 
+# A snippet that pymdownx.snippets replaces with the file it names, here an example or the output it prints.
+SNIPPET = re.compile(r'^--8<-- "([^"]+)"$', re.M)
+
 log = logging.getLogger("mkdocs.hooks.citations")
+examples_log = logging.getLogger("mkdocs.hooks.examples")
+shown = set()
 
 
 def on_files(files, config):
@@ -39,6 +48,11 @@ def on_files(files, config):
 
 def on_page_markdown(markdown, page, config, files):
     docs = pathlib.Path(config["docs_dir"]).resolve().relative_to(ROOT).as_posix()
+
+    shown.update(SNIPPET.findall(markdown))
+    uri = pathlib.PurePosixPath(page.file.src_uri)
+    if uri.parts[0] == "reference" and len(uri.parts) == 3 and uri.name != "index.md" and "### Example" not in markdown:
+        examples_log.warning("%s/%s has no Example section", docs, uri)
 
     def in_repository(uri):
         return "README.md" if uri == "index.md" else f"{docs}/{uri}"
@@ -61,3 +75,10 @@ def on_page_markdown(markdown, page, config, files):
         return f"]({target}{link.group(2) or ''})"
 
     return LINK.sub(relink, markdown)
+
+
+def on_env(env, config, files):
+    for example in sorted((ROOT / "examples").rglob("*")):
+        if example.suffix in (".cpp", ".out") and example.relative_to(ROOT).as_posix() not in shown:
+            examples_log.warning("no reference page shows %s", example.relative_to(ROOT).as_posix())
+    return env
