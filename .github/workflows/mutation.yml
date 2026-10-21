@@ -1,0 +1,84 @@
+#          Copyright Rein Halbersma 2014-2026.
+# Distributed under the Boost Software License, Version 1.0.
+#    (See accompanying file LICENSE_1_0.txt or copy at
+#          http://www.boost.org/LICENSE_1_0.txt)
+
+name: Mutation
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Weekly: each clause of each constraint is deleted in turn, and the run fails on a deletion no test notices that
+# tools/delete-clauses-survivors.toml does not accept, or on an accepted one a test now kills. A failure opens an
+# issue, or comments on the open one.
+on:
+  schedule:
+    - cron: '17 5 * * 3'
+  workflow_dispatch:
+
+jobs:
+  delete-clauses:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: rhalbersma/cpp-ci/.github/actions/install-gcc@2a7b3577168d22d62a9119b1913c6e0122e78994 # v0.14.0
+        with:
+          version: "15"
+          trunk: "false"
+
+      - uses: rhalbersma/cpp-ci/.github/actions/install-clang@2a7b3577168d22d62a9119b1913c6e0122e78994 # v0.14.0
+        with:
+          version: "22"
+          llvm_suffix: "-22"
+          libcxx: "true"
+
+      # The mutants are compiled with -fsyntax-only, so Boost's headers are all they need: the release tarball's, from
+      # every library's include directory, at the version and SHA-256 tools/setup-toolchain.sh pins.
+      - name: Install Boost's headers
+        env:
+          BOOST_VERSION: 1.92.0
+          BOOST_SHA256: 9bed76128d4e46755dbe818487788c6fceb6f72b378f4daa49b7e1e600d9088d
+        run: |
+          set -euo pipefail
+          src="${RUNNER_TEMP}/boost-src"
+          mkdir -p "${src}" "${RUNNER_TEMP}/boost/include"
+          curl -fsSL --retry 3 "https://github.com/boostorg/boost/releases/download/boost-${BOOST_VERSION}/boost-${BOOST_VERSION}-cmake.tar.xz" \
+            -o "${RUNNER_TEMP}/boost.tar.xz"
+          echo "${BOOST_SHA256}  ${RUNNER_TEMP}/boost.tar.xz" | sha256sum --check --quiet
+          tar -xJf "${RUNNER_TEMP}/boost.tar.xz" -C "${src}" --strip-components=1
+          find "${src}/libs" -type d -path '*/include/boost' -prune -exec cp -r {} "${RUNNER_TEMP}/boost/include/" \;
+          echo "CPLUS_INCLUDE_PATH=${RUNNER_TEMP}/boost/include" >> "${GITHUB_ENV}"
+
+      - name: Delete each clause, and compile the tests against each mutant
+        run: python3 -I tools/delete-clauses.py
+
+  report:
+    needs: [delete-clauses]
+    if: failure() && github.event_name == 'schedule'
+    runs-on: ubuntu-24.04
+    permissions:
+      issues: write
+    steps:
+      - name: Open an issue, or comment on the open one
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          title="The weekly mutation check failed"
+          body="$(printf '[This run](%s) found a clause deletion that no test notices and the survivors file does not accept, or an accepted one that a test now kills.\n' "${RUN}")"
+          open="$(gh issue list --repo "${REPO}" --state open --search "in:title \"${title}\"" --json number --jq '.[0].number // empty')"
+          if [ -n "${open}" ]; then
+            gh issue comment "${open}" --repo "${REPO}" --body "${body}"
+          else
+            gh issue create --repo "${REPO}" --title "${title}" --body "${body}"
+          fi

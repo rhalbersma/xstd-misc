@@ -127,8 +127,8 @@ libraries) in both Debug and Release mode:
 [CONTRIBUTING.md](CONTRIBUTING.md#the-ci-matrix) says what each channel is, and which legs run beyond the table.
 
 Beyond the compilers, CI holds coverage at 100%, consumes the library through `find_package`, `add_subdirectory` and
-`FetchContent`, runs the sanitizers, analyzes the code with Clang-Tidy, MSVC's `/analyze` and CodeQL, and builds the
-documentation site:
+`FetchContent`, runs the sanitizers, analyzes the code with Clang-Tidy, MSVC's `/analyze` and CodeQL, deletes each
+clause of each constraint to check that a test notices, and builds the documentation site:
 
 [![Coverage](https://codecov.io/gh/rhalbersma/xstd-misc/branch/main/graph/badge.svg)](https://codecov.io/gh/rhalbersma/xstd-misc)
 [![Consumption](https://github.com/rhalbersma/xstd-misc/actions/workflows/consumption.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/consumption.yml)
@@ -136,6 +136,7 @@ documentation site:
 [![Clang-Tidy](https://github.com/rhalbersma/xstd-misc/actions/workflows/clang-tidy.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/clang-tidy.yml)
 [![MSVC-Analyze](https://github.com/rhalbersma/xstd-misc/actions/workflows/msvc-analyze.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/msvc-analyze.yml)
 [![CodeQL](https://github.com/rhalbersma/xstd-misc/actions/workflows/codeql.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/codeql.yml)
+[![Mutation](https://github.com/rhalbersma/xstd-misc/actions/workflows/mutation.yml/badge.svg)](CONTRIBUTING.md#deleting-clauses)
 [![Documentation](https://github.com/rhalbersma/xstd-misc/actions/workflows/pages.yml/badge.svg)](https://rhalbersma.github.io/xstd-misc/)
 
 ## Acknowledgements
