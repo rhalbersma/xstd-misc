@@ -51,6 +51,10 @@ adds a second 32-bit leg, i686 with GCC `-m32`, where `size_t` is 32 bits and th
 `__int128`. The MSVC workflow adds a third, x86 with VS 2026 in Debug, where `size_t` is 32
 bits and 64-bit members keep their 8-byte alignment under MSVC's own ABI.
 
+The `s390x` row is the one big-endian leg: GCC 15's s390x cross compiler, in Debug, with the
+tests run under QEMU's user-mode emulator. Emulation is several times slower than native, so
+the nightly canary dispatches it, and no pull request runs it.
+
 ## Test suite requirements
 
 Keep a focused test source for each public function, concept, and trait, mirroring its header path under `test/src/`. A source matching an umbrella header (for example, `concepts.cpp`, `type_traits.cpp`, or `utility.cpp`) tests only identities that span several focused facilities.
