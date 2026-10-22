@@ -96,14 +96,14 @@ reference implementations, compare the two algorithms:
 
 - **What XXH-64 fails:** all nine failures are seed tests, and it passes every test that hashes
   keys under one seed.
-  - In [SeedBlockLen](https://gitlab.com/fwojcik/smhasher3/-/raw/main/results/raw/XXH-64.txt)
-    at 15, 19, 21, 26, 29 and 30 bytes, and SeedBlockOffset at offset 8, two pairs of seed and key,
-    each seed with at most two bits set, share all 64 bits. Every one of those keys is under 32
-    bytes, where the seed enters once, as `seed + P5`, and a small change in it can cancel a small
-    change in the key.
-  - In SeedBIC, flipping seed bit 39 of a 4-byte key, or bit 35 of an 8-byte one, flips output
-    bits 24 and 56 with a correlation of 0.82 and 0.94, where the worst pair at every other length
-    stays within 0.006.
+    - In [SeedBlockLen](https://gitlab.com/fwojcik/smhasher3/-/raw/main/results/raw/XXH-64.txt)
+      at 15, 19, 21, 26, 29 and 30 bytes, and SeedBlockOffset at offset 8, two pairs of seed and key,
+      each seed with at most two bits set, share all 64 bits. Every one of those keys is under 32
+      bytes, where the seed enters once, as `seed + P5`, and a small change in it can cancel a small
+      change in the key.
+    - In SeedBIC, flipping seed bit 39 of a 4-byte key, or bit 35 of an 8-byte one, flips output
+      bits 24 and 56 with a correlation of 0.82 and 0.94, where the worst pair at every other length
+      stays within 0.006.
 - **The cost:** on short keys, the length of most keys a table holds, SipHash takes about three
   times as long as xxHash. Hash2's `xxhash_64(std::uint64_t)` seeds as the reference XXH64 does,
   so its test results carry over.

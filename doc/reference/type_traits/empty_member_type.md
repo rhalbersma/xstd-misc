@@ -25,8 +25,8 @@ A tagged empty class that keeps the place of a data member that is not there.
 
 - The variadic constructor ignores its arguments, so an enclosing class can construct the member as it would the
   type it stands in for.
-  - *Constraints:* No `Args` is the class itself, so copying from a mutable lvalue stays the trivial copy rather than
-    the variadic constructor, which would match that lvalue better.
+    - *Constraints:* No `Args` is the class itself, so copying from a mutable lvalue stays the trivial copy rather than
+      the variadic constructor, which would match that lvalue better.
 - `operator<=>`: every two of its values compare equal and equivalent.
 
 ### Notes

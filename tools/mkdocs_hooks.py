@@ -13,6 +13,10 @@ A citation of the working draft, such as [utility.underlying]/1, links to its se
 paper or document, such as P1682R1 or N4861, links to its cplusplus/papers issue or to wg21.link. One left unlinked in
 prose is reported as a warning, which --strict makes a failure.
 
+Python-Markdown nests a list item, and a paragraph, table or fence that continues one after a blank line, only when it
+is indented four spaces past its parent's marker, where GitHub nests it at two. Either indented one to three spaces is
+reported as a warning too: on the site it would render outside the list it belongs to.
+
 Each header's page under reference/ shows an example, pulled in from examples/ by pymdownx.snippets with what it prints,
 and every example there is shown on a page. A page without an Example section, or an example no page shows, is
 reported as a warning too.
@@ -32,6 +36,11 @@ LINK = re.compile(r"\]\((?![a-z]+:)([^)#\s]+)(#[^)\s]*)?\)")
 # What a citation check reads past: fenced and inline code, Markdown links with their text, and HTML tags.
 NOT_PROSE = re.compile(r"^```.*?^```|`[^`\n]*`|\[(?:[^\[\]]|\[[^\[\]]*\])*\]\([^)]*\)|<[^>]+>", re.M | re.S)
 CITATION = re.compile(r"\[[a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+\](?:/\d+)?|\b[PN]\d{4}(?:R\d+)?\b", re.I)
+
+# A list item, or a block after a blank line, that Python-Markdown would not nest under its parent.
+UNNESTED_ITEM = re.compile(r"^ {1,3}(?:[-*+]|\d+[.)]) ")
+UNNESTED_BLOCK = re.compile(r"^ {1,3}\S")
+FENCE = re.compile(r"^ *(?:```|~~~)")
 
 # A snippet that pymdownx.snippets replaces with the file it names, here an example or the output it prints.
 SNIPPET = re.compile(r'^--8<-- "([^"]+)"$', re.M)
@@ -59,6 +68,14 @@ def on_page_markdown(markdown, page, config, files):
 
     for citation in CITATION.findall(NOT_PROSE.sub(" ", markdown)):
         log.warning("%s cites %s without a link", in_repository(page.file.src_uri), citation)
+
+    fenced, after_blank = False, False
+    for number, line in enumerate(markdown.splitlines(), 1):
+        if FENCE.match(line):
+            fenced = not fenced
+        elif not fenced and (UNNESTED_ITEM.match(line) or (after_blank and UNNESTED_BLOCK.match(line))):
+            log.warning("%s:%d indents a list's block by fewer than four spaces", in_repository(page.file.src_uri), number)
+        after_blank = not line.strip()
 
     served = {in_repository(f.src_uri): f.src_uri for f in files.documentation_pages()}
     here = posixpath.dirname(in_repository(page.file.src_uri))

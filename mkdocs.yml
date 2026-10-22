@@ -36,21 +36,21 @@ nav:
       - proxy_semi_reference.hpp: reference/concepts/proxy_semi_reference.md
       - simple_allocator.hpp: reference/concepts/simple_allocator.md
       - specialization_of.hpp: reference/concepts/specialization_of.md
-    - type_traits.hpp:
-      - reference/type_traits/index.md
-      - empty_base_type.hpp: reference/type_traits/empty_base_type.md
-      - empty_member_type.hpp: reference/type_traits/empty_member_type.md
-      - no_unique_address.hpp: reference/type_traits/no_unique_address.md
-      - conditional_data_member.hpp: reference/type_traits/conditional_data_member.md
-      - hash_algorithm_is_avalanching.hpp: reference/type_traits/hash_algorithm_is_avalanching.md
-      - is_specialization_of.hpp: reference/type_traits/is_specialization_of.md
+    - format.hpp:
+      - reference/format/index.md
+      - digest.hpp: reference/format/digest.md
     - functional.hpp:
       - reference/functional/index.md
       - digest.hpp: reference/functional/digest.md
       - hash.hpp: reference/functional/hash.md
-    - format.hpp:
-      - reference/format/index.md
-      - digest.hpp: reference/format/digest.md
+    - type_traits.hpp:
+      - reference/type_traits/index.md
+      - conditional_data_member.hpp: reference/type_traits/conditional_data_member.md
+      - empty_base_type.hpp: reference/type_traits/empty_base_type.md
+      - empty_member_type.hpp: reference/type_traits/empty_member_type.md
+      - hash_algorithm_is_avalanching.hpp: reference/type_traits/hash_algorithm_is_avalanching.md
+      - is_specialization_of.hpp: reference/type_traits/is_specialization_of.md
+      - no_unique_address.hpp: reference/type_traits/no_unique_address.md
     - utility.hpp:
       - reference/utility/index.md
       - to_underlying.hpp: reference/utility/to_underlying.md
@@ -78,6 +78,10 @@ theme:
         icon: material/brightness-4
         name: Switch to light mode
 
+# The reference index's relation table keeps each entity name on one line.
+extra_css:
+  - stylesheets/reference.css
+
 markdown_extensions:
   - tables
   - toc:
@@ -90,6 +94,7 @@ markdown_extensions:
       base_path: [ . ]
       check_paths: true
   - pymdownx.superfences
+  - md_in_html
 
 validation:
   links:
