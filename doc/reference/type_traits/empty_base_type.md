@@ -20,6 +20,18 @@ A tagged empty class that keeps the place of a base class that is not there.
 - It is an empty, regular, trivial class, whose special members do not throw.
 - It declares no comparison, so none reaches a class derived from it.
 
+### Example
+
+```cpp
+--8<-- "examples/type_traits/empty_base_type.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/type_traits/empty_base_type.out"
+```
+
 ### See also
 
 | Entity | Relation |

@@ -67,6 +67,18 @@ The string specialization takes `basic_string_view<CharT, Traits>` in place of `
 - The digests of fixed-width keys under the default algorithm match the reference xxHash implementation's.
 - Where the digest is as wide as `size_t`, the hash is the digest unchanged.
 
+### Example
+
+```cpp
+--8<-- "examples/functional/digest.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/functional/digest.out"
+```
+
 ### See also
 
 | Entity | Relation |

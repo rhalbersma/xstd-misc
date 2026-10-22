@@ -1,0 +1,4 @@
+uses: 1
+widget<true> counts its uses: true
+widget<false> counts its uses: false
+sizeof(widget<false>) == sizeof(int) is true

@@ -87,6 +87,23 @@ The string specialization takes `basic_string_view<CharT, Traits>` in place of `
 - Under FNV-1a, keys that differ only in their high bits share a bucket wherever a table masks the hash, and spread
   in a `boost::unordered_flat_set`, which mixes it first.
 
+### Example
+
+Ported from the example of [`std::hash`](https://en.cppreference.com/w/cpp/utility/hash) on cppreference.com, at
+[revision 179088](https://en.cppreference.com/mwiki/index.php?title=cpp/utility/hash&oldid=179088), by cppreference.com
+contributors. This example is under [CC-BY-SA 3.0 and the GFDL](../../../examples/cppreference/LICENSE), as
+cppreference.com's content is; the rest of this page is under the [Boost Software License](../../../LICENSE_1_0.txt).
+
+```cpp
+--8<-- "examples/cppreference/hash.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/cppreference/hash.out"
+```
+
 ### See also
 
 | Entity | Relation |

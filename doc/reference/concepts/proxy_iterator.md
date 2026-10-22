@@ -18,6 +18,18 @@ An iterator whose reference is a proxy reference.
 
 It subsumes `proxy_semi_iterator<I>`.
 
+### Example
+
+```cpp
+--8<-- "examples/concepts/proxy_iterator.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/concepts/proxy_iterator.out"
+```
+
 ### See also
 
 | Entity | Relation |

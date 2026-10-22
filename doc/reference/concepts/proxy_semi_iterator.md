@@ -16,6 +16,18 @@ An iterator whose reference is a proxy for its value type.
   iterator, `zip_view`'s.
 - A pointer, an iterator yielding a language reference, and one yielding its value type by value do not.
 
+### Example
+
+```cpp
+--8<-- "examples/concepts/proxy_semi_iterator.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/concepts/proxy_semi_iterator.out"
+```
+
 ### See also
 
 | Entity | Relation |

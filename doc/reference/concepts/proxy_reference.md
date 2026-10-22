@@ -28,6 +28,18 @@ A proxy whose address is a semi-iterator dereferencing back to it, and which wri
 - It does not subsume `proxy_semi_reference<R, V>`, whose `V` the caller names: overloads constrained on each are
   ambiguous for a type that satisfies both, and `and (not proxy_reference<R>)` on the weaker one resolves them.
 
+### Example
+
+```cpp
+--8<-- "examples/concepts/proxy_reference.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/concepts/proxy_reference.out"
+```
+
 ### See also
 
 | Entity | Relation |

@@ -43,6 +43,18 @@ on an algorithm:
 - A `bool` result is turned away.
 - A `block_size` of a type other than `size_t` is turned away.
 
+### Example
+
+```cpp
+--8<-- "examples/concepts/hash_algorithm.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/concepts/hash_algorithm.out"
+```
+
 ### See also
 
 | Entity | Relation |

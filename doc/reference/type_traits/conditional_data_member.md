@@ -17,6 +17,25 @@ holds, and otherwise `empty_member_type<Tag>`.
 
 Declared with `XSTD_NO_UNIQUE_ADDRESS`, a member of this type takes no storage where the condition fails.
 
+### Example
+
+Ported from the example of [`std::conditional`](https://en.cppreference.com/w/cpp/types/conditional) on
+cppreference.com, at
+[revision 152806](https://en.cppreference.com/mwiki/index.php?title=cpp/types/conditional&oldid=152806), by
+cppreference.com contributors. This example is under
+[CC-BY-SA 3.0 and the GFDL](../../../examples/cppreference/LICENSE), as cppreference.com's content is; the rest of this
+page is under the [Boost Software License](../../../LICENSE_1_0.txt).
+
+```cpp
+--8<-- "examples/cppreference/conditional.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/cppreference/conditional.out"
+```
+
 ### See also
 
 | Entity | Relation |

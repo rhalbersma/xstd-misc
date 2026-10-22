@@ -35,6 +35,18 @@ A tagged empty class that keeps the place of a data member that is not there.
   expressions.
 - Its comparisons reach a class derived from it, and not a class that holds it as a member.
 
+### Example
+
+```cpp
+--8<-- "examples/type_traits/empty_member_type.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/type_traits/empty_member_type.out"
+```
+
 ### See also
 
 | Entity | Relation |

@@ -1,0 +1,6 @@
+hash("Meet the new boss...") == hash of its view: true
+hash("Hubert", "Farnsworth") == hash of a copy: true (using xxhash_64) and true (using a seeded siphash_64)
+"Bender" "Rodriguez" is in the set: true
+"Turanga" "Leela" is in the set: true
+"Hubert" "Farnsworth" is in the set: true
+"Philip" "Fry" is in the set: false

@@ -123,6 +123,7 @@ libraries) in both Debug and Release mode:
 | Windows  | Clang-CL   | MSVC             | 19.1.5 (VS 2022)          | 20.1.8 (VS 2026)          | 20.1.8 (VS 2026-Preview)       | [![Clang-CL](https://github.com/rhalbersma/xstd-misc/actions/workflows/clang-cl.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/clang-cl.yml) |
 | Windows  | MSVC       | MSVC             | 2022 (17.11+)             | 2026                      | 2026-Preview                   | [![MSVC](https://github.com/rhalbersma/xstd-misc/actions/workflows/msvc.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/msvc.yml) |
 | Web      | Emscripten | libc++           | 6.0.12                    | —                         | —                              | [![Emscripten](https://github.com/rhalbersma/xstd-misc/actions/workflows/emscripten.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/emscripten.yml) |
+| s390x    | GCC        | libstdc++        | 15                        | —                         | —                              | [![s390x](https://github.com/rhalbersma/xstd-misc/actions/workflows/s390x.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/s390x.yml) |
 
 [CONTRIBUTING.md](CONTRIBUTING.md#the-ci-matrix) says what each channel is, and which legs run beyond the table.
 
@@ -155,3 +156,7 @@ Distributed under the <a href="http://www.boost.org/users/license.html">Boost So
    (See accompanying file LICENSE_1_0.txt or copy at
          <a href="http://www.boost.org/LICENSE_1_0.txt">http://www.boost.org/LICENSE_1_0.txt</a>)
 </pre>
+
+The examples under `examples/cppreference/`, ported from [cppreference.com](https://en.cppreference.com/), are the
+exception: as that site's content is, they are under the Creative Commons Attribution-ShareAlike 3.0 Unported License
+and the GNU Free Documentation License, which [their licence file](examples/cppreference/LICENSE) gives in full.
