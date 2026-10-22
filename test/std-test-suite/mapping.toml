@@ -15,6 +15,10 @@ rewrite = [
     { from = "std::to_underlying", to = "xstd::to_underlying" },
     { from = "std::hash<", to = "xstd::hash<" },
 ]
+assertion = [
+    # [unord.hash] leaves the call's exception specification open, and a key's own hash_append may throw.
+    { file = "libcxx/test/std/strings/basic.string.hash/strings.pass.cpp", sha256 = "c497fec689100fd4701cbb829ebe40e768c7e3bb503848338f15dff976b002ee", line = "ASSERT_NOEXCEPT(H()(T()));", drop = true, departure = "xstd::hash's call operator is not noexcept, since the key's hash_append may throw" },
+]
 
 [libstdcxx]
 take = [
