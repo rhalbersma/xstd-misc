@@ -15,7 +15,7 @@ An empty member declared with it needs no storage of its own.
 
 ### Example
 
-Ported from the example of
+Adapted from the example of
 [`[[no_unique_address]]`](https://en.cppreference.com/w/cpp/language/attributes/no_unique_address) on cppreference.com,
 at
 [revision 174656](https://en.cppreference.com/mwiki/index.php?title=cpp/language/attributes/no_unique_address&oldid=174656),

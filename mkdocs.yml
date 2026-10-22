@@ -13,7 +13,7 @@ site_url: https://rhalbersma.github.io/xstd-misc/
 repo_url: https://github.com/rhalbersma/xstd-misc
 repo_name: rhalbersma/xstd-misc
 edit_uri: ""
-copyright: Copyright Rein Halbersma 2014-2026, under the Boost Software License, Version 1.0, but for the examples ported from cppreference.com, which are under CC-BY-SA 3.0 and the GFDL
+copyright: Copyright Rein Halbersma 2014-2026, under the Boost Software License, Version 1.0, but for the examples adapted from cppreference.com, which are under CC-BY-SA 3.0 and the GFDL
 
 docs_dir: doc
 exclude_docs: |
