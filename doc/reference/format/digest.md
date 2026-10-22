@@ -26,7 +26,7 @@ Formats a Boost.Hash2 digest, such as the result of `xxh3_128` or of `xstd::dige
 
 ### Example
 
-Ported from the example of [`std::formatter`](https://en.cppreference.com/w/cpp/utility/format/formatter) on
+Adapted from the example of [`std::formatter`](https://en.cppreference.com/w/cpp/utility/format/formatter) on
 cppreference.com, at
 [revision 177164](https://en.cppreference.com/mwiki/index.php?title=cpp/utility/format/formatter&oldid=177164), by
 cppreference.com contributors. This example is under

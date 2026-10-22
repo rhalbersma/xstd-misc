@@ -20,7 +20,7 @@ Each header has a page, laid out as [cppreference](https://en.cppreference.com/)
   types model it and which do not. Each of those types is tested.
 - **Notes,** for what holds of the entity as a whole.
 - **Example,** a short program of typical use, and the **Output** it prints. Every example is built and run on each
-  compiler under CI, and what it prints is checked against the output shown. One ported from cppreference.com says so
+  compiler under CI, and what it prints is checked against the output shown. One adapted from cppreference.com says so
   above its code, and is under that site's licences rather than this library's.
 - **See also,** for the entities a reader looks up next.
 

@@ -19,7 +19,7 @@ Declared with `XSTD_NO_UNIQUE_ADDRESS`, a member of this type takes no storage w
 
 ### Example
 
-Ported from the example of [`std::conditional`](https://en.cppreference.com/w/cpp/types/conditional) on
+Adapted from the example of [`std::conditional`](https://en.cppreference.com/w/cpp/types/conditional) on
 cppreference.com, at
 [revision 152806](https://en.cppreference.com/mwiki/index.php?title=cpp/types/conditional&oldid=152806), by
 cppreference.com contributors. This example is under

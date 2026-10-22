@@ -89,7 +89,7 @@ The string specialization takes `basic_string_view<CharT, Traits>` in place of `
 
 ### Example
 
-Ported from the example of [`std::hash`](https://en.cppreference.com/w/cpp/utility/hash) on cppreference.com, at
+Adapted from the example of [`std::hash`](https://en.cppreference.com/w/cpp/utility/hash) on cppreference.com, at
 [revision 179088](https://en.cppreference.com/mwiki/index.php?title=cpp/utility/hash&oldid=179088), by cppreference.com
 contributors. This example is under [CC-BY-SA 3.0 and the GFDL](../../../examples/cppreference/LICENSE), as
 cppreference.com's content is; the rest of this page is under the [Boost Software License](../../../LICENSE_1_0.txt).

@@ -57,7 +57,7 @@ A read-only proxy, such as a set's element, models only `proxy_semi_reference`: 
 
 ### Example
 
-Ported from the example of [`std::to_underlying`](https://en.cppreference.com/w/cpp/utility/to_underlying) on
+Adapted from the example of [`std::to_underlying`](https://en.cppreference.com/w/cpp/utility/to_underlying) on
 cppreference.com, at
 [revision 158870](https://en.cppreference.com/mwiki/index.php?title=cpp/utility/to_underlying&oldid=158870), by
 cppreference.com contributors. This example is under
