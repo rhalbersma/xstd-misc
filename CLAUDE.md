@@ -150,6 +150,25 @@ cases users will meet and the pitfalls they will fall into, never against a cons
 
 A fixture that runs a component over a user-shaped argument probes no concept, and stays.
 
+## The relation table
+
+The reference's relation table, in `doc/reference/index.md`, relates every public entity to the working draft, a row per
+entity or family. Its rules are the same across the xstd libraries, so that a reader of one table can read the others:
+
+- **Clause first.** The Counterpart cell leads with the clause of the draft that specifies the counterpart, as
+  `[[unord.hash]](https://eel.is/c++draft/unord.hash)`, then says only how the entity extends or generalizes it. The
+  clause already names the standard facility, so the cell does not name it again. Several clauses go in the draft's
+  order.
+- **The draft's order.** Rows follow the draft's numbering of their leading clause, as eel.is shows it, and the names
+  within a row follow the draft's order of their counterparts, not the alphabet. A row with no counterpart sits beside
+  its nearest kin, citing the kin's clause where one is shared, as `empty_base_type` does beside
+  `XSTD_NO_UNIQUE_ADDRESS`, and its names are alphabetical. A proposed row takes its paper's order.
+- **One clause for a family.** Where a family's counterparts share a tight parent subclause, it is cited once.
+- **Permission is no counterpart.** A clause cited only as a license, such as `[namespace.std]` for a `formatter`
+  specialization, stays in the description and decides nothing about the row's place.
+- **Customization is new.** A standard-named type generalizes its counterpart; templates that only choose its
+  representation take a row of their own, of kind New, led by the same clause.
+
 ## Checking your work
 
 Break things here, not on CI's runners, where a push waits hours for its first result. Two scripts make that
