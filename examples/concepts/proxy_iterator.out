@@ -1,0 +1,5 @@
+plain: light dark
+packed: light dark
+proxy_iterator<shade_iterator> is true
+proxy_semi_iterator<shade_iterator> is true
+proxy_iterator<shade*> is false

@@ -55,6 +55,25 @@ Converts an enumerator to its underlying type.
 A read-only proxy, such as a set's element, models only `proxy_semi_reference`: convert it first, as
 `to_underlying(static_cast<E>(key))`.
 
+### Example
+
+Ported from the example of [`std::to_underlying`](https://en.cppreference.com/w/cpp/utility/to_underlying) on
+cppreference.com, at
+[revision 158870](https://en.cppreference.com/mwiki/index.php?title=cpp/utility/to_underlying&oldid=158870), by
+cppreference.com contributors. This example is under
+[CC-BY-SA 3.0 and the GFDL](../../../examples/cppreference/LICENSE), as cppreference.com's content is; the rest of this
+page is under the [Boost Software License](../../../LICENSE_1_0.txt).
+
+```cpp
+--8<-- "examples/cppreference/to_underlying.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/cppreference/to_underlying.out"
+```
+
 ### See also
 
 | Entity | Relation |

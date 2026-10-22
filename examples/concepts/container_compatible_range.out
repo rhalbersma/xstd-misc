@@ -1,0 +1,5 @@
+1 2 3
+from a range
+4 5 6
+container_compatible_range<std::string, std::string> is false
+container_compatible_range<std::vector<std::string>, std::string> is true

@@ -1,0 +1,5 @@
+4 c
+specialization_of<std::vector<int>, std::vector> is true
+specialization_of<std::vector<int> const, std::vector> is true
+specialization_of<std::vector<int>&, std::vector> is false
+specialization_of<std::deque<int>, std::vector> is false

@@ -1,0 +1,6 @@
+through a proxy: true
+through a language reference: 1
+through a language reference: 1
+proxy_semi_iterator<vector<bool>::iterator> is true
+proxy_semi_iterator<vector<int>::iterator> is false
+proxy_semi_iterator<int*> is false

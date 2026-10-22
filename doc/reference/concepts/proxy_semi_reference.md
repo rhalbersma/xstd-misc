@@ -15,6 +15,18 @@ A class that stands in for a value of type `V`, which the caller names, and conv
 - A class that converts to the named `V` models it, with or without a way back from its address.
 - `V` itself, a scalar, a class naming a value it does not convert to, and a language reference do not.
 
+### Example
+
+```cpp
+--8<-- "examples/concepts/proxy_semi_reference.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/concepts/proxy_semi_reference.out"
+```
+
 ### See also
 
 | Entity | Relation |

@@ -44,6 +44,7 @@ set(cxx_compile_options_warnings
         -Wno-c2y-extensions                 # triggered by Boost.Test's use of __COUNTER__
         -Wno-lifetime-safety-intra-tu-suggestions             # Clang 23+; suggests [[clang::lifetimebound]], which GCC would reject as unknown
         -Wno-lifetime-safety-intra-tu-constructor-suggestions # ditto, for constructors
+        -Wno-lifetime-safety-experimental-field-origin-escape # Clang 24+; rejects a non-owning view's accessor returning through its pointer member
     >
     $<$<CXX_COMPILER_ID:GNU>:
         -Wall
@@ -177,6 +178,12 @@ endwhile()
 if(readme_example EQUAL 0)
     message(FATAL_ERROR "README.md has no ```cpp block, so no example of it is compiled")
 endif()
+
+# Each reference page's example is built with the same warnings, run, and what it prints checked against the output
+# the page shows. Those written for this library are under its licence; those ported from cppreference.com are under
+# CC-BY-SA 3.0 and the GFDL, and so is the CMakeLists.txt beside them that builds them.
+add_subdirectory(${PROJECT_SOURCE_DIR}/examples ${CMAKE_CURRENT_BINARY_DIR}/examples)
+add_subdirectory(${PROJECT_SOURCE_DIR}/examples/cppreference ${CMAKE_CURRENT_BINARY_DIR}/examples/cppreference)
 
 # A header under a detail/ directory is machinery, not a public header: what includes it specifies it, and tests it.
 list(FILTER public_headers EXCLUDE REGEX "/detail/")

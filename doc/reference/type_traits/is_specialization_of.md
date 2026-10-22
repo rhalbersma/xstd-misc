@@ -23,6 +23,18 @@ Whether a type is a specialization of a class template whose parameters are all 
 - A primary template with a value parameter, such as `array`, cannot be named as `Primary`.
 - The concept and the trait agree.
 
+### Example
+
+```cpp
+--8<-- "examples/type_traits/is_specialization_of.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/type_traits/is_specialization_of.out"
+```
+
 ### See also
 
 | Entity | Relation |

@@ -3,8 +3,9 @@
 #    (See accompanying file LICENSE_1_0.txt or copy at
 #          http://www.boost.org/LICENSE_1_0.txt)
 
-# The documentation site, built by the pages workflow from the README and doc/. tools/mkdocs_hooks.py serves the
-# README as the index and points each relative link at its page, or at its file on GitHub where the site has none.
+# The documentation site, built by the pages workflow from the README, doc/ and the examples under examples/ that the
+# reference pages pull in. tools/mkdocs_hooks.py serves the README as the index and points each relative link at its
+# page, or at its file on GitHub where the site has none.
 
 site_name: xstd-misc
 site_description: Miscellaneous extensions to the C++ Standard Library
@@ -12,7 +13,7 @@ site_url: https://rhalbersma.github.io/xstd-misc/
 repo_url: https://github.com/rhalbersma/xstd-misc
 repo_name: rhalbersma/xstd-misc
 edit_uri: ""
-copyright: Copyright Rein Halbersma 2014-2026, under the Boost Software License, Version 1.0
+copyright: Copyright Rein Halbersma 2014-2026, under the Boost Software License, Version 1.0, but for the examples ported from cppreference.com, which are under CC-BY-SA 3.0 and the GFDL
 
 docs_dir: doc
 exclude_docs: |
@@ -87,6 +88,11 @@ markdown_extensions:
       permalink: true
   - pymdownx.highlight
   - pymdownx.inlinehilite
+  # Each reference page's example and its output, pulled in from examples/ rather than copied, so the page shows what
+  # the build compiles and runs. A path that names no file fails the build.
+  - pymdownx.snippets:
+      base_path: [ . ]
+      check_paths: true
   - pymdownx.superfences
   - md_in_html
 

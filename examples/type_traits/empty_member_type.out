@@ -1,0 +1,3 @@
+labelled entries 1 "one" and 1 "uno" are equal: false
+unlabelled entries 1 "one" and 1 "uno" are equal: true
+unlabelled entries 1 "one" and 2 "two" are equal: false

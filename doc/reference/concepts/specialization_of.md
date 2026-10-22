@@ -15,6 +15,18 @@ A specialization of the class template `Primary`, whose parameters are all types
 - A reference to a specialization does not.
 - An adaptor constrained on it accepts a `const` owner and a mutable one.
 
+### Example
+
+```cpp
+--8<-- "examples/concepts/specialization_of.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/concepts/specialization_of.out"
+```
+
 ### See also
 
 | Entity | Relation |

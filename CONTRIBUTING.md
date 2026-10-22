@@ -9,6 +9,10 @@ When adding or changing a public utility:
 3. Build and test locally (see below).
 4. Update the feature table and examples in [README.md](README.md) when the public API changes. Each ```` ```cpp ```` block
    there is compiled as a test, so an example includes what it uses and declares what it names.
+5. Give a new header's reference page an `### Example` section before *See also*: a short program of typical use, at
+   `examples/<group>/<header>.cpp`, and what it prints, at `<header>.out` beside it, which is written by running the
+   example, never by hand. The page pulls both in with a `--8<--` line, so no code is copied into it. An entity with a
+   counterpart on cppreference.com ports that page's example instead; see [License](#license).
 
 ## What a PR must satisfy before it can merge
 
@@ -20,9 +24,10 @@ This repository enforces its quality bar through CI rather than through review d
 - **No new sanitizer failures.** The [sanitizers workflow](.github/workflows/sanitizers.yml) must stay green.
 - **The public headers stay self-sufficient.** Each header is compiled as its own translation unit (see `test/CMakeLists.txt`); don't rely on include order from another header.
 - **The README's examples compile.** `test/CMakeLists.txt` writes each ```` ```cpp ```` block of [README.md](README.md) to a translation unit of its own, `readme.example<n>`, built with the tests' warnings on every leg.
+- **The reference's examples print what their pages show.** [`examples/CMakeLists.txt`](examples/CMakeLists.txt) builds each example written here, and [`examples/cppreference/CMakeLists.txt`](examples/cppreference/CMakeLists.txt) each one ported from cppreference.com, with the tests' warnings on every leg. CTest runs each as `example.<group>.<header>` or `example.cppreference.<page>`, and [`examples/check_output.cmake`](examples/check_output.cmake) compares what it prints with the `.out` beside it, line endings aside. The site build fails on a header page with no Example section and on an example no page shows.
 - **The documentation site builds.** The [Pages workflow](.github/workflows/pages.yml) runs `mkdocs build --strict` over the README and `doc/`, which fails on a link to a page or an anchor that does not exist, and deploys the site from `main`.
 - **The library stays a leaf.** `test/CMakeLists.txt` fails the configure step if any public header includes `<xstd/ints/...>` or `<xstd/bits/...>`. A facility that needs one of them belongs in that library, not here.
-- **`clang-format` is clean.** The [Clang-Format workflow](.github/workflows/clang-format.yml) runs `clang-format --dry-run --Werror` over every header and test source against [`.clang-format`](.clang-format), so any diff fails the job. Run `clang-format -i` on changed files before pushing.
+- **`clang-format` is clean.** The [Clang-Format workflow](.github/workflows/clang-format.yml) runs `clang-format --dry-run --Werror` over every header, test source and example against [`.clang-format`](.clang-format), so any diff fails the job. Run `clang-format -i` on changed files before pushing.
 - **Workflow files pass `actionlint`.** The [Actionlint workflow](.github/workflows/actionlint.yml) validates GitHub Actions syntax and expressions.
 - **The documented consumption methods work.** The [Consumption workflow](.github/workflows/consumption.yml) builds a consumer using `find_package`, `add_subdirectory`, and `FetchContent`.
 - **CodeQL analysis is clean.** The [CodeQL workflow](.github/workflows/codeql.yml) runs the C/C++ `security-extended` query suite.
@@ -45,6 +50,10 @@ where `size_t` is 32 bits but 64-bit integers keep their 8-byte alignment. The G
 adds a second 32-bit leg, i686 with GCC `-m32`, where `size_t` is 32 bits and there is no
 `__int128`. The MSVC workflow adds a third, x86 with VS 2026 in Debug, where `size_t` is 32
 bits and 64-bit members keep their 8-byte alignment under MSVC's own ABI.
+
+The `s390x` row is the one big-endian leg: GCC 15's s390x cross compiler, in Debug, with the
+tests run under QEMU's user-mode emulator. Emulation is several times slower than native, so
+the nightly canary dispatches it, and no pull request runs it.
 
 ## Test suite requirements
 
@@ -209,7 +218,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
   -DCMAKE_CXX_FLAGS="--coverage -O0 -g" -DCMAKE_EXE_LINKER_FLAGS="--coverage"
 cmake --build build
 ctest --test-dir build --output-on-failure
-gcovr --root . --exclude 'test/.*' --exclude 'build/.*' \
+gcovr --root . --exclude 'test/.*' --exclude 'build/.*' --exclude 'examples/.*' \
   --exclude-lines-by-pattern '^\s*assert\(' \
   --exclude-lines-by-pattern '=\s*default;' \
   --exclude-branches-by-pattern '^\s*assert\(' \
@@ -299,7 +308,9 @@ branch protection requires: a leg name changes whenever a rung moves, the gate n
 The gate is this repository's own job, carrying the required name, beside the shared ladder it waits for. On a
 pull request, [`changes.yml`](.github/workflows/changes.yml) first compares the diff with the paths no ladder
 builds: prose, `doc/`, `tools/`, the site's configuration, and the workflows that are not ladders. The README
-counts as prose unless one of its ```` ```cpp ```` blocks, each compiled as a test, is added, removed or changed.
+counts as prose unless one of its ```` ```cpp ```` blocks, each compiled as a test, is added, removed or changed. An
+example under `examples/`, or the output beside it, is code, and the reference page that shows it is prose: the page
+pulls the example in, and holds no code of its own.
 When every changed file is one of those, the ladder is skipped and its gate
 passes; any other file, a new directory included, runs the ladder in full and the gate passes only if every leg
 did. A manual run and the canary always build. The names under branch protection do not change. This table is
@@ -309,3 +320,15 @@ it alone carries, the three repositories holding one bar between them.
 ## License
 
 By contributing, you agree that your contributions will be licensed under the [Boost Software License, Version 1.0](LICENSE_1_0.txt), the same license that covers the rest of this repository.
+
+The examples ported from cppreference.com are the exception, and follow four rules:
+
+- **Kept apart.** A ported example, and the output beside it, is under `examples/cppreference/`, whose
+  [LICENSE](examples/cppreference/LICENSE) gives the Creative Commons Attribution-ShareAlike 3.0 Unported License and
+  the GNU Free Documentation License, under which cppreference.com publishes its content.
+- **Attributed.** Its header comment links the cppreference.com page and the revision it was ported from, credits
+  cppreference.com contributors and says how it was adapted, and its reference page's Example section links the same.
+- **Share-alike.** The `CMakeLists.txt` that builds, runs and checks the ported examples is under the same two
+  licences, and nothing under `test/src/` or elsewhere in the repository derives from them.
+- **Marked.** A line above the code on its reference page says the example is under those licences and that the rest
+  of the page is under the Boost Software License.

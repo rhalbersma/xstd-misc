@@ -20,6 +20,18 @@ under a name users can spell.
 A type models it if it meets the requirements of
 [[allocator.requirements.general]](https://eel.is/c++draft/allocator.requirements.general).
 
+### Example
+
+```cpp
+--8<-- "examples/concepts/simple_allocator.cpp"
+```
+
+Output:
+
+```text
+--8<-- "examples/concepts/simple_allocator.out"
+```
+
 ### See also
 
 | Entity | Relation |

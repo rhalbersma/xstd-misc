@@ -1,0 +1,5 @@
+1
+2
+simple_allocator<std::allocator<int>> is true
+simple_allocator<std::pmr::polymorphic_allocator<int>> is true
+simple_allocator<std::pmr::memory_resource*> is false

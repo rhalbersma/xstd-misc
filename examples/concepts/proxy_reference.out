@@ -1,0 +1,4 @@
+plain is light, the packed shades are dark and light
+proxy_reference<shade_reference> is true
+proxy_reference<shade&> is false
+proxy_reference<vector<bool>::const_reference> is false
