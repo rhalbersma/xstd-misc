@@ -30,3 +30,13 @@ rewrite = [
     { from = "std::to_underlying", to = "xstd::to_underlying" },
     { from = "using std::hash;", to = "using xstd::hash;" },
 ]
+
+[msvc-stl]
+take = [
+    { path = "tests/std/tests/P1682R3_to_underlying" },
+]
+include = ["xstd/misc/utility/to_underlying.hpp"]
+# The test calls to_underlying unqualified, under a using-directive for std.
+rewrite = [
+    { regex = '\bto_underlying\(', to = 'xstd::to_underlying(' },
+]

@@ -18,3 +18,4 @@ set(CMAKE_CXX_STANDARD 23)
 
 std_test_suite(libcxx MAPPING mapping.toml LINK_LIBRARIES xstd::misc)
 std_test_suite(libstdcxx MAPPING mapping.toml LINK_LIBRARIES xstd::misc)
+std_test_suite(msvc-stl MAPPING mapping.toml LINK_LIBRARIES xstd::misc)
