@@ -8,7 +8,7 @@ FetchContent_Declare(
     cpp-ci
     GIT_REPOSITORY https://github.com/rhalbersma/cpp-ci.git
     # The commit .github/workflows/ pins, so the suites' tags are the rungs' the ladders build on.
-    GIT_TAG ef3eba3981445aecb241edea3cc32c1aa19ba1d1
+    GIT_TAG acbf0f0b3ed85dcabf95cd0d4806c0fa7c451ecf
 )
 FetchContent_MakeAvailable(cpp-ci)
 include(${cpp-ci_SOURCE_DIR}/cmake/StdTestSuite.cmake)
