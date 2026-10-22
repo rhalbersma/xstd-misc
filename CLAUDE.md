@@ -156,7 +156,8 @@ Everything that checks the code lives under `test/`: the unit tests in `test/src
 helpers in `test/include/`, and each suite with a CMake option or a workflow of its own in a directory beside them, as
 `test/consumer/` is for the consumption workflow. A new suite goes there too, never at the top level. What measures or
 demonstrates rather than passes or fails, such as `examples/`, stays outside. `changes.yml` counts a path under `test/`
-as built, so a suite that no compiler ladder builds is listed there as unbuilt, or each change to it runs the full matrix.
+as built, so a suite that no compiler ladder builds is listed there as unbuilt, or each change to it runs the full
+matrix.
 
 ## The relation table
 
