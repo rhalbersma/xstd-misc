@@ -24,14 +24,27 @@ every public API is in namespace `xstd`.
 
 ## Headers
 
+The headers come at three levels:
+
+- `<xstd/misc.hpp>` includes the whole library.
+- An umbrella per standard header the library has counterparts for, named after it: `<xstd/misc/utility.hpp>` for
+  `<utility>`, `<xstd/misc/functional.hpp>` for `<functional>`, and so on.
+- Beneath each umbrella, in the folder of its name, a header per entity, such as
+  `<xstd/misc/utility/to_underlying.hpp>`.
+
+The umbrellas are:
+
+<div class="headers" markdown>
+
 | Header | Description |
 | :----- | :---------- |
-| `<xstd/misc.hpp>` | Every header below, through one include. |
 | `<xstd/misc/concepts.hpp>` | The proxy concepts, a Boost.Hash2 hash algorithm, `specialization_of`, and two exposition-only concepts copied from the standard. |
 | `<xstd/misc/format.hpp>` | A `std::formatter` that writes a Boost.Hash2 digest as hex. |
 | `<xstd/misc/functional.hpp>` | `hash` and `digest`: an unordered container's hash and a key's digest, from a seeded Boost.Hash2 algorithm. |
 | `<xstd/misc/type_traits.hpp>` | `is_specialization_of`, whether a hash algorithm avalanches, `XSTD_NO_UNIQUE_ADDRESS`, and the types that keep the place of a base or member that may be absent. |
 | `<xstd/misc/utility.hpp>` | `std::to_underlying`, extended to an enumerator in `std::integral_constant` and to a proxy reference to one. |
+
+</div>
 
 [The reference](doc/reference/index.md) lists each group's headers and specifies each entity, [the design notes](doc/design.md)
 give the rationale, and [the measurements](doc/measurements.md) the evidence behind it. [CONTRIBUTING.md](CONTRIBUTING.md) builds the library itself.
