@@ -272,3 +272,10 @@ foreach(t ${targets})
 
     add_test(NAME ${target_id} COMMAND ${target_id} --log_level=all)
 endforeach()
+
+# Off by default: the standard libraries' own test suites, fetched at the stable rungs' tags and rewritten onto the
+# entities that have a standard counterpart.
+option(${project_option_prefix}_STD_TEST_SUITES "Run the libc++ and libstdc++ test suites against the entities with a standard counterpart" OFF)
+if(${project_option_prefix}_STD_TEST_SUITES)
+    add_subdirectory(std-test-suite)
+endif()

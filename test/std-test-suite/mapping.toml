@@ -1,0 +1,28 @@
+# Copyright Rein Halbersma 2014-2026.
+# Distributed under the Boost Software License, Version 1.0.
+# (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+
+# The standard libraries' own tests of to_underlying and of the string hashes, rewritten onto xstd::to_underlying and
+# xstd::hash. Each departure names the clause or the design decision it stands for.
+
+[libcxx]
+take = [
+    { path = "libcxx/test/std/utilities/utility/utility.underlying" },
+    { path = "libcxx/test/std/strings/basic.string.hash" },
+]
+include = ["xstd/misc/functional/hash.hpp", "xstd/misc/utility/to_underlying.hpp"]
+rewrite = [
+    { from = "std::to_underlying", to = "xstd::to_underlying" },
+    { from = "std::hash<", to = "xstd::hash<" },
+]
+
+[libstdcxx]
+take = [
+    { path = "libstdc++-v3/testsuite/20_util/to_underlying" },
+    { path = "libstdc++-v3/testsuite/21_strings/basic_string/hash" },
+]
+include = ["xstd/misc/functional/hash.hpp", "xstd/misc/utility/to_underlying.hpp"]
+rewrite = [
+    { from = "std::to_underlying", to = "xstd::to_underlying" },
+    { from = "using std::hash;", to = "using xstd::hash;" },
+]
