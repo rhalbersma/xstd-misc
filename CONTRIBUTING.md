@@ -55,6 +55,10 @@ The `s390x` row is the one big-endian leg: GCC 15's s390x cross compiler, in Deb
 tests run under QEMU's user-mode emulator. Emulation is several times slower than native, so
 the nightly canary dispatches it, and no pull request runs it.
 
+The GCC and Clang with libc++ workflows each add a `std_test_suites` leg, on the stable rung in Debug, that runs the
+standard libraries' own tests of the entities with a counterpart: see
+[Running the standard libraries' test suites](#running-the-standard-libraries-test-suites).
+
 ## Test suite requirements
 
 Keep a focused test source for each public function, concept, and trait, mirroring its header path under `test/src/`. A source matching an umbrella header (for example, `concepts.cpp`, `type_traits.cpp`, or `utility.cpp`) tests only identities that span several focused facilities.
@@ -209,6 +213,32 @@ failed", or comments on the open one.
 ```sh
 tools/delete-clauses.py                                           # every header
 tools/delete-clauses.py include/xstd/misc/concepts/proxy_reference.hpp
+```
+
+### Running the standard libraries' test suites
+
+libc++, libstdc++ and the MSVC STL each test their `to_underlying` and their string hashes against the same
+paragraphs this library's tests are written to. With `-DXSTD_MISC_STD_TEST_SUITES=ON`,
+[`test/std-test-suite/`](test/std-test-suite/) fetches those tests at the stable rung's tags, through cpp-ci's
+`std_test_suite` module at the commit the workflows pin, rewrites them onto `xstd::to_underlying` and `xstd::hash`, and
+registers each as a CTest test labelled `std-test-suite`. [`mapping.toml`](test/std-test-suite/mapping.toml) holds
+what is taken, how it is rewritten, and each departure with the reason for it. Its one departure is libc++'s
+assertion that the string hash's call is `noexcept`, which `xstd::hash`'s is not, since a key's own `hash_append` may
+throw.
+
+| Suite | Tests | Under GCC 15 | Under Clang 22 with libc++ |
+| :---- | :---- | :----------- | :------------------------- |
+| libc++ | `to_underlying`, the string hash | run | run |
+| libstdc++ | `to_underlying` (compile only), the string, `string_view`, PMR and debug-mode hashes | run | skipped: its support headers need libstdc++ |
+| MSVC STL | `to_underlying` | run | run |
+
+A test of diagnostics, and one that no rewrite reaches, is skipped with that reason in the build tree's
+`manifest.json`. A mapping entry whose file has changed upstream fails configuration, so a moved pin is reviewed.
+
+```sh
+cmake -S . -B build/suites -G Ninja -DCMAKE_CXX_COMPILER=g++-15 -DXSTD_MISC_STD_TEST_SUITES=ON
+cmake --build build/suites --target std-test-suite-libcxx std-test-suite-libstdcxx std-test-suite-msvc-stl
+ctest --test-dir build/suites -L std-test-suite
 ```
 
 ### Reproducing the coverage gate
