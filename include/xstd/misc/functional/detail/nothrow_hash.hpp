@@ -22,7 +22,7 @@
 #include <typeindex>                                             // type_index
 #include <variant>                                               // monostate
 #include <vector>                                                // vector
-#include <version>                                               // __cpp_lib_stacktrace, __cpp_lib_text_encoding
+#include <version>                                               // IWYU pragma: keep; __cpp_lib_stacktrace, __cpp_lib_text_encoding
 
 #ifdef __cpp_lib_stacktrace
 #include <stacktrace> // IWYU pragma: keep; basic_stacktrace, stacktrace_entry

@@ -39,7 +39,7 @@
 #include <unordered_set>                                           // unordered_set
 #include <utility>                                                 // declval, pair
 #include <vector>                                                  // vector
-#include <version>                                                 // __cpp_lib_stacktrace, __cpp_lib_text_encoding
+#include <version>                                                 // IWYU pragma: keep; __cpp_lib_stacktrace, __cpp_lib_text_encoding
 
 #ifdef __cpp_lib_stacktrace
 #include <stacktrace> // IWYU pragma: keep; stacktrace_entry
