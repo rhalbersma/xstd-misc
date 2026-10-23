@@ -47,7 +47,7 @@ public:
         {}
 
         template<class Value>
-        static constexpr auto is_nothrow = std::is_nothrow_invocable_v<ValueHash&, Value const&> && (std::is_invocable_v<ValueHash const&, Value const&> || std::is_nothrow_copy_constructible_v<ValueHash>);
+        static constexpr auto is_nothrow = std::is_nothrow_invocable_v<ValueHash&, Value const&> and (std::is_invocable_v<ValueHash const&, Value const&> or std::is_nothrow_copy_constructible_v<ValueHash>);
 
         // A value's hash whose call operator is not const is called on a copy, as std::hash's own is on a temporary.
         template<class Value>

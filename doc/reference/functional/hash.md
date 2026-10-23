@@ -126,8 +126,8 @@ specialization takes `const optional<T>&` and the indirect one `const indirect<T
 - *Remarks:* It is `noexcept` where [[unord.hash]](https://eel.is/c++draft/unord.hash)/3 makes `std::hash<T>`'s call
   `noexcept`, and `hash_type` is one of Hash2's own algorithms. That covers the arithmetic, enumeration and pointer
   types, `nullptr_t`, strings and their views, and each standard key the [Keys](#keys) table lists but `indirect`,
-  `unique_ptr`, `duration`, `time_point` and `zoned_time`. The optional and indirect specializations are not
-  `noexcept`.
+  `unique_ptr`, `duration`, `time_point` and `zoned_time`. The optional and indirect specializations are `noexcept`
+  where the hash of their value is.
 - *Remarks:* It is unconstrained: Hash2 declares `hash_append` for every type, so a constraint would admit keys it
   then rejects, such as `weak_ptr`.
 - *Remarks:* As of Boost.Hash2 1.92 a call is not a constant expression, since

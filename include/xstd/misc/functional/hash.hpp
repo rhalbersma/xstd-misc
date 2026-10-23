@@ -54,7 +54,7 @@ public:
         using is_avalanching = typename detail::hasher<hash_type, Flavor>::is_avalanching;
         using is_transparent = void;
 
-        // What converts to the key alone, as std::hash's parameter accepts, would need a second conversion to reach a view.
+        // What converts only to the key, as std::hash's parameter accepts, would need a second conversion to a view.
         [[nodiscard]] constexpr auto operator()(std::basic_string<CharT, Traits, Allocator> const& v) const noexcept(detail::is_nothrow_hash_v<hash_type, std::basic_string_view<CharT, Traits>>)
                 -> std::size_t
         {
@@ -63,7 +63,7 @@ public:
 
         template<class K>
                 requires std::convertible_to<K const&, std::basic_string_view<CharT, Traits>>
-        [[nodiscard]] constexpr auto operator()(K const& v) const noexcept(detail::is_nothrow_hash_v<hash_type, std::basic_string_view<CharT, Traits>> && std::is_nothrow_convertible_v<K const&, std::basic_string_view<CharT, Traits>>)
+        [[nodiscard]] constexpr auto operator()(K const& v) const noexcept(detail::is_nothrow_hash_v<hash_type, std::basic_string_view<CharT, Traits>> and std::is_nothrow_convertible_v<K const&, std::basic_string_view<CharT, Traits>>)
                 -> std::size_t
         {
                 return detail::hasher<hash_type, Flavor>::operator()(std::basic_string_view<CharT, Traits>(v));
@@ -92,7 +92,7 @@ public:
         }
 };
 
-#if defined(__cpp_lib_indirect)
+#ifdef __cpp_lib_indirect
 // [indirect.hash]: an indirect hashes as its value does, and a valueless one as no bytes, which no value appends.
 template<class T, class Allocator, hash_algorithm H64, hash_algorithm H32, class Flavor>
         requires (sizeof(typename H32::result_type) <= sizeof(typename H64::result_type))

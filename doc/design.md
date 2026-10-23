@@ -428,8 +428,9 @@ Hash2's own algorithms. This header wrote those keys' appends and Hash2 wrote th
 throws, though Hash2 declares no exception specification. A user's key or a user's algorithm runs code this header
 does not see, so there the call is not `noexcept`, and an exception propagates rather than ending the program. A
 `path`'s element can allocate where the standard library builds one per step of its iterator, as libc++ and the
-MSVC STL do, so a `bad_alloc` there ends the program, as it would inside their own `noexcept` `hash_value`. `digest`
-has no standard counterpart, so its call is not `noexcept`.
+MSVC STL do, so a `bad_alloc` there ends the program, as it would inside their own `noexcept` `hash_value`. The
+optional and indirect specializations are `noexcept` where the hash of their value is, which the standard permits
+and libc++ does. `digest` has no standard counterpart, so its call is not `noexcept`.
 
 ### `digest`
 

@@ -24,7 +24,7 @@
 #include <cstddef>                                                 // size_t
 #include <cstdint>                                                 // int64_t, uint32_t, uint64_t
 #include <filesystem>                                              // path
-#include <functional>                                              // equal_to, hash
+#include <functional>                                              // equal_to, hash, not_equal_to
 #include <initializer_list>                                        // initializer_list
 #include <limits>                                                  // numeric_limits
 #include <memory>                                                  // make_shared, make_unique, weak_ptr
@@ -41,15 +41,15 @@
 #include <vector>                                                  // vector
 
 #if __has_include(<stacktrace>)
-#include <stacktrace> // stacktrace_entry
+#include <stacktrace> // IWYU pragma: keep; stacktrace_entry
 #endif
 
 #if __has_include(<stdfloat>)
-#include <stdfloat> // float128_t, float16_t
+#include <stdfloat> // IWYU pragma: keep; float128_t, float16_t
 #endif
 
 #if __has_include(<text_encoding>)
-#include <text_encoding> // text_encoding
+#include <text_encoding> // IWYU pragma: keep; text_encoding
 #endif
 
 #if __has_include(<boost/unordered/unordered_flat_set.hpp>)
@@ -119,14 +119,14 @@ auto hash2_of(H algorithm, T const& v)
 
 // Two equal keys hash equal, and a third, unequal to them, hashes apart.
 template<class Key>
-auto check_equal_and_apart(Key const& key, Key const& equal_key, Key const& other_key)
+auto check_equal_and_apart(std::pair<Key, Key> const& equal_keys, Key const& other_key)
         -> void
 {
         auto const h = xstd::hash<Key>(seed);
-        BOOST_CHECK(key == equal_key);
-        BOOST_CHECK(key != other_key);
-        BOOST_CHECK_EQUAL(h(key), h(equal_key));
-        BOOST_CHECK_NE(h(key), h(other_key));
+        BOOST_CHECK(std::equal_to<>()(equal_keys.first, equal_keys.second));
+        BOOST_CHECK(std::not_equal_to<>()(equal_keys.first, other_key));
+        BOOST_CHECK_EQUAL(h(equal_keys.first), h(equal_keys.second));
+        BOOST_CHECK_NE(h(equal_keys.first), h(other_key));
 }
 
 } // namespace
@@ -238,13 +238,14 @@ BOOST_AUTO_TEST_CASE(SeedsAreExplicit)
         XSTD_CONSTEXPR_CHECK((std::is_constructible_v<xstd::hash<int>, unsigned char const*, std::size_t>));
 }
 
-// [unord.hash]/3: noexcept as std::hash is, for a standard key under Hash2's algorithms, and only there.
+// [unord.hash]/3: noexcept as std::hash is for a standard key under Hash2's algorithms, an optional as its value's is.
 BOOST_AUTO_TEST_CASE(TheCallIsNoexceptWhereStdHashsIs)
 {
         XSTD_CONSTEXPR_CHECK(noexcept(std::declval<xstd::hash<int> const&>()(0)));
-        XSTD_CONSTEXPR_CHECK(noexcept(std::declval<xstd::hash<std::string> const&>()("word")));
+        XSTD_CONSTEXPR_CHECK(noexcept(std::declval<xstd::hash<std::string> const&>()(std::declval<std::string const&>())));
         XSTD_CONSTEXPR_CHECK(noexcept(std::declval<xstd::hash<std::bitset<8>, boost::hash2::siphash_64> const&>()(std::bitset<8>())));
         XSTD_CONSTEXPR_CHECK(noexcept(std::declval<xstd::hash<std::filesystem::path> const&>()(std::filesystem::path())));
+        XSTD_CONSTEXPR_CHECK(noexcept(std::declval<xstd::hash<std::optional<int>> const&>()(std::declval<std::optional<int> const&>())));
 }
 
 // A key's own hash_append may throw, and a noexcept call would turn that into std::terminate.
@@ -252,7 +253,6 @@ BOOST_AUTO_TEST_CASE(TheCallIsNotNoexceptWhereStdHashsIsNot)
 {
         XSTD_CONSTEXPR_CHECK(not noexcept(std::declval<xstd::hash<std::vector<int>> const&>()(std::vector<int>())));
         XSTD_CONSTEXPR_CHECK(not noexcept(std::declval<xstd::hash<std::pair<int, int>> const&>()(std::pair<int, int>())));
-        XSTD_CONSTEXPR_CHECK(not noexcept(std::declval<xstd::hash<std::optional<int>> const&>()(std::optional<int>())));
         XSTD_CONSTEXPR_CHECK(not noexcept(std::declval<xstd::hash<std::unique_ptr<int>> const&>()(std::unique_ptr<int>())));
         XSTD_CONSTEXPR_CHECK(not noexcept(std::declval<xstd::hash<std::chrono::seconds> const&>()(std::chrono::seconds())));
 }
@@ -391,37 +391,37 @@ BOOST_AUTO_TEST_CASE(FindsAStringKeyByItsViewInAStdUnorderedSet)
 // -0.0 equals 0.0, and x87's long double holds six bytes of padding that a hash of its bytes would read.
 BOOST_AUTO_TEST_CASE(HashesEveryFloatingPointType)
 {
-        check_equal_and_apart(0.0L, -0.0L, 1.0L);
-#if defined(__STDCPP_FLOAT16_T__)
-        check_equal_and_apart(std::float16_t{0.0F}, std::float16_t{-0.0F}, std::float16_t{1.0F});
+        check_equal_and_apart({0.0L, -0.0L}, 1.0L);
+#ifdef __STDCPP_FLOAT16_T__
+        check_equal_and_apart({std::float16_t{0.0F}, std::float16_t{-0.0F}}, std::float16_t{1.0F});
 #endif
-#if defined(__STDCPP_FLOAT128_T__)
-        check_equal_and_apart(std::float128_t{0.0}, std::float128_t{-0.0}, std::float128_t{1.0});
+#ifdef __STDCPP_FLOAT128_T__
+        check_equal_and_apart({std::float128_t{0.0}, std::float128_t{-0.0}}, std::float128_t{1.0});
 #endif
 }
 
-#if defined(__SIZEOF_INT128__)
+#ifdef __SIZEOF_INT128__
 // Hash2 rejects a 128-bit integer where is_integral admits it, as libc++ and -std=gnu++ do, and where it does not.
 BOOST_AUTO_TEST_CASE(HashesA128BitInteger)
 {
-        __extension__ using int128 = __int128;
-        check_equal_and_apart(int128{1} << 70U, int128{1} << 70U, int128{1} << 71U);
-        XSTD_CONSTEXPR_CHECK(noexcept(std::declval<xstd::hash<int128> const&>()(int128{})));
+        __extension__ using uint128 = unsigned __int128;
+        check_equal_and_apart({uint128{1} << 70U, uint128{1} << 70U}, uint128{1} << 71U);
+        XSTD_CONSTEXPR_CHECK(noexcept(std::declval<xstd::hash<uint128> const&>()(uint128{})));
 }
 #endif
 
 BOOST_AUTO_TEST_CASE(HashesABitset)
 {
-        check_equal_and_apart(std::bitset<100>("1"), std::bitset<100>(1), std::bitset<100>("10"));
-        check_equal_and_apart(std::bitset<100>().set(99), std::bitset<100>().set(99), std::bitset<100>().set(98));
+        check_equal_and_apart({std::bitset<100>("1"), std::bitset<100>(1)}, std::bitset<100>("10"));
+        check_equal_and_apart({std::bitset<100>().set(99), std::bitset<100>().set(99)}, std::bitset<100>().set(98));
         BOOST_CHECK_EQUAL(xstd::hash<std::bitset<0>>()(std::bitset<0>()), xstd::hash<std::bitset<0>>()(std::bitset<0>()));
 }
 
 // An error compares by its category and value, so the same value in another category is another error.
 BOOST_AUTO_TEST_CASE(HashesAnErrorByItsCategoryAndValue)
 {
-        check_equal_and_apart(std::error_code(5, std::generic_category()), std::error_code(5, std::generic_category()), std::error_code(5, std::system_category()));
-        check_equal_and_apart(std::error_condition(5, std::generic_category()), std::error_condition(5, std::generic_category()), std::error_condition(6, std::generic_category()));
+        check_equal_and_apart({std::error_code(5, std::generic_category()), std::error_code(5, std::generic_category())}, std::error_code(5, std::system_category()));
+        check_equal_and_apart({std::error_condition(5, std::generic_category()), std::error_condition(5, std::generic_category())}, std::error_condition(6, std::generic_category()));
 }
 
 // [util.smartptr.hash]: a smart pointer hashes as the pointer it holds.
@@ -437,42 +437,42 @@ BOOST_AUTO_TEST_CASE(HashesASmartPointerAsItsPointer)
 
 BOOST_AUTO_TEST_CASE(HashesTheIdentityOfATypeAThreadAndACoroutine)
 {
-        check_equal_and_apart(std::type_index(typeid(int)), std::type_index(typeid(int const)), std::type_index(typeid(long)));
-        check_equal_and_apart(std::this_thread::get_id(), std::this_thread::get_id(), std::thread::id());
-        check_equal_and_apart(std::coroutine_handle<>(std::noop_coroutine()), std::coroutine_handle<>(std::noop_coroutine()), std::coroutine_handle<>());
+        check_equal_and_apart({std::type_index(typeid(int)), std::type_index(typeid(int const))}, std::type_index(typeid(long)));
+        check_equal_and_apart({std::this_thread::get_id(), std::this_thread::get_id()}, std::thread::id());
+        check_equal_and_apart({std::coroutine_handle<>(std::noop_coroutine()), std::coroutine_handle<>(std::noop_coroutine())}, std::coroutine_handle<>());
 }
 
 // A path compares by its elements, so a doubled separator is the same path and a trailing one another.
 BOOST_AUTO_TEST_CASE(HashesAPathByItsElements)
 {
-        check_equal_and_apart(std::filesystem::path("a//b"), std::filesystem::path("a/b"), std::filesystem::path("a/b/"));
-        check_equal_and_apart(std::filesystem::path("/a"), std::filesystem::path("/a"), std::filesystem::path("a"));
+        check_equal_and_apart({std::filesystem::path("a//b"), std::filesystem::path("a/b")}, std::filesystem::path("a/b/"));
+        check_equal_and_apart({std::filesystem::path("/a"), std::filesystem::path("/a")}, std::filesystem::path("a"));
 }
 
 // Sunday is both weekday 0 and weekday 7, which compare equal.
 BOOST_AUTO_TEST_CASE(HashesTimesAndDates)
 {
         using namespace std::chrono;
-        check_equal_and_apart(seconds(60), seconds(60), seconds(61));
-        check_equal_and_apart(sys_seconds(seconds(60)), sys_seconds(seconds(60)), sys_seconds(seconds(61)));
-        check_equal_and_apart(weekday(0), weekday(7), weekday(1));
-        check_equal_and_apart(year_month_day(2026y / 10 / 23), year_month_day(2026y / October / 23d), year_month_day(2026y / 10 / 24));
-        check_equal_and_apart(2026y / October / Friday[last], 2026y / October / Friday[last], 2026y / October / Sunday[last]);
+        check_equal_and_apart({seconds(60), seconds(60)}, seconds(61));
+        check_equal_and_apart({sys_seconds(seconds(60)), sys_seconds(seconds(60))}, sys_seconds(seconds(61)));
+        check_equal_and_apart({weekday(0), weekday(7)}, weekday(1));
+        check_equal_and_apart({year_month_day(2026y / 10 / 23), year_month_day(2026y / October / 23d)}, year_month_day(2026y / 10 / 24));
+        check_equal_and_apart({2026y / October / Friday[last], 2026y / October / Friday[last]}, 2026y / October / Sunday[last]);
 }
 
-#if defined(__cpp_lib_stacktrace)
+#ifdef __cpp_lib_stacktrace
 BOOST_AUTO_TEST_CASE(HashesAStacktraceEntry)
 {
         BOOST_CHECK_EQUAL(xstd::hash<std::stacktrace_entry>()(std::stacktrace_entry()), xstd::hash<std::stacktrace_entry>()(std::stacktrace_entry()));
 }
 #endif
 
-#if defined(__cpp_lib_text_encoding)
+#ifdef __cpp_lib_text_encoding
 // A registered encoding compares by its MIB, whatever alias names it, and an unregistered one by its name.
 BOOST_AUTO_TEST_CASE(HashesATextEncoding)
 {
-        check_equal_and_apart(std::text_encoding("UTF-8"), std::text_encoding("utf8"), std::text_encoding("UTF-16"));
-        check_equal_and_apart(std::text_encoding("x-my-charset"), std::text_encoding("XMYCHARSET"), std::text_encoding("x-your-charset"));
+        check_equal_and_apart({std::text_encoding("UTF-8"), std::text_encoding("utf8")}, std::text_encoding("UTF-16"));
+        check_equal_and_apart({std::text_encoding("x-my-charset"), std::text_encoding("XMYCHARSET")}, std::text_encoding("x-your-charset"));
 }
 #endif
 
@@ -486,7 +486,7 @@ BOOST_AUTO_TEST_CASE(HashesAnEngagedOptionalAsItsValue)
         BOOST_CHECK_NE(h(std::nullopt), h(0));
 }
 
-#if defined(__cpp_lib_indirect)
+#ifdef __cpp_lib_indirect
 // [indirect.hash]: an indirect hashes as its value.
 BOOST_AUTO_TEST_CASE(HashesAnIndirectAsItsValue)
 {
@@ -498,8 +498,8 @@ BOOST_AUTO_TEST_CASE(HashesAnIndirectAsItsValue)
 BOOST_AUTO_TEST_CASE(HashesStandardKeysInsideOtherKeys)
 {
         using bits = std::optional<std::bitset<8>>;
-        check_equal_and_apart(std::vector<bits>{std::bitset<8>(1), std::nullopt}, std::vector<bits>{std::bitset<8>(1), std::nullopt}, std::vector<bits>{std::nullopt, std::bitset<8>(1)});
-        check_equal_and_apart(std::pair(std::error_code(), std::chrono::seconds(1)), std::pair(std::error_code(), std::chrono::seconds(1)), std::pair(std::error_code(), std::chrono::seconds(2)));
+        check_equal_and_apart({std::vector<bits>{std::bitset<8>(1), std::nullopt}, std::vector<bits>{std::bitset<8>(1), std::nullopt}}, std::vector<bits>{std::nullopt, std::bitset<8>(1)});
+        check_equal_and_apart({std::pair(std::error_code(), std::chrono::seconds(1)), std::pair(std::error_code(), std::chrono::seconds(1))}, std::pair(std::error_code(), std::chrono::seconds(2)));
 }
 
 #ifdef TEST_HAS_BOOST_UNORDERED

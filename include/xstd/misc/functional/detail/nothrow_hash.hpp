@@ -24,11 +24,11 @@
 #include <vector>                                                // vector
 
 #if __has_include(<stacktrace>)
-#include <stacktrace> // basic_stacktrace, stacktrace_entry
+#include <stacktrace> // IWYU pragma: keep; basic_stacktrace, stacktrace_entry
 #endif
 
 #if __has_include(<text_encoding>)
-#include <text_encoding> // text_encoding
+#include <text_encoding> // IWYU pragma: keep; text_encoding
 #endif
 
 namespace xstd::detail {
@@ -83,7 +83,7 @@ XSTD_MISC_DETAIL_HASH2_ALGORITHM(xxhash_64);
 
 // [unord.hash]/3: the keys whose std::hash is noexcept, which leaves out those whose clause says otherwise.
 template<class T>
-struct is_nothrow_key : std::bool_constant<std::is_arithmetic_v<T> || std::is_enum_v<T> || std::is_pointer_v<T> || std::is_same_v<T, std::nullptr_t>>
+struct is_nothrow_key : std::bool_constant<std::is_arithmetic_v<T> or std::is_enum_v<T> or std::is_pointer_v<T> or std::is_same_v<T, std::nullptr_t>>
 {};
 
 template<class T>
@@ -118,7 +118,7 @@ struct is_nothrow_key<std::coroutine_handle<Promise>> : std::true_type
         struct is_nothrow_key<__VA_ARGS__> : std::true_type \
         {}
 
-#if defined(__SIZEOF_INT128__)
+#ifdef __SIZEOF_INT128__
 XSTD_MISC_DETAIL_NOTHROW_KEY(int128);
 XSTD_MISC_DETAIL_NOTHROW_KEY(uint128);
 #endif
@@ -143,19 +143,19 @@ XSTD_MISC_DETAIL_NOTHROW_KEY(std::chrono::year_month_day);
 XSTD_MISC_DETAIL_NOTHROW_KEY(std::chrono::year_month_day_last);
 XSTD_MISC_DETAIL_NOTHROW_KEY(std::chrono::year_month_weekday);
 XSTD_MISC_DETAIL_NOTHROW_KEY(std::chrono::year_month_weekday_last);
-#if defined(XSTD_MISC_DETAIL_HAS_TIME_ZONES)
+#ifdef XSTD_MISC_DETAIL_HAS_TIME_ZONES
 XSTD_MISC_DETAIL_NOTHROW_KEY(std::chrono::leap_second);
 #endif
-#if defined(__cpp_lib_stacktrace)
+#ifdef __cpp_lib_stacktrace
 XSTD_MISC_DETAIL_NOTHROW_KEY(std::stacktrace_entry);
 #endif
-#if defined(__cpp_lib_text_encoding)
+#ifdef __cpp_lib_text_encoding
 XSTD_MISC_DETAIL_NOTHROW_KEY(std::text_encoding);
 #endif
 
 #undef XSTD_MISC_DETAIL_NOTHROW_KEY
 
-#if defined(__cpp_lib_stacktrace)
+#ifdef __cpp_lib_stacktrace
 template<class Allocator>
 struct is_nothrow_key<std::basic_stacktrace<Allocator>> : std::true_type
 {};
@@ -163,7 +163,7 @@ struct is_nothrow_key<std::basic_stacktrace<Allocator>> : std::true_type
 
 // A key whose std::hash is noexcept, hashed by one of Hash2's algorithms, which nothing in between can make throw.
 template<class H, class T>
-inline constexpr auto is_nothrow_hash_v = is_hash2_algorithm_v<H> && is_nothrow_key_v<T>;
+inline constexpr auto is_nothrow_hash_v = is_hash2_algorithm_v<H> and is_nothrow_key_v<T>;
 
 } // namespace xstd::detail
 
