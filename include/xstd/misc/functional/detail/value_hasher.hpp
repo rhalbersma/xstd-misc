@@ -34,11 +34,19 @@ public:
 
         [[nodiscard]] value_hasher() = default;
 
+        // MSVC checks C4459 as it instantiates the template, so any namespace-scope seed a consumer declares trips it.
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4459)
+#endif
         [[nodiscard]] constexpr explicit value_hasher(std::uint64_t seed)
                 requires std::is_constructible_v<ValueHash, std::uint64_t>
                 : hasher<H, Flavor>(seed)
                 , m_value_hash(seed)
         {}
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
         [[nodiscard]] constexpr value_hasher(unsigned char const* p, std::size_t n)
                 requires std::is_constructible_v<ValueHash, unsigned char const*, std::size_t>

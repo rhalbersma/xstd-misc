@@ -39,16 +39,17 @@
 #include <unordered_set>                                           // unordered_set
 #include <utility>                                                 // declval, pair
 #include <vector>                                                  // vector
+#include <version>                                                 // __cpp_lib_stacktrace, __cpp_lib_text_encoding
 
-#if __has_include(<stacktrace>)
+#ifdef __cpp_lib_stacktrace
 #include <stacktrace> // IWYU pragma: keep; stacktrace_entry
 #endif
 
-#if __has_include(<stdfloat>)
+#if defined(__STDCPP_FLOAT16_T__) || defined(__STDCPP_FLOAT128_T__)
 #include <stdfloat> // IWYU pragma: keep; float128_t, float16_t
 #endif
 
-#if __has_include(<text_encoding>)
+#ifdef __cpp_lib_text_encoding
 #include <text_encoding> // IWYU pragma: keep; text_encoding
 #endif
 
