@@ -24,11 +24,18 @@ assertion = [
 take = [
     { path = "libstdc++-v3/testsuite/20_util/to_underlying" },
     { path = "libstdc++-v3/testsuite/21_strings/basic_string/hash" },
+    { path = "libstdc++-v3/testsuite/20_util/hash" },
+    { path = "libstdc++-v3/testsuite/20_util/optional", select = "std::hash<" },
+    { path = "libstdc++-v3/testsuite/20_util/variant", select = "std::hash<" },
+    { path = "libstdc++-v3/testsuite/20_util/monostate" },
+    { path = "libstdc++-v3/testsuite/23_containers/vector/bool/hash" },
 ]
 include = ["xstd/misc/functional/hash.hpp", "xstd/misc/utility/to_underlying.hpp"]
 rewrite = [
     { from = "std::to_underlying", to = "xstd::to_underlying" },
     { from = "using std::hash;", to = "using xstd::hash;" },
+    { from = "std::hash<", to = "xstd::hash<" },
+    { regex = '(?<![\w:])hash<', to = 'xstd::hash<' },
 ]
 
 [msvc-stl]
