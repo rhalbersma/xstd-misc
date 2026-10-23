@@ -3,12 +3,19 @@
 #    (See accompanying file LICENSE_1_0.txt or copy at
 #          http://www.boost.org/LICENSE_1_0.txt)
 
+# cpp-ci's commit is the one the workflows call, so the suites move with a repin and take the ladders' rungs.
+set(workflow ${CMAKE_CURRENT_SOURCE_DIR}/../../.github/workflows/gcc.yml)
+file(STRINGS ${workflow} cpp_ci_uses REGEX "uses: rhalbersma/cpp-ci/.+@[0-9a-f]+" LIMIT_COUNT 1)
+string(REGEX MATCH "@([0-9a-f]+)" cpp_ci_pin "${cpp_ci_uses}")
+if(NOT CMAKE_MATCH_1)
+    message(FATAL_ERROR "no rhalbersma/cpp-ci pin in ${workflow}")
+endif()
+
 include(FetchContent)
 FetchContent_Declare(
     cpp-ci
     GIT_REPOSITORY https://github.com/rhalbersma/cpp-ci.git
-    # The commit .github/workflows/ pins, so the suites' tags are the rungs' the ladders build on.
-    GIT_TAG acbf0f0b3ed85dcabf95cd0d4806c0fa7c451ecf
+    GIT_TAG ${CMAKE_MATCH_1}
 )
 FetchContent_MakeAvailable(cpp-ci)
 include(${cpp-ci_SOURCE_DIR}/cmake/StdTestSuite.cmake)
