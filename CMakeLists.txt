@@ -67,6 +67,9 @@ target_sources(
         include/xstd/misc/format/digest.hpp
         include/xstd/misc/functional.hpp
         include/xstd/misc/functional/detail/hasher.hpp
+        include/xstd/misc/functional/detail/nothrow_hash.hpp
+        include/xstd/misc/functional/detail/standard_keys.hpp
+        include/xstd/misc/functional/detail/value_hasher.hpp
         include/xstd/misc/functional/digest.hpp
         include/xstd/misc/functional/hash.hpp
         include/xstd/misc/type_traits.hpp

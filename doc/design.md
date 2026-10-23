@@ -234,6 +234,45 @@ check. That specialization declares `is_transparent`, and a container pairing it
 `std::equal_to<>` finds a string key by a view or a literal without building a string. Every
 other key converts a lookup argument to the key type first, as it would for `std::hash`.
 
+**Every key the standard hashes.** A container that swaps `std::hash` for `xstd::hash` keeps every key it had, so
+each key the standard specializes `std::hash` for is a key this one hashes. Boost.Hash2 1.92 hashes the arithmetic,
+enumeration and pointer types, `nullptr_t`, strings and their views, `vector<bool>`, `optional`, `variant` and
+`monostate`, and none of the rest: `long double` where it is neither 4 nor 8 bytes, as x87's is, the 2- and 16-byte
+extended floating-point types, `bitset`, `error_code` and `error_condition`, the smart pointers, `type_index`,
+`thread::id`, `coroutine_handle`, `filesystem::path`, `stacktrace_entry`, `text_encoding`, `indirect` and the
+`<chrono>` types of [P2592R3](https://wg21.link/P2592R3). Each of those appends the state its `operator==` reads,
+and no other, so equal keys hash equal and unequal ones append different bytes, and collide only as the algorithm's
+results do: a path its root name, whether it has a root directory, and each element after them, which is what
+`compare` reads; an error its category's address and its value; a `type_index` its `name()`, since distinct types
+may share a `hash_code()`; a `thread::id` its object representation, which a `static_assert` checks has no padding.
+An unregistered `text_encoding` appends its name with every `0` dropped, coarser than *comp-name*, because
+libstdc++ 15 and 16 drop a `0` after a digit and punctuation that *comp-name* keeps, and both comparisons must hash
+equal names alike. The overloads are `tag_invoke`s in `namespace boost::hash2`, the one namespace both Hash2's
+argument-dependent lookup and its `has_tag_invoke` detection reach for a type the user does not own, and so they
+compose: a `vector<optional<bitset<8>>>` hashes as any other range of optionals does. Should Hash2 hash one of these
+itself, the two overloads become ambiguous, and the build says so rather than picking one.
+
+**The value relations the standard states.** [[optional.hash]](https://eel.is/c++draft/optional.hash) requires an
+engaged `optional<T>` to hash as its value, [[indirect.hash]](https://eel.is/c++draft/indirect.hash) the same of an
+`indirect`, and [[util.smartptr.hash]](https://eel.is/c++draft/util.smartptr.hash) a smart pointer as its `get()`.
+A smart pointer appends its pointer alone, so that holds wherever it is hashed. Hash2 appends whether an optional is
+engaged before its value, and must, or a pair of an empty and an engaged optional would hash as the same pair
+swapped; so `hash<optional<T>>` and `hash<indirect<T>>` are specializations that call `hash<T>` on an engaged
+value, seeded alike, and hash an empty one as no bytes at all, which no key appends. Inside another key they append
+as Hash2 does. Calling `hash<T>` rather than appending `T` follows a user's specialization of `hash<T>`, as
+`std::hash<optional<T>>` follows `std::hash<T>`. Nothing else does: a key's own hash is its `tag_invoke`, which
+Hash2 follows inside a `variant`, a smart pointer, a range or a tuple alike, where a specialization of `hash` is
+reached only from the top. The standard libraries' tests that hash a `variant` or a `unique_ptr` over a type with a
+specialized hash are departures for that reason.
+
+**128-bit integers.** libstdc++ and libc++ hash `__int128` and `unsigned __int128`. Hash2 does not: where
+`is_integral_v<__int128>` holds, as libc++ and `-std=gnu++` make it, Hash2 takes the integral path and has no
+16-byte write, and where it does not, Hash2 has no overload at all, so a `tag_invoke` would be ambiguous in the one
+case and the only candidate in the other. `hash` therefore appends a 128-bit key as its low and high 64 bits itself,
+in the flavor's byte order, before Hash2 sees it. Inside another key, Hash2 still rejects it. A relation to
+a value the standard library computes, such as `hash_code()` or `filesystem::hash_value`, is not one `xstd::hash`
+can keep, and the standard library's own test of it is a departure.
+
 **The call is unconstrained.** A requires-expression that `hash_append(h, {}, v)` is
 well-formed would read as a constraint and check nothing: Hash2 declares `hash_append` with
 a `void` return and no constraint for every `T`, and rejects a key it cannot hash inside its
@@ -382,9 +421,16 @@ tests assert. The call operator is not yet one for any algorithm: Hash2's
 `get_integral_result` is not `constexpr` as of 1.92.
 The specifier costs nothing in a template and takes effect as soon as Hash2's does;
 reimplementing the fold here to evaluate it now would fork Hash2's mapping, which a hasher
-built on Hash2 must not. Nothing is `noexcept`: Hash2 declares no exception specification
-on its algorithms, and the `hash_append` of a key is the user's own code, so a written
-guarantee would be a promise about code this header does not see.
+built on Hash2 must not. The call is `noexcept` where [[unord.hash]](https://eel.is/c++draft/unord.hash)/3 makes
+`std::hash`'s call `noexcept`, which is for every key the standard hashes but those whose clause says otherwise
+(`optional`, `variant`, `unique_ptr`, `duration`, `time_point`, `zoned_time` and `indirect`), and only under one of
+Hash2's own algorithms. This header wrote those keys' appends and Hash2 wrote those algorithms, none of which
+throws, though Hash2 declares no exception specification. A user's key or a user's algorithm runs code this header
+does not see, so there the call is not `noexcept`, and an exception propagates rather than ending the program. A
+`path`'s element can allocate where the standard library builds one per step of its iterator, as libc++ and the
+MSVC STL do, so a `bad_alloc` there ends the program, as it would inside their own `noexcept` `hash_value`. The
+optional and indirect specializations are `noexcept` where the hash of their value is, which the standard permits
+and libc++ does. `digest` has no standard counterpart, so its call is not `noexcept`.
 
 ### `digest`
 

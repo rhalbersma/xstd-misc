@@ -7,9 +7,10 @@
 #define XSTD_MISC_FUNCTIONAL_DETAIL_HASHER_HPP
 
 #include <xstd/misc/concepts/hash_algorithm.hpp>                   // hash_algorithm
+#include <xstd/misc/functional/detail/nothrow_hash.hpp>            // is_hash2_algorithm_v, is_nothrow_hash_v
+#include <xstd/misc/functional/detail/standard_keys.hpp>           // append_key, tag_invoke
 #include <xstd/misc/type_traits/hash_algorithm_is_avalanching.hpp> // hash_algorithm_is_avalanching_v
 #include <boost/hash2/get_integral_result.hpp>                     // get_integral_result
-#include <boost/hash2/hash_append.hpp>                             // hash_append
 #include <cstddef>                                                 // size_t
 #include <cstdint>                                                 // uint32_t, uint64_t
 #include <type_traits>                                             // bool_constant, conditional_t
@@ -27,7 +28,7 @@ class hasher
                 -> H
         {
                 auto h = m_prototype;
-                boost::hash2::hash_append(h, Flavor(), v);
+                append_key(h, Flavor(), v);
                 return h;
         }
 
@@ -58,12 +59,20 @@ public:
                 : m_prototype(p, n)
         {}
 
-        // Neither constrained nor noexcept: Hash2 declares hash_append void for every T, and it runs the user's code.
+        // Unconstrained, since Hash2 declares hash_append void for every T, and noexcept only where std::hash<T> is.
         template<class T>
-        [[nodiscard]] constexpr auto operator()(T const& v) const
+        [[nodiscard]] constexpr auto operator()(T const& v) const noexcept(is_nothrow_hash_v<H, T>)
                 -> std::size_t
         {
                 auto h = appended(v);
+                return boost::hash2::get_integral_result<std::size_t>(h);
+        }
+
+        // The hash of no bytes at all, which differs from every key's, as Hash2 appends at least one byte for each.
+        [[nodiscard]] constexpr auto operator()() const noexcept(is_hash2_algorithm_v<H>)
+                -> std::size_t
+        {
+                auto h = m_prototype;
                 return boost::hash2::get_integral_result<std::size_t>(h);
         }
 
