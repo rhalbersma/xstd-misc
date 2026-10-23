@@ -6,24 +6,23 @@
 #ifndef XSTD_MISC_FUNCTIONAL_DETAIL_STANDARD_KEYS_HPP
 #define XSTD_MISC_FUNCTIONAL_DETAIL_STANDARD_KEYS_HPP
 
-#include <boost/hash2/endian.hpp>          // endian
-#include <boost/hash2/hash_append_fwd.hpp> // hash_append_tag
-#include <array>                           // array
-#include <bit>                             // bit_cast, endian
-#include <bitset>                          // bitset
-#include <chrono>                          // day, duration, month, time_point, weekday, year, year_month_day, ...
-#include <concepts>                        // same_as
-#include <coroutine>                       // coroutine_handle
-#include <cstddef>                         // size_t
-#include <cstdint>                         // uint16_t, uint64_t
-#include <filesystem>                      // path
-#include <limits>                          // numeric_limits
-#include <memory>                          // shared_ptr, unique_ptr
-#include <string_view>                     // string_view
-#include <system_error>                    // error_code, error_condition
-#include <thread>                          // thread
-#include <type_traits>                     // has_unique_object_representations_v, is_floating_point_v
-#include <typeindex>                       // type_index
+#include <boost/hash2/endian.hpp>      // endian
+#include <boost/hash2/hash_append.hpp> // hash_append, hash_append_tag
+#include <array>                       // array
+#include <bit>                         // bit_cast, endian
+#include <bitset>                      // bitset
+#include <chrono>                      // day, duration, month, time_point, weekday, year, year_month_day, ...
+#include <coroutine>                   // coroutine_handle
+#include <cstddef>                     // size_t
+#include <cstdint>                     // uint16_t, uint64_t
+#include <filesystem>                  // path
+#include <limits>                      // numeric_limits
+#include <memory>                      // shared_ptr, unique_ptr
+#include <string_view>                 // string_view
+#include <system_error>                // error_code, error_condition
+#include <thread>                      // thread
+#include <type_traits>                 // has_unique_object_representations_v, is_floating_point_v, is_same_v
+#include <typeindex>                   // type_index
 
 #if __has_include(<stacktrace>)
 #include <stacktrace> // stacktrace_entry
@@ -37,14 +36,40 @@
 #define XSTD_MISC_DETAIL_HAS_TIME_ZONES
 #endif
 
-#if defined(__SIZEOF_INT128__)
 namespace xstd::detail {
 
+#if defined(__SIZEOF_INT128__)
 __extension__ using int128  = __int128;
 __extension__ using uint128 = unsigned __int128;
 
-} // namespace xstd::detail
+template<class T>
+inline constexpr auto is_int128_v = std::is_same_v<T, int128> || std::is_same_v<T, uint128>;
+#else
+template<class T>
+inline constexpr auto is_int128_v = false;
 #endif
+
+// Hash2 has no 16-byte write for an integer is_integral admits, and no overload where it does not, so a 128-bit key is two halves.
+template<class Hash, class Flavor, class T>
+constexpr auto append_key(Hash& h, Flavor const& f, T const& v)
+        -> void
+{
+        if constexpr (is_int128_v<T>) {
+                auto const low  = static_cast<std::uint64_t>(static_cast<uint128>(v));
+                auto const high = static_cast<std::uint64_t>(static_cast<uint128>(v) >> 64U);
+                if constexpr (Flavor::byte_order == boost::hash2::endian::big) {
+                        boost::hash2::hash_append(h, f, high);
+                        boost::hash2::hash_append(h, f, low);
+                } else {
+                        boost::hash2::hash_append(h, f, low);
+                        boost::hash2::hash_append(h, f, high);
+                }
+        } else {
+                boost::hash2::hash_append(h, f, v);
+        }
+}
+
+} // namespace xstd::detail
 
 // Each key the standard specializes std::hash for and Boost.Hash2 does not hash appends the state its operator== reads.
 namespace boost::hash2 {
@@ -76,25 +101,6 @@ constexpr auto tag_invoke(hash_append_tag const&, Provider const&, Hash& h, Flav
                 static_assert(sizeof(T) == 0, "a floating-point format of a width Boost.Hash2 does not hash, and this header does not know");
         }
 }
-
-#if defined(__SIZEOF_INT128__)
-// Hash2 hashes the 128-bit integers only where is_integral admits them, as -std=gnu++ does and -std=c++ does not.
-template<class Provider, class Hash, class Flavor, class T>
-        requires (std::same_as<T, xstd::detail::int128> || std::same_as<T, xstd::detail::uint128>) && (!std::is_integral_v<T>)
-constexpr auto tag_invoke(hash_append_tag const&, Provider const&, Hash& h, Flavor const& f, T const* v)
-        -> void
-{
-        auto const low  = static_cast<std::uint64_t>(static_cast<xstd::detail::uint128>(*v));
-        auto const high = static_cast<std::uint64_t>(static_cast<xstd::detail::uint128>(*v) >> 64U);
-        if constexpr (Flavor::byte_order == endian::big) {
-                Provider::hash_append(h, f, high);
-                Provider::hash_append(h, f, low);
-        } else {
-                Provider::hash_append(h, f, low);
-                Provider::hash_append(h, f, high);
-        }
-}
-#endif
 
 template<class Provider, class Hash, class Flavor, std::size_t N>
 constexpr auto tag_invoke(hash_append_tag const&, Provider const&, Hash& h, Flavor const& f, std::bitset<N> const* v)

@@ -257,8 +257,19 @@ engaged `optional<T>` to hash as its value, [[indirect.hash]](https://eel.is/c++
 `indirect`, and [[util.smartptr.hash]](https://eel.is/c++draft/util.smartptr.hash) a smart pointer as its `get()`.
 A smart pointer appends its pointer alone, so that holds wherever it is hashed. Hash2 appends whether an optional is
 engaged before its value, and must, or a pair of an empty and an engaged optional would hash as the same pair
-swapped; so `hash<optional<T>>` and `hash<indirect<T>>` are specializations that hash an engaged value as `T`, and
-an empty one as no bytes at all, which no key appends. Inside another key they append as Hash2 does. A relation to
+swapped; so `hash<optional<T>>` and `hash<indirect<T>>` are specializations that call `hash<T>` on an engaged
+value, seeded alike, and hash an empty one as no bytes at all, which no key appends. Inside another key they append
+as Hash2 does. Calling `hash<T>` rather than appending `T` follows a user's specialization of `hash<T>`, as
+`std::hash<optional<T>>` follows `std::hash<T>`. Nothing else does: a key's own hash is its `tag_invoke`, which
+Hash2 follows inside a `variant`, a smart pointer, a range or a tuple alike, where a specialization of `hash` is
+reached only from the top. The standard libraries' tests that hash a `variant` or a `unique_ptr` over a type with a
+specialized hash are departures for that reason.
+
+**128-bit integers.** libstdc++ and libc++ hash `__int128` and `unsigned __int128`. Hash2 does not: where
+`is_integral_v<__int128>` holds, as libc++ and `-std=gnu++` make it, Hash2 takes the integral path and has no
+16-byte write, and where it does not, Hash2 has no overload at all, so a `tag_invoke` would be ambiguous in the one
+case and the only candidate in the other. `hash` therefore appends a 128-bit key as its low and high 64 bits itself,
+in the flavor's byte order, before Hash2 sees it. Inside another key, Hash2 still rejects it. A relation to
 a value the standard library computes, such as `hash_code()` or `filesystem::hash_value`, is not one `xstd::hash`
 can keep, and the standard library's own test of it is a departure.
 

@@ -29,11 +29,15 @@ of `hash_type`, seeded once; each call copies the prototype, appends the key and
 2. The string specialization, transparent over `basic_string_view<CharT, Traits>`. A string, its view and a C string
    hash the same, and a set of strings finds a key by its view, or by a literal, without building a string. Only a
    string key is transparent: equal values of other types need not append the same bytes.
-3. The optional specialization. An engaged optional hashes as its value, as
-   [[optional.hash]](https://eel.is/c++draft/optional.hash) requires, and an empty one as no bytes at all, which no
-   key appends.
-4. The indirect specialization, where the standard library declares `indirect`. An `indirect` hashes as its value,
-   as [[indirect.hash]](https://eel.is/c++draft/indirect.hash) requires, and a valueless one as no bytes at all.
+3. The optional specialization. An engaged optional hashes as `hash<remove_const_t<T>, H64, H32, Flavor>` hashes its
+   value, as [[optional.hash]](https://eel.is/c++draft/optional.hash) requires, and an empty one as no bytes at all,
+   which no key appends. It is seeded as that hash is, and `is_avalanching` is that hash's.
+4. The indirect specialization, where the standard library declares `indirect`. An `indirect` hashes as
+   `hash<T, H64, H32, Flavor>` hashes its value, as [[indirect.hash]](https://eel.is/c++draft/indirect.hash) requires,
+   and a valueless one as no bytes at all.
+
+A key's own hash is its Boost.Hash2 `tag_invoke`, which every key containing it follows at any depth. A
+specialization of `hash` for a key is followed only by the optional and indirect specializations.
 
 ### Keys
 
@@ -45,6 +49,7 @@ hashes the arithmetic, enumeration and pointer types, `nullptr_t`, strings and t
 | Key | Appends |
 | :-- | :------ |
 | a floating-point type of neither 4 nor 8 bytes, such as x87's `long double`, `float16_t` or `float128_t` | its value bits, with `-0` as `+0` and without padding |
+| `__int128`, `unsigned __int128`, where the compiler has them and the key is not inside another | its low and high 64 bits |
 | `bitset<N>` | its bits, 64 to a word |
 | `error_code`, `error_condition` | the address of its category, then its value |
 | `unique_ptr<T, D>`, `shared_ptr<T>` | `get()` |

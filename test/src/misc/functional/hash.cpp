@@ -400,6 +400,16 @@ BOOST_AUTO_TEST_CASE(HashesEveryFloatingPointType)
 #endif
 }
 
+#if defined(__SIZEOF_INT128__)
+// Hash2 rejects a 128-bit integer where is_integral admits it, as libc++ and -std=gnu++ do, and where it does not.
+BOOST_AUTO_TEST_CASE(HashesA128BitInteger)
+{
+        __extension__ using int128 = __int128;
+        check_equal_and_apart(int128{1} << 70U, int128{1} << 70U, int128{1} << 71U);
+        XSTD_CONSTEXPR_CHECK(noexcept(std::declval<xstd::hash<int128> const&>()(int128{})));
+}
+#endif
+
 BOOST_AUTO_TEST_CASE(HashesABitset)
 {
         check_equal_and_apart(std::bitset<100>("1"), std::bitset<100>(1), std::bitset<100>("10"));

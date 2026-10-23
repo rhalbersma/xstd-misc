@@ -2,7 +2,7 @@
 # Distributed under the Boost Software License, Version 1.0.
 # (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-# The standard libraries' own tests of to_underlying and of the string hashes, rewritten onto xstd::to_underlying and
+# The standard libraries' own tests of to_underlying and of every std::hash, rewritten onto xstd::to_underlying and
 # xstd::hash. Each departure names the clause or the design decision it stands for.
 
 [libcxx]
@@ -31,6 +31,44 @@ rewrite = [
     { from = "std::to_underlying", to = "xstd::to_underlying" },
     { from = "std::hash<", to = "xstd::hash<" },
 ]
+expect = [
+    { file = "libcxx/test/std/utilities/function.objects/unord.hash/non_enum.pass.cpp", sha256 = "dd4b923be466d8da6bb8738d03fa89a9cc0c1b517e0c596a6d17a934a47a085c", fails = "compile", paragraph = "[unord.hash]/4, a disabled specialization: xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile" },
+]
+assertion = [
+    { file = "libcxx/test/std/utilities/function.objects/unord.hash/integral.pass.cpp", sha256 = "a10ba24a9e1137543110e836a94167be432524814faffbfb8d0641de71159af3", line = "LIBCPP_ASSERT(result == static_cast<std::size_t>(t));", drop = true, departure = "a value the standard library computes itself, which xstd::hash does not reproduce" },
+    { file = "libcxx/test/support/poisoned_hash_helper.h", sha256 = "cf8d9012d735ec617467ea821811014a145480e5e6ff1e04c8fc1fd7198385e1", line = "static_assert(!std::is_default_constructible<Hash>::value, \"\");", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", drop = true },
+    { file = "libcxx/test/support/poisoned_hash_helper.h", sha256 = "cf8d9012d735ec617467ea821811014a145480e5e6ff1e04c8fc1fd7198385e1", line = "static_assert(!std::is_copy_constructible<Hash>::value, \"\");", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", drop = true },
+    { file = "libcxx/test/support/poisoned_hash_helper.h", sha256 = "cf8d9012d735ec617467ea821811014a145480e5e6ff1e04c8fc1fd7198385e1", line = "static_assert(!std::is_move_constructible<Hash>::value, \"\");", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", drop = true },
+    { file = "libcxx/test/support/poisoned_hash_helper.h", sha256 = "cf8d9012d735ec617467ea821811014a145480e5e6ff1e04c8fc1fd7198385e1", line = "static_assert(!std::is_copy_assignable<Hash>::value, \"\");", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", drop = true },
+    { file = "libcxx/test/support/poisoned_hash_helper.h", sha256 = "cf8d9012d735ec617467ea821811014a145480e5e6ff1e04c8fc1fd7198385e1", line = "static_assert(!std::is_move_assignable<Hash>::value, \"\");", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", drop = true },
+    { file = "libcxx/test/support/poisoned_hash_helper.h", sha256 = "cf8d9012d735ec617467ea821811014a145480e5e6ff1e04c8fc1fd7198385e1", line = "static_assert(!can_hash<Hash, Key&>(), \"\");", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", drop = true },
+    { file = "libcxx/test/support/poisoned_hash_helper.h", sha256 = "cf8d9012d735ec617467ea821811014a145480e5e6ff1e04c8fc1fd7198385e1", line = "static_assert(!can_hash<Hash, Key const&>(), \"\");", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", drop = true },
+    { file = "libcxx/test/support/poisoned_hash_helper.h", sha256 = "cf8d9012d735ec617467ea821811014a145480e5e6ff1e04c8fc1fd7198385e1", line = "static_assert(!can_hash<Hash, Key&&>(), \"\");", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", drop = true },
+    { file = "libcxx/test/support/poisoned_hash_helper.h", sha256 = "cf8d9012d735ec617467ea821811014a145480e5e6ff1e04c8fc1fd7198385e1", line = "static_assert(!can_hash<Hash const, Key&>(), \"\");", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", drop = true },
+    { file = "libcxx/test/support/poisoned_hash_helper.h", sha256 = "cf8d9012d735ec617467ea821811014a145480e5e6ff1e04c8fc1fd7198385e1", line = "static_assert(!can_hash<Hash const, Key const&>(), \"\");", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", drop = true },
+    { file = "libcxx/test/support/poisoned_hash_helper.h", sha256 = "cf8d9012d735ec617467ea821811014a145480e5e6ff1e04c8fc1fd7198385e1", line = "static_assert(!can_hash<Hash const, Key&&>(), \"\");", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", drop = true },
+    { file = "libcxx/test/support/poisoned_hash_helper.h", sha256 = "cf8d9012d735ec617467ea821811014a145480e5e6ff1e04c8fc1fd7198385e1", line = "static_assert(!can_hash<Hash, ConvertibleToSimple<Key>&>(), \"\");", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", drop = true },
+    { file = "libcxx/test/support/poisoned_hash_helper.h", sha256 = "cf8d9012d735ec617467ea821811014a145480e5e6ff1e04c8fc1fd7198385e1", line = "static_assert(!can_hash<Hash, ConvertibleToSimple<Key> const&>(), \"\");", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", drop = true },
+    { file = "libcxx/test/support/poisoned_hash_helper.h", sha256 = "cf8d9012d735ec617467ea821811014a145480e5e6ff1e04c8fc1fd7198385e1", line = "static_assert(!can_hash<Hash, ConvertibleToSimple<Key>&&>(), \"\");", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", drop = true },
+    { file = "libcxx/test/support/poisoned_hash_helper.h", sha256 = "cf8d9012d735ec617467ea821811014a145480e5e6ff1e04c8fc1fd7198385e1", line = "static_assert(!can_hash<Hash, ConvertibleTo<Key>&>(), \"\");", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", drop = true },
+    { file = "libcxx/test/support/poisoned_hash_helper.h", sha256 = "cf8d9012d735ec617467ea821811014a145480e5e6ff1e04c8fc1fd7198385e1", line = "static_assert(!can_hash<Hash, ConvertibleTo<Key> const&>(), \"\");", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", drop = true },
+    { file = "libcxx/test/support/poisoned_hash_helper.h", sha256 = "cf8d9012d735ec617467ea821811014a145480e5e6ff1e04c8fc1fd7198385e1", line = "static_assert(!can_hash<Hash, ConvertibleTo<Key>&&>(), \"\");", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", drop = true },
+    { file = "libcxx/test/support/poisoned_hash_helper.h", sha256 = "cf8d9012d735ec617467ea821811014a145480e5e6ff1e04c8fc1fd7198385e1", line = "static_assert(!can_hash<Hash, ConvertibleTo<Key> const&&>(), \"\");", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", drop = true },
+    { file = "libcxx/test/std/utilities/template.bitset/bitset.hash/bitset.pass.cpp", sha256 = "1956cf9211391d7e36bb9e14f1e6f1b5eea6556bb15ddea44aa55082f4d1c2e1", line = "LIBCPP_ASSERT(result == N);", departure = "a value the standard library computes itself, which xstd::hash does not reproduce", drop = true },
+    { file = "libcxx/test/std/diagnostics/syserr/syserr.hash/error_code.pass.cpp", sha256 = "f55fe88776d8bc6050376671628082a809772e971f0dd42e225723837d5a68b4", line = "LIBCPP_ASSERT(result == static_cast<std::size_t>(i));", departure = "a value the standard library computes itself, which xstd::hash does not reproduce", drop = true },
+    { file = "libcxx/test/std/diagnostics/syserr/syserr.hash/error_condition.pass.cpp", sha256 = "4a15e2f17bb73c856587332c9f09a0db33b0b8f0b9bb975c5d0ddad15be513eb", line = "LIBCPP_ASSERT(result == static_cast<std::size_t>(i));", departure = "a value the standard library computes itself, which xstd::hash does not reproduce", drop = true },
+    { file = "libcxx/test/std/utilities/type.index/type.index.hash/hash.pass.cpp", sha256 = "ce53593750aa7faaf681f50334ccf7f829715d0ee67017ac74af796a29e9945d", line = "assert(std::hash<std::type_index>()(t1) == t1.hash_code());", departure = "a value the standard library computes itself, which xstd::hash does not reproduce", drop = true },
+    { file = "libcxx/test/std/utilities/variant/variant.hash/hash.pass.cpp", sha256 = "13e1c5eb4275ecaa3377f0a0f0be3dcd3c174b0950174d28339b710bc1a44d65", line = "assert(h(v) == h(v2));", departure = "a key customizes its hash through Hash2's tag_invoke, which a variant's or a unique_ptr's append follows, not through a specialization of xstd::hash", drop = true },
+    { file = "libcxx/test/std/utilities/variant/variant.hash/hash.pass.cpp", sha256 = "13e1c5eb4275ecaa3377f0a0f0be3dcd3c174b0950174d28339b710bc1a44d65", line = "test_hash_enabled<std::variant<int, B>>();", departure = "a key customizes its hash through Hash2's tag_invoke, which a variant's or a unique_ptr's append follows, not through a specialization of xstd::hash", drop = true },
+    { file = "libcxx/test/std/utilities/variant/variant.hash/hash.pass.cpp", sha256 = "13e1c5eb4275ecaa3377f0a0f0be3dcd3c174b0950174d28339b710bc1a44d65", line = "test_hash_enabled<std::variant<const B, int>>();", departure = "a key customizes its hash through Hash2's tag_invoke, which a variant's or a unique_ptr's append follows, not through a specialization of xstd::hash", drop = true },
+    { file = "libcxx/test/std/utilities/memory/util.smartptr/util.smartptr.hash/hash_unique_ptr.pass.cpp", sha256 = "ff02441eac17f3bbadabc33d9b4b5413907e4b5eef0718a0e7aa73048f09a28d", line = "std::unique_ptr<int, PointerDeleter<int, 1>> pThrowingHash;", departure = "a key customizes its hash through Hash2's tag_invoke, which a variant's or a unique_ptr's append follows, not through a specialization of xstd::hash", drop = true },
+    { file = "libcxx/test/std/utilities/memory/util.smartptr/util.smartptr.hash/hash_unique_ptr.pass.cpp", sha256 = "ff02441eac17f3bbadabc33d9b4b5413907e4b5eef0718a0e7aa73048f09a28d", line = "std::hash<std::unique_ptr<int, PointerDeleter<int, 1>>> fThrowingHash;", departure = "a key customizes its hash through Hash2's tag_invoke, which a variant's or a unique_ptr's append follows, not through a specialization of xstd::hash", drop = true },
+    { file = "libcxx/test/std/utilities/memory/util.smartptr/util.smartptr.hash/hash_unique_ptr.pass.cpp", sha256 = "ff02441eac17f3bbadabc33d9b4b5413907e4b5eef0718a0e7aa73048f09a28d", line = "ASSERT_NOT_NOEXCEPT(fThrowingHash(pThrowingHash));", departure = "a key customizes its hash through Hash2's tag_invoke, which a variant's or a unique_ptr's append follows, not through a specialization of xstd::hash", drop = true },
+    { file = "libcxx/test/std/utilities/memory/util.smartptr/util.smartptr.hash/hash_unique_ptr.pass.cpp", sha256 = "ff02441eac17f3bbadabc33d9b4b5413907e4b5eef0718a0e7aa73048f09a28d", line = "test_enabled_with_deleter<int, PointerDeleter<int, 1>>();", departure = "a key customizes its hash through Hash2's tag_invoke, which a variant's or a unique_ptr's append follows, not through a specialization of xstd::hash", drop = true },
+    { file = "libcxx/test/std/utilities/memory/util.smartptr/util.smartptr.hash/hash_unique_ptr.pass.cpp", sha256 = "ff02441eac17f3bbadabc33d9b4b5413907e4b5eef0718a0e7aa73048f09a28d", line = "test_enabled_with_deleter<int[], PointerDeleter<int[], 1>>();", departure = "a key customizes its hash through Hash2's tag_invoke, which a variant's or a unique_ptr's append follows, not through a specialization of xstd::hash", drop = true },
+    { file = "libcxx/test/std/utilities/memory/util.smartptr/util.smartptr.hash/hash_unique_ptr.pass.cpp", sha256 = "ff02441eac17f3bbadabc33d9b4b5413907e4b5eef0718a0e7aa73048f09a28d", line = "test_enabled_with_deleter<A, PointerDeleter<A, 1>>();", departure = "a key customizes its hash through Hash2's tag_invoke, which a variant's or a unique_ptr's append follows, not through a specialization of xstd::hash", drop = true },
+    { file = "libcxx/test/std/utilities/memory/util.smartptr/util.smartptr.hash/hash_unique_ptr.pass.cpp", sha256 = "ff02441eac17f3bbadabc33d9b4b5413907e4b5eef0718a0e7aa73048f09a28d", line = "test_enabled_with_deleter<A[], PointerDeleter<A[], 1>>();", departure = "a key customizes its hash through Hash2's tag_invoke, which a variant's or a unique_ptr's append follows, not through a specialization of xstd::hash", drop = true },
+]
 
 [libstdcxx]
 take = [
@@ -43,10 +81,10 @@ take = [
     { path = "libstdc++-v3/testsuite/20_util/bitset/hash" },
     { path = "libstdc++-v3/testsuite/20_util/hash" },
     { path = "libstdc++-v3/testsuite/20_util/monostate" },
-    { path = "libstdc++-v3/testsuite/20_util/optional", select = "std::hash<" },
+    { path = "libstdc++-v3/testsuite/20_util/optional", select = "hashable<" },
     { path = "libstdc++-v3/testsuite/20_util/shared_ptr/hash" },
     { path = "libstdc++-v3/testsuite/20_util/typeindex", select = "hash<type_index>" },
-    { path = "libstdc++-v3/testsuite/20_util/unique_ptr/hash" },
+    { path = "libstdc++-v3/testsuite/20_util/unique_ptr/hash", select = "PointerDeleter|has_res_type" },
     { path = "libstdc++-v3/testsuite/20_util/variant", select = "No hash specialization|MultiHash" },
     { path = "libstdc++-v3/testsuite/23_containers/vector/bool/hash" },
     { path = "libstdc++-v3/testsuite/27_io/filesystem/path/nonmember", select = "hash_value" },
@@ -60,13 +98,28 @@ rewrite = [
     { regex = '(?<![\w:])hash<', to = 'xstd::hash<' },
     { regex = '(?<![\w:])hash_value\((p+|path\([^()]*\))\)', to = 'xstd::hash<path>()(\1)' },
 ]
+assertion = [
+    { file = "libstdc++-v3/testsuite/20_util/hash/52931.cc", sha256 = "ad3a0fbf93c345ec378db47a481fe5102bfe38d727f8fe92e72086103f7867e1", line = "static_assert(!decltype(f<S>(0))::value, \"\");", drop = true, departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile" },
+    { file = "libstdc++-v3/testsuite/20_util/optional/hash.cc", sha256 = "135b604b88743809c33e874d9d252054085034618a82922ffbb181f98ebb730d", line = "static_assert(!decltype(f<S>(0))::value, \"\");", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", drop = true },
+    { file = "libstdc++-v3/testsuite/20_util/optional/hash.cc", sha256 = "135b604b88743809c33e874d9d252054085034618a82922ffbb181f98ebb730d", line = "static_assert(!hashable<std::optional<S>>());", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", drop = true },
+    { file = "libstdc++-v3/testsuite/20_util/optional/hash.cc", sha256 = "135b604b88743809c33e874d9d252054085034618a82922ffbb181f98ebb730d", line = "static_assert(!hashable<std::optional<const S>>());", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", drop = true },
+    { file = "libstdc++-v3/testsuite/20_util/variant/hash.cc", sha256 = "87fd1c184fb77b8dc70a1f19bc706466162572f4e0256df5d422fc985c93f91d", line = "static_assert(!decltype(f<S>(0))::value, \"\");", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", drop = true },
+    { file = "libstdc++-v3/testsuite/20_util/variant/hash.cc", sha256 = "87fd1c184fb77b8dc70a1f19bc706466162572f4e0256df5d422fc985c93f91d", line = "static_assert(!decltype(f<std::variant<S>>(0))::value, \"\");", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", drop = true },
+    { file = "libstdc++-v3/testsuite/20_util/variant/hash.cc", sha256 = "87fd1c184fb77b8dc70a1f19bc706466162572f4e0256df5d422fc985c93f91d", line = "static_assert(!decltype(f<std::variant<S, S>>(0))::value, \"\");", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", drop = true },
+    { file = "libstdc++-v3/testsuite/20_util/variant/hash.cc", sha256 = "87fd1c184fb77b8dc70a1f19bc706466162572f4e0256df5d422fc985c93f91d", line = "static_assert(!std::is_invocable_v<", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", to = "static_assert(true || !std::is_invocable_v<" },
+    { file = "libstdc++-v3/testsuite/20_util/variant/hash.cc", sha256 = "87fd1c184fb77b8dc70a1f19bc706466162572f4e0256df5d422fc985c93f91d", line = "VERIFY(std::hash<int>()(x) == std::hash<std::variant<int>>()(x2));", departure = "libstdc++'s own value, as [variant.hash] relates no alternative's hash to the variant's", drop = true },
+    { file = "libstdc++-v3/testsuite/20_util/shared_ptr/hash/1.cc", sha256 = "8efc78031757c2a1f72efaeb77c79732be42d631cee51a6b61c4fbd83c66d232", line = "std::__shared_ptr<T>              s1(new T);", departure = "libstdc++'s internal std::__shared_ptr", drop = true },
+    { file = "libstdc++-v3/testsuite/20_util/shared_ptr/hash/1.cc", sha256 = "8efc78031757c2a1f72efaeb77c79732be42d631cee51a6b61c4fbd83c66d232", line = "std::hash<std::__shared_ptr<T>>   hs1;", departure = "libstdc++'s internal std::__shared_ptr", drop = true },
+    { file = "libstdc++-v3/testsuite/20_util/shared_ptr/hash/1.cc", sha256 = "8efc78031757c2a1f72efaeb77c79732be42d631cee51a6b61c4fbd83c66d232", line = "std::hash<T*>                     hp1;", departure = "libstdc++'s internal std::__shared_ptr", drop = true },
+    { file = "libstdc++-v3/testsuite/20_util/shared_ptr/hash/1.cc", sha256 = "8efc78031757c2a1f72efaeb77c79732be42d631cee51a6b61c4fbd83c66d232", line = "VERIFY( hs1(s1) == hp1(s1.get()) );", departure = "libstdc++'s internal std::__shared_ptr", drop = true },
+    { file = "libstdc++-v3/testsuite/20_util/unique_ptr/hash/1.cc", sha256 = "14dbd1b4600576803f8a8174f0ebc8ef95eee0b92f5aa4daa0c8a106a3387703", line = "static_assert(!decltype(f<Pointer<int>>(0))::value, \"\");", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", drop = true },
+]
 
 [msvc-stl]
 take = [
     { path = "tests/std/tests/P1682R3_to_underlying" },
     { path = "tests/std/tests/Dev10_491486_floating_point_hash" },
     { path = "tests/std/tests/Dev10_590599_hash_string" },
-    { path = "tests/std/tests/GH_002789_Hash_vec_Tidy" },
     { path = "tests/std/tests/P0513R0_poisoning_the_hash" },
     { path = "tests/std/tests/P0414R2_shared_ptr_for_arrays" },
 ]
@@ -76,4 +129,11 @@ rewrite = [
     { regex = '\bto_underlying\(', to = 'xstd::to_underlying(' },
     { from = "std::hash<", to = "xstd::hash<" },
     { regex = '(?<![\w:])hash<', to = 'xstd::hash<' },
+]
+expect = [
+    { file = "tests/std/tests/P0513R0_poisoning_the_hash/test.cpp", sha256 = "242167bcf11d228848d0ecc4957facbc0738fcfe2c03e6d06fd20ced92297bc3", fails = "compile", paragraph = "the MSVC STL's own hash objects: trivially copyable, with argument_type and result_type, and hash<const T> disabled, where xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile" },
+]
+assertion = [
+    { file = "tests/std/tests/Dev10_491486_floating_point_hash/test.cpp", sha256 = "420c5716adb4e540bbdf8cccec421ab771bc157b9ebb69c71b040ecb44ba1029", line = "test_case<long double>();", departure = "the test reads long double as the 8 bytes MSVC's has", drop = true },
+    { file = "tests/std/tests/P0414R2_shared_ptr_for_arrays/test.cpp", sha256 = "4e0c54dab353edc4c996327c6e9767fa5a49df7497fe5e883fc1e191bacfa7ce", line = "assert(first[i].weak_from_this().expired());", departure = "libc++ enables shared_from_this for a shared_ptr<T[]>, which [util.smartptr.shared.const] does not", drop = true },
 ]

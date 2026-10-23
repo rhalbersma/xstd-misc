@@ -6,7 +6,7 @@
 #ifndef XSTD_MISC_FUNCTIONAL_DETAIL_NOTHROW_HASH_HPP
 #define XSTD_MISC_FUNCTIONAL_DETAIL_NOTHROW_HASH_HPP
 
-#include <xstd/misc/functional/detail/standard_keys.hpp>       // int128, uint128
+#include <xstd/misc/functional/detail/standard_keys.hpp>         // int128, uint128
 #include <xstd/misc/type_traits/detail/hash2_algorithms_fwd.hpp> // blake2b_512, blake2s_256, hmac, md5_128, murmur3_128, murmur3_32, ripemd_128, ripemd_160, sha1_160, sha2_224, sha2_256, sha2_384, sha2_512, sha2_512_224, sha2_512_256, sha3_224, sha3_256, sha3_384, sha3_512, shake_128, shake_256, siphash_32, siphash_64, spooky2_128, xxh3_128, xxhash_32, xxhash_64
 #include <bitset>                                                // bitset
 #include <chrono>                                                // day, leap_second, month, weekday, year, year_month_day, ...
