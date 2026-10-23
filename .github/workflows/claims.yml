@@ -31,7 +31,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: rhalbersma/cpp-ci/.github/actions/install-gcc@acbf0f0b3ed85dcabf95cd0d4806c0fa7c451ecf # main after rhalbersma/cpp-ci#83, which runs the standard libraries' test suites against a library
+      - uses: rhalbersma/cpp-ci/.github/actions/install-gcc@6f431bb43037778af31b6a7010498e0a2145b381 # main after rhalbersma/cpp-ci#83, which runs the standard libraries' test suites against a library
         with:
           version: "15"
           trunk: "false"

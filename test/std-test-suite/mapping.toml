@@ -9,26 +9,48 @@
 take = [
     { path = "libcxx/test/std/utilities/utility/utility.underlying" },
     { path = "libcxx/test/std/strings/basic.string.hash" },
+    { path = "libcxx/test/std/strings/string.view/string.view.hash" },
+    { path = "libcxx/test/std/utilities/function.objects/unord.hash" },
+    { path = "libcxx/test/std/utilities/optional/optional.hash" },
+    { path = "libcxx/test/std/utilities/variant/variant.hash" },
+    { path = "libcxx/test/std/utilities/template.bitset/bitset.hash" },
+    { path = "libcxx/test/std/utilities/memory/util.smartptr/util.smartptr.hash" },
+    { path = "libcxx/test/std/utilities/type.index/type.index.hash" },
+    { path = "libcxx/test/std/diagnostics/syserr/syserr.hash" },
+    { path = "libcxx/test/std/containers/sequences/vector.bool", select = "std::hash<" },
+    { path = "libcxx/test/std/input.output/filesystems/class.path/path.member", select = "std::hash<" },
+    { path = "libcxx/test/std/language.support/support.coroutines/coroutine.handle/coroutine.handle.hash" },
+    { path = "libcxx/test/std/thread/thread.threads/thread.thread.class/thread.thread.id", select = "std::hash<" },
+    { path = "libcxx/test/std/time/time.hash" },
+]
+support = [
+    { path = "libcxx/test/support/poisoned_hash_helper.h" },
 ]
 include = ["xstd/misc/functional/hash.hpp", "xstd/misc/utility/to_underlying.hpp"]
 rewrite = [
     { from = "std::to_underlying", to = "xstd::to_underlying" },
     { from = "std::hash<", to = "xstd::hash<" },
 ]
-assertion = [
-    # [unord.hash] leaves the call's exception specification open, and a key's own hash_append may throw.
-    { file = "libcxx/test/std/strings/basic.string.hash/strings.pass.cpp", sha256 = "c497fec689100fd4701cbb829ebe40e768c7e3bb503848338f15dff976b002ee", line = "ASSERT_NOEXCEPT(H()(T()));", drop = true, departure = "xstd::hash's call operator is not noexcept, since the key's hash_append may throw" },
-]
 
 [libstdcxx]
 take = [
     { path = "libstdc++-v3/testsuite/20_util/to_underlying" },
     { path = "libstdc++-v3/testsuite/21_strings/basic_string/hash" },
+    { path = "libstdc++-v3/testsuite/18_support/coroutines", select = "std::hash<" },
+    { path = "libstdc++-v3/testsuite/19_diagnostics/error_code", select = "std::hash<" },
+    { path = "libstdc++-v3/testsuite/19_diagnostics/error_condition", select = "std::hash<" },
+    { path = "libstdc++-v3/testsuite/19_diagnostics/stacktrace", select = "std::hash<S>" },
+    { path = "libstdc++-v3/testsuite/20_util/bitset/hash" },
     { path = "libstdc++-v3/testsuite/20_util/hash" },
-    { path = "libstdc++-v3/testsuite/20_util/optional", select = "std::hash<" },
-    { path = "libstdc++-v3/testsuite/20_util/variant", select = "std::hash<" },
     { path = "libstdc++-v3/testsuite/20_util/monostate" },
+    { path = "libstdc++-v3/testsuite/20_util/optional", select = "std::hash<" },
+    { path = "libstdc++-v3/testsuite/20_util/shared_ptr/hash" },
+    { path = "libstdc++-v3/testsuite/20_util/typeindex", select = "hash<type_index>" },
+    { path = "libstdc++-v3/testsuite/20_util/unique_ptr/hash" },
+    { path = "libstdc++-v3/testsuite/20_util/variant", select = "No hash specialization|MultiHash" },
     { path = "libstdc++-v3/testsuite/23_containers/vector/bool/hash" },
+    { path = "libstdc++-v3/testsuite/27_io/filesystem/path/nonmember", select = "hash_value" },
+    { path = "libstdc++-v3/testsuite/30_threads/thread/id", select = "std::hash<" },
 ]
 include = ["xstd/misc/functional/hash.hpp", "xstd/misc/utility/to_underlying.hpp"]
 rewrite = [
@@ -36,14 +58,22 @@ rewrite = [
     { from = "using std::hash;", to = "using xstd::hash;" },
     { from = "std::hash<", to = "xstd::hash<" },
     { regex = '(?<![\w:])hash<', to = 'xstd::hash<' },
+    { regex = '(?<![\w:])hash_value\((p+|path\([^()]*\))\)', to = 'xstd::hash<path>()(\1)' },
 ]
 
 [msvc-stl]
 take = [
     { path = "tests/std/tests/P1682R3_to_underlying" },
+    { path = "tests/std/tests/Dev10_491486_floating_point_hash" },
+    { path = "tests/std/tests/Dev10_590599_hash_string" },
+    { path = "tests/std/tests/GH_002789_Hash_vec_Tidy" },
+    { path = "tests/std/tests/P0513R0_poisoning_the_hash" },
+    { path = "tests/std/tests/P0414R2_shared_ptr_for_arrays" },
 ]
-include = ["xstd/misc/utility/to_underlying.hpp"]
-# The test calls to_underlying unqualified, under a using-directive for std.
+include = ["xstd/misc/functional/hash.hpp", "xstd/misc/utility/to_underlying.hpp"]
+# The tests call to_underlying and hash unqualified, under a using-directive for std.
 rewrite = [
     { regex = '\bto_underlying\(', to = 'xstd::to_underlying(' },
+    { from = "std::hash<", to = "xstd::hash<" },
+    { regex = '(?<![\w:])hash<', to = 'xstd::hash<' },
 ]
