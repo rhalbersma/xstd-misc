@@ -20,7 +20,8 @@ Formats a Boost.Hash2 digest, such as the result of `xxh3_128` or of `xstd::dige
 
 - `parse`:
     - *Effects:* Accepts an empty specification, `x` or `X`.
-    - *Throws:* `format_error` for any other specification.
+    - *Throws:* `format_error` for any other specification. Built with exceptions off, as under `-fno-exceptions`, it
+      writes the message to `stderr` and calls `std::abort()` instead, as libstdc++'s and libc++'s own formatters do.
 - `format`:
     - *Effects:* Writes two hexadecimal digits per byte, in byte order, lowercase unless the specification is `X`.
 

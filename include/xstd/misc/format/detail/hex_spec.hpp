@@ -6,9 +6,10 @@
 #ifndef XSTD_MISC_FORMAT_DETAIL_HEX_SPEC_HPP
 #define XSTD_MISC_FORMAT_DETAIL_HEX_SPEC_HPP
 
-#include <format>      // format_error, format_parse_context
-#include <iterator>    // next
-#include <string_view> // string_view
+#include <xstd/misc/format/detail/throw_format_error.hpp> // throw_format_error
+#include <format>                                         // format_parse_context
+#include <iterator>                                       // next
+#include <string_view>                                    // string_view
 
 namespace xstd::detail {
 
@@ -27,7 +28,7 @@ public:
                         it          = std::next(it);
                 }
                 if (it != ctx.end() and *it != '}') {
-                        throw std::format_error("a digest takes x, X or no format specification");
+                        throw_format_error("a digest takes x, X or no format specification");
                 }
                 return it;
         }

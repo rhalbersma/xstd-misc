@@ -35,6 +35,6 @@ jobs:
           set -euo pipefail
           # codeql.yml and coverage.yml are absent: each runs on a schedule of its own.
           for workflow in gcc.yml clang.yml clang-libc++.yml mingw.yml apple-clang.yml msvc.yml clang-cl.yml \
-                          emscripten.yml s390x.yml sanitizers.yml clang-tidy.yml msvc-analyze.yml consumption.yml; do
+                          emscripten.yml android.yml ios.yml s390x.yml sanitizers.yml clang-tidy.yml msvc-analyze.yml consumption.yml; do
             gh workflow run "$workflow" --repo "$REPO" --ref "$REF"
           done

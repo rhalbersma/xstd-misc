@@ -1,0 +1,31 @@
+#          Copyright Rein Halbersma 2014-2026.
+# Distributed under the Boost Software License, Version 1.0.
+#    (See accompanying file LICENSE_1_0.txt or copy at
+#          http://www.boost.org/LICENSE_1_0.txt)
+
+name: Android
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow_ref }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    branches: [ main ]
+  # canary.yml dispatches this nightly on main, the run its README badge shows.
+  workflow_dispatch:
+
+jobs:
+  # Whether this pull request can reach what the ladder builds; see changes.yml.
+  changes:
+    uses: ./.github/workflows/changes.yml
+
+  # Android 15, 16 and 17 (API 35, 36 and 37) on arm64-v8a, with NDK r30's Clang and libc++: each level's bionic
+  # declarations, and the tests run statically linked under qemu-aarch64.
+  android:
+    needs: changes
+    if: needs.changes.outputs.build == 'true'
+    uses: rhalbersma/cpp-ci/.github/workflows/android-ndk.yml@47d56c00db0024b6a5a22a0d1e8bec06f40163ff # main after rhalbersma/cpp-ci#87, which adds the Android and iOS legs

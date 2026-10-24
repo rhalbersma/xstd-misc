@@ -21,4 +21,4 @@ jobs:
   # Big-endian: the one leg where an integer's first byte is its highest, so a byte copy or a known-answer digest that
   # assumes otherwise fails here and passes everywhere else.
   s390x:
-    uses: rhalbersma/cpp-ci/.github/workflows/s390x.yml@6f431bb43037778af31b6a7010498e0a2145b381 # main after rhalbersma/cpp-ci#83, which runs the standard libraries' test suites against a library
+    uses: rhalbersma/cpp-ci/.github/workflows/s390x.yml@47d56c00db0024b6a5a22a0d1e8bec06f40163ff # main after rhalbersma/cpp-ci#87, which adds the Android and iOS legs

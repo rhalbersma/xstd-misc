@@ -55,6 +55,13 @@ The `s390x` row is the one big-endian leg: GCC 15's s390x cross compiler, in Deb
 tests run under QEMU's user-mode emulator. Emulation is several times slower than native, so
 the nightly canary dispatches it, and no pull request runs it.
 
+The `Android` row builds with NDK r30 for arm64-v8a at API 35, 36 and 37, Android 15, 16 and 17, in Debug at
+`-O1`: each level's bionic declarations and the NDK's libc++, with the tests statically linked and run under QEMU's
+user-mode emulator rather than on a device. The `iOS` row builds for the iOS Simulator at the deployment targets of
+iOS 18, 26 and 27, which turn libc++'s availability markup on, each with the newest Xcode on the macOS image that
+carries that release's simulator, and runs the tests on that release's own runtime. Both run on every pull request,
+and the nightly canary dispatches them on `main`.
+
 The GCC and Clang with libc++ workflows each add a `std_test_suites` leg, on the stable rung in Debug, that runs the
 standard libraries' own tests of the entities with a counterpart: see
 [Running the standard libraries' test suites](#running-the-standard-libraries-test-suites).
@@ -187,9 +194,9 @@ tools/ci-local.sh                  # every leg
 tools/ci-local.sh gcc-17 tidy-24   # the ones a change is likeliest to break
 ```
 
-MSVC, clang-cl, MinGW, Apple Clang and Emscripten have no Linux equivalent, and the libc++ 23 and 24-SVN legs need a
-libc++ that cannot be installed beside 22. The sanitizer, CodeQL, consumption and actionlint jobs are not in it
-either; the coverage and clang-tidy commands are also given on their own in the sections below.
+MSVC, clang-cl, MinGW, Apple Clang, Emscripten, Android and iOS have no Linux equivalent, and the libc++ 23 and
+24-SVN legs need a libc++ that cannot be installed beside 22. The sanitizer, CodeQL, consumption and actionlint jobs
+are not in it either; the coverage and clang-tidy commands are also given on their own in the sections below.
 
 ### Deleting clauses
 
