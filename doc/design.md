@@ -265,11 +265,18 @@ Hash2 follows inside a `variant`, a smart pointer, a range or a tuple alike, whe
 reached only from the top. The standard libraries' tests that hash a `variant` or a `unique_ptr` over a type with a
 specialized hash are departures for that reason.
 
-**128-bit integers.** libstdc++ and libc++ hash `__int128` and `unsigned __int128`. Hash2 does not: where
-`is_integral_v<__int128>` holds, as libc++ and `-std=gnu++` make it, Hash2 takes the integral path and has no
-16-byte write, and where it does not, Hash2 has no overload at all, so a `tag_invoke` would be ambiguous in the one
-case and the only candidate in the other. `hash` therefore appends a 128-bit key as its low and high 64 bits itself,
-in the flavor's byte order, before Hash2 sees it. Inside another key, Hash2 still rejects it. A relation to
+**128-bit and bit-precise integers.** libstdc++ and libc++ hash `__int128` and `unsigned __int128`, and libc++
+hashes `_BitInt(N)` of every width, as [P3666R5](https://wg21.link/P3666R5) would have every library do. Hash2
+appends an integer as the `sizeof(T)` bytes of its value, but writes only 1, 2, 4 or 8 of them, and only where
+`is_integral_v<T>` holds. Where it holds, as libc++ and `-std=gnu++` make it for `__int128` and libc++ for
+`_BitInt`, Hash2 takes the integral path and has no write for a wider integer. Where it does not, as libstdc++ leaves
+every `_BitInt`, Hash2 has no overload at all. A `tag_invoke` would be ambiguous in the one case and the only
+candidate in the other. `hash` therefore appends these keys itself, before Hash2 sees them, by Hash2's own rule:
+the value converted to the unsigned integer as wide as the object, then its `sizeof(T)` bytes in the flavor's byte
+order. A `__int128` appends what its low and high 64 bits appended in turn would, and a `_BitInt` that Hash2 could
+write appends what Hash2 would. The conversion reads the value, never the padding a `_BitInt` usually carries, and
+sign-extends a negative value across it, as Hash2's cast to `uintN_t` does. Inside another key, Hash2 still rejects
+these keys. A relation to
 a value the standard library computes, such as `hash_code()` or `filesystem::hash_value`, is not one `xstd::hash`
 can keep, and the standard library's own test of it is a departure.
 
