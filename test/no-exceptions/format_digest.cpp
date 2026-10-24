@@ -13,7 +13,7 @@
 auto main() -> int
 {
         constexpr auto bytes = std::array<unsigned char, 4>{0x00, 0x01, 0xab, 0xff};
-        auto d = boost::hash2::digest<4>();
+        auto d               = boost::hash2::digest<4>();
         std::ranges::copy(bytes, d.begin());
 
         using namespace std::string_view_literals;
