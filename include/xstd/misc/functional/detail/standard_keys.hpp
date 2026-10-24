@@ -8,10 +8,12 @@
 
 #include <boost/hash2/endian.hpp>      // endian
 #include <boost/hash2/hash_append.hpp> // hash_append, hash_append_tag
+#include <algorithm>                   // reverse
 #include <array>                       // array
 #include <bit>                         // bit_cast, endian
 #include <bitset>                      // bitset
 #include <chrono>                      // day, duration, month, time_point, weekday, year, year_month_day, ...
+#include <climits>                     // CHAR_BIT
 #include <coroutine>                   // coroutine_handle
 #include <cstddef>                     // ptrdiff_t, size_t
 #include <cstdint>                     // uint16_t, uint64_t
@@ -22,7 +24,7 @@
 #include <string_view>                 // string_view
 #include <system_error>                // error_code, error_condition
 #include <thread>                      // thread
-#include <type_traits>                 // has_unique_object_representations_v, is_floating_point_v, is_same_v
+#include <type_traits>                 // has_unique_object_representations_v, is_floating_point_v, type_identity
 #include <typeindex>                   // type_index
 #include <version>                     // __cpp_lib_stacktrace, __cpp_lib_text_encoding
 
@@ -40,36 +42,68 @@
 
 namespace xstd::detail {
 
+// The integers Hash2 has no write for, each paired with the unsigned integer as wide as its object.
+template<class T>
+struct object_unsigned
+{};
+
 #ifdef __SIZEOF_INT128__
 __extension__ using int128  = __int128;
 __extension__ using uint128 = unsigned __int128;
 
-template<class T>
-inline constexpr auto is_int128_v = std::is_same_v<T, int128> or std::is_same_v<T, uint128>;
+// No 16-byte write where is_integral admits a 128-bit integer, as libc++ and -std=gnu++ do, and no overload otherwise.
+template<>
+struct object_unsigned<int128> : std::type_identity<uint128>
+{};
+
+template<>
+struct object_unsigned<uint128> : std::type_identity<uint128>
+{};
 #endif
 
-// Hash2 has no 16-byte write where is_integral admits a 128-bit integer, and no overload where it does not.
+#ifdef __BITINT_MAXWIDTH__
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wbit-int-extension"
+#endif
+// No write past 8 bytes where is_integral admits a _BitInt, as libc++ does, and no overload where it does not.
+template<std::size_t N>
+struct object_unsigned<_BitInt(N)> : std::type_identity<unsigned _BitInt(sizeof(_BitInt(N)) * CHAR_BIT)>
+{};
+
+template<std::size_t N>
+struct object_unsigned<unsigned _BitInt(N)> : std::type_identity<unsigned _BitInt(sizeof(unsigned _BitInt(N)) * CHAR_BIT)>
+{};
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+#endif // __BITINT_MAXWIDTH__
+
+template<class T>
+concept hash2_lacks_write = requires { typename object_unsigned<T>::type; };
+
+// Hash2's own rule for an integer, its value as sizeof(T) bytes in the flavor's order, where Hash2 lacks the write.
 template<class Hash, class Flavor, class T>
 constexpr auto append_key(Hash& h, Flavor const& f, T const& v)
         -> void
 {
-#ifdef __SIZEOF_INT128__
-        if constexpr (is_int128_v<T>) {
-                auto const low  = static_cast<std::uint64_t>(static_cast<uint128>(v));
-                auto const high = static_cast<std::uint64_t>(static_cast<uint128>(v) >> static_cast<unsigned>(std::numeric_limits<std::uint64_t>::digits));
-                if constexpr (Flavor::byte_order == boost::hash2::endian::big) {
-                        boost::hash2::hash_append(h, f, high);
-                        boost::hash2::hash_append(h, f, low);
-                } else {
-                        boost::hash2::hash_append(h, f, low);
-                        boost::hash2::hash_append(h, f, high);
+        if constexpr (hash2_lacks_write<T>) {
+                // NOLINTNEXTLINE(readability-redundant-typename): clang-cl's -Wc++20-compat rejects the bare dependent name.
+                using bits_type = typename object_unsigned<T>::type;
+                // Modular, so the bytes past a negative value's width hold its sign, as Hash2's cast to uintN_t does.
+                auto const bits = static_cast<bits_type>(v);
+                auto bytes      = std::array<unsigned char, sizeof(T)>();
+                for (auto i = std::size_t{0}; i < sizeof(T); ++i) {
+                        // Byte i is at shift 8i, which stays below the width of the object's own unsigned integer.
+                        bytes[i] = static_cast<unsigned char>(bits >> (CHAR_BIT * i));
                 }
+                if constexpr (Flavor::byte_order == boost::hash2::endian::big) {
+                        std::ranges::reverse(bytes);
+                }
+                h.update(bytes.data(), bytes.size());
         } else {
                 boost::hash2::hash_append(h, f, v);
         }
-#else
-        boost::hash2::hash_append(h, f, v);
-#endif
 }
 
 } // namespace xstd::detail

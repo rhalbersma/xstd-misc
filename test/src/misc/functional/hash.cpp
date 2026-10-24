@@ -8,7 +8,7 @@
 #include <xstd/misc/type_traits/hash_algorithm_is_avalanching.hpp> // hash_algorithm_is_avalanching_v
 #include <test/constexpr_check.hpp>                                // XSTD_CONSTEXPR_CHECK
 #include <test/hash2_algorithms.hpp>                               // algorithms, constexpr_algorithms
-#include <boost/hash2/flavor.hpp>                                  // default_flavor
+#include <boost/hash2/flavor.hpp>                                  // big_endian_flavor, default_flavor, little_endian_flavor
 #include <boost/hash2/fnv1a.hpp>                                   // fnv1a_64
 #include <boost/hash2/get_integral_result.hpp>                     // get_integral_result
 #include <boost/hash2/hash_append.hpp>                             // hash_append
@@ -16,13 +16,13 @@
 #include <boost/hash2/xxhash.hpp>                                  // xxhash_32, xxhash_64
 #include <boost/test/unit_test.hpp>                                // BOOST_AUTO_TEST_CASE, BOOST_AUTO_TEST_CASE_TEMPLATE, BOOST_AUTO_TEST_SUITE, BOOST_AUTO_TEST_SUITE_END, BOOST_CHECK, BOOST_CHECK_EQUAL, BOOST_CHECK_GT, BOOST_CHECK_LT, BOOST_CHECK_NE
 #include <array>                                                   // array
-#include <bit>                                                     // endian, has_single_bit
+#include <bit>                                                     // bit_cast, endian, has_single_bit
 #include <bitset>                                                  // bitset
 #include <chrono>                                                  // Friday, October, Sunday, last, seconds, sys_seconds, weekday, year_month_day
 #include <concepts>                                                // same_as
 #include <coroutine>                                               // coroutine_handle, noop_coroutine
 #include <cstddef>                                                 // size_t
-#include <cstdint>                                                 // int64_t, uint32_t, uint64_t
+#include <cstdint>                                                 // int32_t, int64_t, uint32_t, uint64_t
 #include <filesystem>                                              // path
 #include <functional>                                              // equal_to, hash, not_equal_to
 #include <initializer_list>                                        // initializer_list
@@ -409,7 +409,76 @@ BOOST_AUTO_TEST_CASE(HashesA128BitInteger)
         check_equal_and_apart({uint128{1} << 70U, uint128{1} << 70U}, uint128{1} << 71U);
         XSTD_CONSTEXPR_CHECK(noexcept(std::declval<xstd::hash<uint128> const&>()(uint128{})));
 }
+
+// Its 16 bytes are its low and high 64 bits as Hash2 appends two of them, in the flavor's byte order.
+BOOST_AUTO_TEST_CASE(A128BitIntegerAppendsItsHalvesInTheFlavorsOrder)
+{
+        __extension__ using uint128 = unsigned __int128;
+        constexpr auto high         = std::uint64_t{0x0123'4567'89ab'cdef};
+        constexpr auto low          = std::uint64_t{0xfedc'ba98'7654'3210};
+        constexpr auto value        = (uint128{high} << 64U) | uint128{low};
+        auto const halves           = [](auto flavor, std::uint64_t first, std::uint64_t second) -> std::size_t {
+                auto h = boost::hash2::xxhash_64(seed);
+                boost::hash2::hash_append(h, flavor, first);
+                boost::hash2::hash_append(h, flavor, second);
+                return boost::hash2::get_integral_result<std::size_t>(h);
+        };
+        using little = xstd::hash<uint128, boost::hash2::xxhash_64, boost::hash2::xxhash_64, boost::hash2::little_endian_flavor>;
+        using big    = xstd::hash<uint128, boost::hash2::xxhash_64, boost::hash2::xxhash_64, boost::hash2::big_endian_flavor>;
+        BOOST_CHECK_EQUAL(little(seed)(value), halves(boost::hash2::little_endian_flavor(), low, high));
+        BOOST_CHECK_EQUAL(big(seed)(value), halves(boost::hash2::big_endian_flavor(), high, low));
+}
 #endif
+
+#ifdef __BITINT_MAXWIDTH__
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wbit-int-extension"
+#endif
+// Hash2 writes no _BitInt where is_integral leaves it out, as libstdc++ does, and none past 8 bytes where it admits it.
+BOOST_AUTO_TEST_CASE(HashesABitPreciseIntegerOfEveryWidth)
+{
+        check_equal_and_apart<_BitInt(32)>({-5, -5}, 5);
+        check_equal_and_apart<unsigned _BitInt(65)>({1U, 1U}, static_cast<unsigned _BitInt(65)>(1U) << 64U);
+        check_equal_and_apart<_BitInt(128)>({-1, -1}, static_cast<_BitInt(128)>(static_cast<unsigned _BitInt(128)>(1U) << 100U));
+#if __BITINT_MAXWIDTH__ >= 200
+        check_equal_and_apart<unsigned _BitInt(200)>({1U, 1U}, static_cast<unsigned _BitInt(200)>(1U) << 199U);
+#endif
+        XSTD_CONSTEXPR_CHECK(noexcept(std::declval<xstd::hash<_BitInt(128)> const&>()(_BitInt(128){})));
+}
+
+// Where Hash2 writes an integer of the same size, a _BitInt of the same value appends the same bytes.
+BOOST_AUTO_TEST_CASE(ABitPreciseIntegerAppendsWhatHash2WritesForItsSize)
+{
+        BOOST_CHECK_EQUAL(xstd::hash<_BitInt(32)>(seed)(-5), xstd::hash<std::int32_t>(seed)(-5));
+#ifdef __SIZEOF_INT128__
+        __extension__ using int128  = __int128;
+        __extension__ using uint128 = unsigned __int128;
+        constexpr auto magnitude    = uint128{1} << 100U;
+        BOOST_CHECK_EQUAL(xstd::hash<_BitInt(128)>(seed)(-static_cast<_BitInt(128)>(magnitude)), xstd::hash<int128>(seed)(-static_cast<int128>(magnitude)));
+#endif
+}
+
+// A _BitInt(65) leaves most of its top byte as padding, which C code or a copied buffer may leave set.
+BOOST_AUTO_TEST_CASE(ABitPreciseIntegerHashesItsValueNotItsPadding)
+{
+        using int65 = _BitInt(65);
+        // The byte farthest from the value's least significant one, wherever the target puts it.
+        constexpr auto top = []() -> std::size_t {
+                if constexpr (std::endian::native == std::endian::little) {
+                        return sizeof(int65) - 1;
+                } else {
+                        return 0;
+                }
+        }();
+        auto bytes = std::bit_cast<std::array<unsigned char, sizeof(int65)>>(static_cast<int65>(-5));
+        bytes[top] = static_cast<unsigned char>(bytes[top] ^ 0x5aU);
+        check_equal_and_apart<int65>({-5, std::bit_cast<int65>(bytes)}, 5);
+}
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+#endif // __BITINT_MAXWIDTH__
 
 BOOST_AUTO_TEST_CASE(HashesABitset)
 {
