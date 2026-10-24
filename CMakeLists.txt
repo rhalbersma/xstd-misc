@@ -64,6 +64,7 @@ target_sources(
         include/xstd/misc/concepts/specialization_of.hpp
         include/xstd/misc/format.hpp
         include/xstd/misc/format/detail/hex_spec.hpp
+        include/xstd/misc/format/detail/throw_format_error.hpp
         include/xstd/misc/format/digest.hpp
         include/xstd/misc/functional.hpp
         include/xstd/misc/functional/detail/hasher.hpp

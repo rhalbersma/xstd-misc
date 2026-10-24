@@ -20,7 +20,7 @@ on:
 
 jobs:
   consumption:
-    uses: rhalbersma/cpp-ci/.github/workflows/consumption.yml@6f431bb43037778af31b6a7010498e0a2145b381 # main after rhalbersma/cpp-ci#83, which runs the standard libraries' test suites against a library
+    uses: rhalbersma/cpp-ci/.github/workflows/consumption.yml@47d56c00db0024b6a5a22a0d1e8bec06f40163ff # main after rhalbersma/cpp-ci#87, which adds the Android and iOS legs
     with:
       # CMakeLists.txt find_package()s boost_hash2 unconditionally, so every configure here needs vcpkg.
       vcpkg: true

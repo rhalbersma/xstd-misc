@@ -28,7 +28,7 @@ jobs:
   apple_clang_ladder:
     needs: changes
     if: needs.changes.outputs.build == 'true'
-    uses: rhalbersma/cpp-ci/.github/workflows/apple-clang.yml@6f431bb43037778af31b6a7010498e0a2145b381 # main after rhalbersma/cpp-ci#83, which runs the standard libraries' test suites against a library
+    uses: rhalbersma/cpp-ci/.github/workflows/apple-clang.yml@47d56c00db0024b6a5a22a0d1e8bec06f40163ff # main after rhalbersma/cpp-ci#87, which adds the Android and iOS legs
     with:
       # A pull request builds only the floor and ceiling rungs, in Debug. The
       # all gate cannot see what was skipped, so the nightly canary covers it,

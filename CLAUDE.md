@@ -199,8 +199,8 @@ when it reports back.
 Never build with whatever `g++` or `clang++` happen to resolve to. Ubuntu 24.04 ships GCC 13, which rejects
 `-std=c++2c` outright, so the default compiler cannot build this library at all, and a check that quietly falls
 back to a cut-down reproduction proves less than it appears to. What `ci-local.sh` cannot cover, MSVC, clang-cl,
-MinGW, Apple Clang, Emscripten and the libc++ legs of the two newer rungs, is CI's alone; say so rather than claim
-it was checked.
+MinGW, Apple Clang, Emscripten, Android, iOS and the libc++ legs of the two newer rungs, is CI's alone; say so rather
+than claim it was checked.
 
 A comment or formatting change is not exempt, because two gates read lines rather than syntax. `NOLINT` and
 `GCOVR_EXCL_LINE` suppress the line they sit on, so a formatter that splits that line leaves the marker behind on

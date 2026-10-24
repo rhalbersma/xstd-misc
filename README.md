@@ -137,6 +137,8 @@ libraries) in both Debug and Release mode:
 | Windows  | MSVC       | MSVC             | 2022 (17.11+)             | 2026                      | 2026-Preview                   | [![MSVC](https://github.com/rhalbersma/xstd-misc/actions/workflows/msvc.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/msvc.yml) |
 | Web      | Emscripten | libc++           | 6.0.12                    | —                         | —                              | [![Emscripten](https://github.com/rhalbersma/xstd-misc/actions/workflows/emscripten.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/emscripten.yml) |
 | s390x    | GCC        | libstdc++        | 15                        | —                         | —                              | [![s390x](https://github.com/rhalbersma/xstd-misc/actions/workflows/s390x.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/s390x.yml) |
+| Android  | Clang      | libc++           | NDK r30: API 35, 36, 37   | —                         | —                              | [![Android](https://github.com/rhalbersma/xstd-misc/actions/workflows/android.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/android.yml) |
+| iOS      | Apple Clang | libc++          | Xcode 26.3, 26.6, 27: iOS 18, 26, 27 | —              | —                              | [![iOS](https://github.com/rhalbersma/xstd-misc/actions/workflows/ios.yml/badge.svg)](https://github.com/rhalbersma/xstd-misc/actions/workflows/ios.yml) |
 
 [CONTRIBUTING.md](CONTRIBUTING.md#the-ci-matrix) says what each channel is, and which legs run beyond the table.
 
