@@ -62,6 +62,15 @@ target_sources(
         include/xstd/misc/concepts/proxy_semi_reference.hpp
         include/xstd/misc/concepts/simple_allocator.hpp
         include/xstd/misc/concepts/specialization_of.hpp
+        include/xstd/misc/detail/empty_member_type.hpp
+        include/xstd/misc/detail/hash2_algorithms_fwd.hpp
+        include/xstd/misc/detail/hash_algorithm.hpp
+        include/xstd/misc/detail/hash_algorithm_is_avalanching.hpp
+        include/xstd/misc/detail/is_specialization_of.hpp
+        include/xstd/misc/detail/no_unique_address.hpp
+        include/xstd/misc/detail/proxy_reference.hpp
+        include/xstd/misc/detail/proxy_semi_iterator.hpp
+        include/xstd/misc/detail/proxy_semi_reference.hpp
         include/xstd/misc/format.hpp
         include/xstd/misc/format/detail/hex_spec.hpp
         include/xstd/misc/format/detail/throw_format_error.hpp
@@ -75,7 +84,6 @@ target_sources(
         include/xstd/misc/functional/hash.hpp
         include/xstd/misc/type_traits.hpp
         include/xstd/misc/type_traits/conditional_data_member.hpp
-        include/xstd/misc/type_traits/detail/hash2_algorithms_fwd.hpp
         include/xstd/misc/type_traits/empty_base_type.hpp
         include/xstd/misc/type_traits/empty_member_type.hpp
         include/xstd/misc/type_traits/hash_algorithm_is_avalanching.hpp

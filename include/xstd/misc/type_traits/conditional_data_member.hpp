@@ -6,9 +6,9 @@
 #ifndef XSTD_MISC_TYPE_TRAITS_CONDITIONAL_DATA_MEMBER_HPP
 #define XSTD_MISC_TYPE_TRAITS_CONDITIONAL_DATA_MEMBER_HPP
 
-#include <xstd/misc/type_traits/empty_member_type.hpp> // IWYU pragma: export; empty_member_type
-#include <xstd/misc/type_traits/no_unique_address.hpp> // IWYU pragma: export; XSTD_NO_UNIQUE_ADDRESS
-#include <type_traits>                                 // conditional, conditional_t
+#include <xstd/misc/detail/empty_member_type.hpp> // IWYU pragma: export; empty_member_type
+#include <xstd/misc/detail/no_unique_address.hpp> // IWYU pragma: export; XSTD_NO_UNIQUE_ADDRESS
+#include <type_traits>                            // conditional, conditional_t
 
 namespace xstd {
 

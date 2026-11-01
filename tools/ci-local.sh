@@ -32,7 +32,7 @@ cmake="${HOME:-/root}/.local/bin/cmake"
 [ -x "${cmake}" ] || cmake="cmake"
 readonly cmake
 
-readonly all_legs=(gcc-15 gcc-16 gcc-17 clang-22 clang-23 clang-24 libcxx-22 i686 coverage tidy-22 tidy-23 tidy-24 format draft site)
+readonly all_legs=(gcc-15 gcc-16 gcc-17 clang-22 clang-23 clang-24 libcxx-22 i686 coverage tidy-22 tidy-23 tidy-24 format layering draft site)
 
 # Each clang uses the libstdc++ of its own rung, as on the runners, rather than the newest GCC installed.
 gcc_for_clang() {
@@ -102,6 +102,18 @@ format() {
         find "${root}/include" "${root}/test" "${root}/examples" -regex '.*\.\(hpp\|cpp\)' -print0 | xargs -0 clang-format-22 --dry-run --Werror
 }
 
+# cpp-ci's layering check, at the commit the workflows pin, over the folder kinds tools/layering.toml names.
+layering() {
+        local dir="${out}/layering" sha
+        sha="$(grep -m1 -oE 'rhalbersma/cpp-ci/[^@ ]+@[0-9a-f]{40}' "${root}/.github/workflows/gcc.yml" | sed 's/.*@//')"
+        [ -n "${sha}" ] || { echo "no rhalbersma/cpp-ci pin in .github/workflows/gcc.yml" >&2; return 1; }
+        if [ ! -d "${dir}/.git" ]; then
+                git init -q "${dir}" && git -C "${dir}" remote add origin https://github.com/rhalbersma/cpp-ci.git || return 1
+        fi
+        git -C "${dir}" fetch -q --depth 1 origin "${sha}" && git -C "${dir}" checkout -q FETCH_HEAD \
+                && (cd "${root}" && python3 -I "${dir}/.github/actions/layering/layering.py" tools/layering.toml)
+}
+
 # The working draft at the tag the headers cite, from the draft's own repository, then the check of their wording.
 draft() {
         local dir="${out}/draft" docno
@@ -137,6 +149,7 @@ run_leg() {
                 coverage) coverage ;;
                 tidy-2[234]) tidy "${1#tidy-}" ;;
                 format) format ;;
+                layering) layering ;;
                 draft) draft ;;
                 site) site ;;
                 *) echo "no leg named $1; tools/ci-local.sh --list names them" >&2; return 2 ;;

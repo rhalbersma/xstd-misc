@@ -6,9 +6,9 @@
 #ifndef XSTD_MISC_UTILITY_TO_UNDERLYING_HPP
 #define XSTD_MISC_UTILITY_TO_UNDERLYING_HPP
 
-#include <xstd/misc/concepts/proxy_reference.hpp> // proxy_reference
-#include <iterator>                               // iter_value_t
-#include <type_traits>                            // integral_constant, is_enum_v, is_nothrow_convertible_v, underlying_type_t
+#include <xstd/misc/detail/proxy_reference.hpp> // proxy_reference
+#include <iterator>                             // iter_value_t
+#include <type_traits>                          // integral_constant, is_enum_v, is_nothrow_convertible_v, underlying_type_t
 
 namespace xstd {
 

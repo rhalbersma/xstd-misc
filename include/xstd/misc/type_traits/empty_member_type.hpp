@@ -6,28 +6,6 @@
 #ifndef XSTD_MISC_TYPE_TRAITS_EMPTY_MEMBER_TYPE_HPP
 #define XSTD_MISC_TYPE_TRAITS_EMPTY_MEMBER_TYPE_HPP
 
-#include <compare>     // strong_ordering
-#include <concepts>    // same_as
-#include <type_traits> // remove_cvref_t
-
-namespace xstd {
-
-// An absent data member, safely comparable: its hidden friends never reach the enclosing class. Tagged to stay apart.
-template<class Tag = void>
-struct empty_member_type
-{
-        [[nodiscard]] empty_member_type() = default;
-
-        // Lets an enclosing class construct this member, without hijacking copy or move construction.
-        template<class... Args>
-                requires ((not std::same_as<std::remove_cvref_t<Args>, empty_member_type>) and ...)
-        [[nodiscard]] constexpr explicit empty_member_type(Args&&...) noexcept
-        {}
-
-        // Lets an enclosing class default its comparisons over this member.
-        [[nodiscard]] friend auto operator<=>(empty_member_type, empty_member_type) -> std::strong_ordering = default;
-};
-
-} // namespace xstd
+#include <xstd/misc/detail/empty_member_type.hpp> // IWYU pragma: export; empty_member_type
 
 #endif // XSTD_MISC_TYPE_TRAITS_EMPTY_MEMBER_TYPE_HPP

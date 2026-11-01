@@ -1,0 +1,5 @@
+# The kind of each folder under include/xstd/misc/, for cpp-ci's layering check: the shared detail/ holds every
+# definition more than one folder needs, and each layer is a public front over it and the layers below.
+root = "include/xstd/misc"
+shared = "detail"
+layers = ["concepts", "format", "functional", "type_traits", "utility"]

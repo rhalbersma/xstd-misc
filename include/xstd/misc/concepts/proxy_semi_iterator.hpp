@@ -6,15 +6,6 @@
 #ifndef XSTD_MISC_CONCEPTS_PROXY_SEMI_ITERATOR_HPP
 #define XSTD_MISC_CONCEPTS_PROXY_SEMI_ITERATOR_HPP
 
-#include <xstd/misc/concepts/proxy_semi_reference.hpp> // proxy_semi_reference
-#include <iterator>                                    // indirectly_readable, iter_reference_t, iter_value_t
-
-namespace xstd {
-
-// An iterator whose reference is a semi-reference for its value type, as vector<bool>'s and zip_view's are.
-template<class I>
-concept proxy_semi_iterator = std::indirectly_readable<I> and proxy_semi_reference<std::iter_reference_t<I>, std::iter_value_t<I>>;
-
-} // namespace xstd
+#include <xstd/misc/detail/proxy_semi_iterator.hpp> // IWYU pragma: export; proxy_semi_iterator
 
 #endif // XSTD_MISC_CONCEPTS_PROXY_SEMI_ITERATOR_HPP

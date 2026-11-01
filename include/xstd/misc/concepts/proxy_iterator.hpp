@@ -6,9 +6,9 @@
 #ifndef XSTD_MISC_CONCEPTS_PROXY_ITERATOR_HPP
 #define XSTD_MISC_CONCEPTS_PROXY_ITERATOR_HPP
 
-#include <xstd/misc/concepts/proxy_reference.hpp>     // proxy_reference
-#include <xstd/misc/concepts/proxy_semi_iterator.hpp> // proxy_semi_iterator
-#include <iterator>                                   // iter_reference_t
+#include <xstd/misc/detail/proxy_reference.hpp>     // proxy_reference
+#include <xstd/misc/detail/proxy_semi_iterator.hpp> // proxy_semi_iterator
+#include <iterator>                                 // iter_reference_t
 
 namespace xstd {
 
