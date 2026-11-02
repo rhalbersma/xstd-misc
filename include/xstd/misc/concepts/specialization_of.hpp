@@ -6,8 +6,8 @@
 #ifndef XSTD_MISC_CONCEPTS_SPECIALIZATION_OF_HPP
 #define XSTD_MISC_CONCEPTS_SPECIALIZATION_OF_HPP
 
-#include <xstd/misc/type_traits/is_specialization_of.hpp> // is_specialization_of_v
-#include <type_traits>                                    // remove_const_t
+#include <xstd/misc/detail/is_specialization_of.hpp> // is_specialization_of_v
+#include <type_traits>                               // remove_const_t
 
 namespace xstd {
 

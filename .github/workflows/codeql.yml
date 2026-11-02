@@ -30,4 +30,4 @@ jobs:
     permissions:
       contents: read
       security-events: write
-    uses: rhalbersma/cpp-ci/.github/workflows/codeql.yml@47d56c00db0024b6a5a22a0d1e8bec06f40163ff # main after rhalbersma/cpp-ci#87, which adds the Android and iOS legs
+    uses: rhalbersma/cpp-ci/.github/workflows/codeql.yml@0e0b8a1ec3476589bb39dc798d41551e18165916 # main after rhalbersma/cpp-ci#90, which adds the layering action

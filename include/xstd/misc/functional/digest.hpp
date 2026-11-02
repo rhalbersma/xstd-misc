@@ -6,7 +6,7 @@
 #ifndef XSTD_MISC_FUNCTIONAL_DIGEST_HPP
 #define XSTD_MISC_FUNCTIONAL_DIGEST_HPP
 
-#include <xstd/misc/concepts/hash_algorithm.hpp>  // hash_algorithm
+#include <xstd/misc/detail/hash_algorithm.hpp>    // hash_algorithm
 #include <xstd/misc/functional/detail/hasher.hpp> // hasher
 #include <boost/hash2/flavor.hpp>                 // little_endian_flavor
 #include <boost/hash2/xxh3.hpp>                   // xxh3_128

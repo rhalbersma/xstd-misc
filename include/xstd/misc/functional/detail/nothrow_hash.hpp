@@ -6,23 +6,23 @@
 #ifndef XSTD_MISC_FUNCTIONAL_DETAIL_NOTHROW_HASH_HPP
 #define XSTD_MISC_FUNCTIONAL_DETAIL_NOTHROW_HASH_HPP
 
-#include <xstd/misc/functional/detail/standard_keys.hpp>         // hash2_lacks_write
-#include <xstd/misc/type_traits/detail/hash2_algorithms_fwd.hpp> // blake2b_512, blake2s_256, hmac, md5_128, murmur3_128, murmur3_32, ripemd_128, ripemd_160, sha1_160, sha2_224, sha2_256, sha2_384, sha2_512, sha2_512_224, sha2_512_256, sha3_224, sha3_256, sha3_384, sha3_512, shake_128, shake_256, siphash_32, siphash_64, spooky2_128, xxh3_128, xxhash_32, xxhash_64
-#include <bitset>                                                // bitset
-#include <chrono>                                                // day, leap_second, month, weekday, year, year_month_day, ...
-#include <coroutine>                                             // coroutine_handle
-#include <cstddef>                                               // nullptr_t, size_t
-#include <filesystem>                                            // path
-#include <memory>                                                // shared_ptr
-#include <string>                                                // basic_string, char_traits
-#include <string_view>                                           // basic_string_view
-#include <system_error>                                          // error_code, error_condition
-#include <thread>                                                // thread
-#include <type_traits>                                           // bool_constant, false_type, is_arithmetic_v, is_enum_v, is_pointer_v, is_same_v, true_type
-#include <typeindex>                                             // type_index
-#include <variant>                                               // monostate
-#include <vector>                                                // vector
-#include <version>                                               // IWYU pragma: keep; __cpp_lib_stacktrace, __cpp_lib_text_encoding
+#include <xstd/misc/detail/hash2_algorithms_fwd.hpp>     // blake2b_512, blake2s_256, hmac, md5_128, murmur3_128, murmur3_32, ripemd_128, ripemd_160, sha1_160, sha2_224, sha2_256, sha2_384, sha2_512, sha2_512_224, sha2_512_256, sha3_224, sha3_256, sha3_384, sha3_512, shake_128, shake_256, siphash_32, siphash_64, spooky2_128, xxh3_128, xxhash_32, xxhash_64
+#include <xstd/misc/functional/detail/standard_keys.hpp> // hash2_lacks_write
+#include <bitset>                                        // bitset
+#include <chrono>                                        // day, leap_second, month, weekday, year, year_month_day, ...
+#include <coroutine>                                     // coroutine_handle
+#include <cstddef>                                       // nullptr_t, size_t
+#include <filesystem>                                    // path
+#include <memory>                                        // shared_ptr
+#include <string>                                        // basic_string, char_traits
+#include <string_view>                                   // basic_string_view
+#include <system_error>                                  // error_code, error_condition
+#include <thread>                                        // thread
+#include <type_traits>                                   // bool_constant, false_type, is_arithmetic_v, is_enum_v, is_pointer_v, is_same_v, true_type
+#include <typeindex>                                     // type_index
+#include <variant>                                       // monostate
+#include <vector>                                        // vector
+#include <version>                                       // IWYU pragma: keep; __cpp_lib_stacktrace, __cpp_lib_text_encoding
 
 #ifdef __cpp_lib_stacktrace
 #include <stacktrace> // IWYU pragma: keep; basic_stacktrace, stacktrace_entry

@@ -6,15 +6,6 @@
 #ifndef XSTD_MISC_CONCEPTS_PROXY_SEMI_REFERENCE_HPP
 #define XSTD_MISC_CONCEPTS_PROXY_SEMI_REFERENCE_HPP
 
-#include <concepts>    // convertible_to, same_as
-#include <type_traits> // is_class_v
-
-namespace xstd {
-
-// A class standing in for V, which it converts to implicitly, as vector<bool>'s and bitset's references do for bool.
-template<class R, class V>
-concept proxy_semi_reference = std::is_class_v<R> and (not std::same_as<R, V>) and std::convertible_to<R, V>;
-
-} // namespace xstd
+#include <xstd/misc/detail/proxy_semi_reference.hpp> // IWYU pragma: export; proxy_semi_reference
 
 #endif // XSTD_MISC_CONCEPTS_PROXY_SEMI_REFERENCE_HPP

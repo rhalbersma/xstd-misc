@@ -6,7 +6,7 @@
 #ifndef XSTD_MISC_FUNCTIONAL_DETAIL_VALUE_HASHER_HPP
 #define XSTD_MISC_FUNCTIONAL_DETAIL_VALUE_HASHER_HPP
 
-#include <xstd/misc/concepts/hash_algorithm.hpp>  // hash_algorithm
+#include <xstd/misc/detail/hash_algorithm.hpp>    // hash_algorithm
 #include <xstd/misc/functional/detail/hasher.hpp> // hasher
 #include <cstddef>                                // size_t
 #include <cstdint>                                // uint64_t

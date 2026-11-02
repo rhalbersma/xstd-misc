@@ -6,11 +6,6 @@
 #ifndef XSTD_MISC_TYPE_TRAITS_NO_UNIQUE_ADDRESS_HPP
 #define XSTD_MISC_TYPE_TRAITS_NO_UNIQUE_ADDRESS_HPP
 
-// MSVC keeps the standard spelling layout-neutral; its vendor spelling has the semantics.
-#ifdef _MSC_VER
-#define XSTD_NO_UNIQUE_ADDRESS msvc::no_unique_address
-#else
-#define XSTD_NO_UNIQUE_ADDRESS no_unique_address
-#endif
+#include <xstd/misc/detail/no_unique_address.hpp> // IWYU pragma: export; XSTD_NO_UNIQUE_ADDRESS
 
 #endif // XSTD_MISC_TYPE_TRAITS_NO_UNIQUE_ADDRESS_HPP

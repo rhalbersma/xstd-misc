@@ -29,12 +29,12 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: rhalbersma/cpp-ci/.github/actions/install-gcc@47d56c00db0024b6a5a22a0d1e8bec06f40163ff # main after rhalbersma/cpp-ci#87, which adds the Android and iOS legs
+      - uses: rhalbersma/cpp-ci/.github/actions/install-gcc@0e0b8a1ec3476589bb39dc798d41551e18165916 # main after rhalbersma/cpp-ci#90, which adds the layering action
         with:
           version: "15"
           trunk: "false"
 
-      - uses: rhalbersma/cpp-ci/.github/actions/install-clang@47d56c00db0024b6a5a22a0d1e8bec06f40163ff # main after rhalbersma/cpp-ci#87, which adds the Android and iOS legs
+      - uses: rhalbersma/cpp-ci/.github/actions/install-clang@0e0b8a1ec3476589bb39dc798d41551e18165916 # main after rhalbersma/cpp-ci#90, which adds the layering action
         with:
           version: "22"
           llvm_suffix: "-22"

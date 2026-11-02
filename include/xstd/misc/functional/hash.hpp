@@ -6,7 +6,7 @@
 #ifndef XSTD_MISC_FUNCTIONAL_HASH_HPP
 #define XSTD_MISC_FUNCTIONAL_HASH_HPP
 
-#include <xstd/misc/concepts/hash_algorithm.hpp>        // hash_algorithm
+#include <xstd/misc/detail/hash_algorithm.hpp>          // hash_algorithm
 #include <xstd/misc/functional/detail/hasher.hpp>       // hasher, is_nothrow_hash_v
 #include <xstd/misc/functional/detail/value_hasher.hpp> // value_hasher
 #include <boost/hash2/flavor.hpp>                       // default_flavor

@@ -316,6 +316,7 @@ The names to tick under branch protection, exactly as GitHub reports them:
 | `consumption / Consume` | the three CMake consumption models |
 | `coverage / gcovr` | 100% of lines and branches |
 | `gcc / all` | GCC 15, 16, 17-SVN |
+| `layering` | the headers' layering against [`tools/layering.toml`](tools/layering.toml): every public header a leaf over the shared `detail/` |
 | `mingw / all` | MinGW 15 and 16 |
 | `msvc / all` | cl on VS 2022, 2026 and 2026-Preview |
 | `msvc_analyze / all` | `/analyze` on the same three rungs |

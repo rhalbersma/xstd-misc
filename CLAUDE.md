@@ -132,6 +132,30 @@ the code that uses it, and no user spells it. Follow the standard's practice wit
 - **A constraint becomes a public concept when users have a reason to name it.** A public concept carries
   semantics: do not promote one to keep a `detail` name out of a signature, and do not merge two to save a name.
 
+## Push implementation down, pull interface up
+
+A definition lives at the lowest folder that every user of it can reach, and a public header is a front over
+it. The folders under `include/xstd/misc/` stack in two kinds:
+
+- **The shared `detail/` is the bottom.** It holds every definition more than one folder needs: the proxy concepts,
+  `hash_algorithm`, `hash_algorithm_is_avalanching`, `is_specialization_of`, `empty_member_type` and
+  `XSTD_NO_UNIQUE_ADDRESS`, and the forward declarations of Hash2's algorithms. It includes no public xstd-misc
+  header.
+- **The layers above it are fronts.** `concepts/`, `type_traits/`, `utility/`, `format/` and `functional/`: each
+  public header re-exports what `detail/` defines, or builds on the layers below it, and never on one above.
+
+Two rules make every header deletable on its own, and every folder too:
+
+- **A public header is a leaf.** Only an umbrella includes it. The library's own headers include the definition under
+  `detail/` instead, in the shared one where another folder needs it and in the folder's own where only its neighbours
+  do, as `functional/hash.hpp` builds on `functional/detail/hasher.hpp`.
+- **A folder's own `detail/` is private to it.** What a second folder needs moves to the shared `detail/`.
+
+cpp-ci's layering action, in the Layering workflow and `tools/ci-local.sh layering`, checks all of it from the
+`#include` lines against [`tools/layering.toml`](tools/layering.toml), and fails on a folder that file does not
+classify, so a new folder says which kind it is before it lands. A public header keeps its path when its definition
+moves down: users include the front, and the front stays where it was.
+
 ## Tests: Murphy, not Machiavelli
 
 Easy to use and hard to misuse holds in the tests too. Test a concept, and any other functionality, against the
