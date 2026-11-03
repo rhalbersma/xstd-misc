@@ -72,7 +72,6 @@ public:
 
 // [optional.hash]: an engaged optional hashes as its value does, and an empty one as no bytes, which no value appends.
 template<class T, hash_algorithm H64, hash_algorithm H32, class Flavor>
-        requires (sizeof(typename H32::result_type) <= sizeof(typename H64::result_type))
 class hash<std::optional<T>, H64, H32, Flavor> : detail::value_hasher<hash<std::remove_const_t<T>, H64, H32, Flavor>, detail::native_hash_algorithm_t<H64, H32>, Flavor>
 {
         using value_hasher = detail::value_hasher<hash<std::remove_const_t<T>, H64, H32, Flavor>, detail::native_hash_algorithm_t<H64, H32>, Flavor>;
@@ -95,7 +94,6 @@ public:
 #ifdef __cpp_lib_indirect
 // [indirect.hash]: an indirect hashes as its value does, and a valueless one as no bytes, which no value appends.
 template<class T, class Allocator, hash_algorithm H64, hash_algorithm H32, class Flavor>
-        requires (sizeof(typename H32::result_type) <= sizeof(typename H64::result_type))
 class hash<std::indirect<T, Allocator>, H64, H32, Flavor> : detail::value_hasher<hash<T, H64, H32, Flavor>, detail::native_hash_algorithm_t<H64, H32>, Flavor>
 {
         using value_hasher = detail::value_hasher<hash<T, H64, H32, Flavor>, detail::native_hash_algorithm_t<H64, H32>, Flavor>;

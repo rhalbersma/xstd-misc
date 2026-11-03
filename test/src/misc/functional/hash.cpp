@@ -31,10 +31,10 @@
 #include <optional>                                                // nullopt, optional
 #include <set>                                                     // set
 #include <string>                                                  // string
-#include <string_view>                                             // string_view
+#include <string_view>                                             // string_view, u8string_view
 #include <system_error>                                            // error_code, error_condition, generic_category, system_category
 #include <thread>                                                  // thread
-#include <type_traits>                                             // conditional_t, is_constructible_v, is_convertible_v
+#include <type_traits>                                             // conditional_t, is_constructible_v, is_convertible_v, is_invocable_v
 #include <typeindex>                                               // type_index
 #include <unordered_set>                                           // unordered_set
 #include <utility>                                                 // declval, pair
@@ -45,8 +45,8 @@
 #include <stacktrace> // IWYU pragma: keep; stacktrace_entry
 #endif
 
-#if defined(__STDCPP_FLOAT16_T__) || defined(__STDCPP_FLOAT128_T__)
-#include <stdfloat> // IWYU pragma: keep; float128_t, float16_t
+#if defined(__STDCPP_FLOAT16_T__) || defined(__STDCPP_FLOAT32_T__) || defined(__STDCPP_FLOAT64_T__) || defined(__STDCPP_FLOAT128_T__)
+#include <stdfloat> // IWYU pragma: keep; float128_t, float16_t, float32_t, float64_t
 #endif
 
 #ifdef __cpp_lib_text_encoding
@@ -166,6 +166,7 @@ BOOST_AUTO_TEST_CASE(APairRunsTheAlgorithmForTheTargetsSizeT)
         XSTD_CONSTEXPR_CHECK((not algorithm_pair<boost::hash2::xxhash_32, boost::hash2::xxhash_64>));
         XSTD_CONSTEXPR_CHECK((not algorithm_pair<boost::hash2::siphash_32, boost::hash2::siphash_64>));
         XSTD_CONSTEXPR_CHECK((not algorithm_pair<boost::hash2::xxhash_32, boost::hash2::xxhash_64, std::string>));
+        XSTD_CONSTEXPR_CHECK((not algorithm_pair<boost::hash2::xxhash_32, boost::hash2::xxhash_64, std::optional<int>>));
 }
 
 // FNV-1a carries no bit of a byte down to the bits below it, so masking its 64-bit hash erases the tag.
@@ -308,6 +309,14 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(AStringHashesAsItsViewAndItsCString, H, test::algo
         BOOST_CHECK_EQUAL(h(string), hash2_of(H(seed), string));
 }
 
+// A u8 literal is char8_t from C++20 on, so it converts to no std::string_view and finds no std::string key.
+BOOST_AUTO_TEST_CASE(AStringHashTakesWhatConvertsToItsView)
+{
+        XSTD_CONSTEXPR_CHECK((std::is_invocable_v<xstd::hash<std::string> const&, char const*>));
+        XSTD_CONSTEXPR_CHECK((not std::is_invocable_v<xstd::hash<std::string> const&, char8_t const*>));
+        XSTD_CONSTEXPR_CHECK((not std::is_invocable_v<xstd::hash<std::string> const&, std::u8string_view>));
+}
+
 BOOST_AUTO_TEST_CASE_TEMPLATE(EqualValuesHashEqual, H, test::algorithms)
 {
         auto const literal = std::string("the quick brown fox");
@@ -392,9 +401,17 @@ BOOST_AUTO_TEST_CASE(FindsAStringKeyByItsViewInAStdUnorderedSet)
 // -0.0 equals 0.0, and x87's long double holds six bytes of padding that a hash of its bytes would read.
 BOOST_AUTO_TEST_CASE(HashesEveryFloatingPointType)
 {
+        check_equal_and_apart({0.0F, -0.0F}, 1.0F);
+        check_equal_and_apart({0.0, -0.0}, 1.0);
         check_equal_and_apart({0.0L, -0.0L}, 1.0L);
 #ifdef __STDCPP_FLOAT16_T__
         check_equal_and_apart({std::float16_t{0.0F}, std::float16_t{-0.0F}}, std::float16_t{1.0F});
+#endif
+#ifdef __STDCPP_FLOAT32_T__
+        check_equal_and_apart({std::float32_t{0.0F}, std::float32_t{-0.0F}}, std::float32_t{1.0F});
+#endif
+#ifdef __STDCPP_FLOAT64_T__
+        check_equal_and_apart({std::float64_t{0.0}, std::float64_t{-0.0}}, std::float64_t{1.0});
 #endif
 #ifdef __STDCPP_FLOAT128_T__
         check_equal_and_apart({std::float128_t{0.0}, std::float128_t{-0.0}}, std::float128_t{1.0});

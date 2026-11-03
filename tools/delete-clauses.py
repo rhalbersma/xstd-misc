@@ -7,7 +7,7 @@
 """Deletes each clause of each constraint in turn, and reports the deletions no test notices.
 
 A concept or a requires-clause emits no code for a mutation tester to change, so its mutants are made here instead:
-for every concept definition and requires-clause in a public header, each operand of an `and` or an `or`, each
+for every concept definition and requires-clause in a header, each operand of an `and` or an `or`, each
 `not`, and each requirement of a requires-expression is deleted on its own. The test sources are then compiled,
 without being run, on each compiler named. A mutant is killed when one of them no longer compiles; one that every
 compiler accepts survives, and is either answered by a test with an existing type or accepted in
@@ -15,7 +15,7 @@ tools/delete-clauses-survivors.toml, with the reason no existing type fails that
 survivor the file does not accept, and on an accepted one that a test now kills or that no longer exists.
 
     tools/delete-clauses.py                         every header, on g++-15 and on clang++-22 with libc++
-    tools/delete-clauses.py include/xstd/misc/concepts/proxy_reference.hpp
+    tools/delete-clauses.py include/xstd/misc/detail/proxy_reference.hpp
 """
 
 import concurrent.futures
