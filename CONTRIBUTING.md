@@ -224,23 +224,38 @@ tools/delete-clauses.py include/xstd/misc/detail/proxy_reference.hpp
 
 ### Running the standard libraries' test suites
 
-libc++, libstdc++ and the MSVC STL each test their `to_underlying` and their string hashes against the same
-paragraphs this library's tests are written to. With `-DXSTD_MISC_STD_TEST_SUITES=ON`,
-[`test/std-test-suite/`](test/std-test-suite/) fetches those tests at the stable rung's tags, through cpp-ci's
-`std_test_suite` module at the commit the workflows pin, rewrites them onto `xstd::to_underlying` and `xstd::hash`, and
-registers each as a CTest test labelled `std-test-suite`. [`mapping.toml`](test/std-test-suite/mapping.toml) holds
-what is taken, how it is rewritten, and each departure with the reason for it. Its one departure is libc++'s
-assertion that the string hash's call is `noexcept`, which `xstd::hash`'s is not, since a key's own `hash_append` may
-throw.
+libc++, libstdc++ and the MSVC STL each test their `to_underlying` and their hashes against the same paragraphs this
+library's tests are written to. With `-DXSTD_MISC_STD_TEST_SUITES=ON`, [`test/std-test-suite/`](test/std-test-suite/)
+fetches those tests at the stable rung's tags, through cpp-ci's `std_test_suite` module at the commit the workflows pin,
+rewrites them onto `xstd::to_underlying` and `xstd::hash`, and registers each as a CTest test labelled
+`std-test-suite`. [`mapping.toml`](test/std-test-suite/mapping.toml) holds what is taken, how it is rewritten, and each
+departure with the reason for it. The `std_test_suites` jobs of the GCC and the Clang with libc++ workflows build them
+on every pull request, on the stable rung in Debug, since what is under test is the mapping rather than the compiler.
 
-| Suite | Tests | Under GCC 15 | Under Clang 22 with libc++ |
-| :---- | :---- | :----------- | :------------------------- |
-| libc++ | `to_underlying`, the string hash | run | run |
-| libstdc++ | `to_underlying` (compile only), the string, `string_view`, PMR and debug-mode hashes | run | skipped: its support headers need libstdc++ |
-| MSVC STL | `to_underlying` | run | run |
+| Suite | Tag | Tests | Under GCC 15 | Under Clang 22 with libc++ |
+| :---- | :-- | :---- | :----------- | :------------------------- |
+| libc++ | `llvmorg-22.1.8` | `to_underlying`, and the hash of every key the standard specializes `std::hash` for | 28 run, 1 expected not to compile | the same |
+| libstdc++ | `releases/gcc-15.2.0` | `to_underlying`, and the hash of every key the standard specializes `std::hash` for | 17 run, 7 compiled only | skipped: its support headers include libstdc++'s internal ones, such as `<bits/c++config.h>` |
+| MSVC STL | `vs-2022-17.14` | `to_underlying`, and the hashes of strings, floating-point values and `shared_ptr<T[]>` | 4 run, 1 expected not to compile | the same |
 
-A test of diagnostics, and one that no rewrite reaches, is skipped with that reason in the build tree's
-`manifest.json`. A mapping entry whose file has changed upstream fails configuration, so a moved pin is reviewed.
+The departures are of three kinds, and `mapping.toml` names each one with the line it drops:
+
+- **`xstd::hash` is unconstrained.** For a key Hash2 cannot hash, or a cv-qualified one, it constructs and is
+  invocable, and only a call fails to compile. The checks that such a hash is disabled are dropped, and the two tests
+  made of them, libc++'s `non_enum.pass.cpp` and the MSVC STL's `P0513R0_poisoning_the_hash`, are expected not to
+  compile.
+- **A value the standard library computes itself**, such as an integer's hash being that integer, or a `type_index`'s
+  being its `hash_code()`, is not one `xstd::hash` reproduces.
+- **A key customizes its hash through Hash2's `tag_invoke`**, not through a specialization of `xstd::hash`, so a test
+  that specializes the hash for a type of its own has that part dropped.
+
+The rest are particular to one library: libstdc++'s internal `std::__shared_ptr`, the MSVC STL reading `long double`
+as the 8 bytes its own has, and libc++ enabling `shared_from_this` for a `shared_ptr<T[]>`, which
+[[util.smartptr.shared.const]](https://eel.is/c++draft/util.smartptr.shared.const) does not.
+
+A test of diagnostics, one that no rewrite reaches, and one whose requirements the build does not meet, such as C++26,
+is skipped with that reason in the build tree's `manifest.json`. A mapping entry whose file has changed upstream fails
+configuration, so a moved pin is reviewed.
 
 ```sh
 cmake -S . -B build/suites -G Ninja -DCMAKE_CXX_COMPILER=g++-15 -DXSTD_MISC_STD_TEST_SUITES=ON
