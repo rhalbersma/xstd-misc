@@ -204,7 +204,7 @@ Full coverage says a line ran, not that a test would fail if it were wrong, and 
 emits no code for a mutation tester such as [Mull](https://github.com/mull-project/mull) to change. [`tools/delete-clauses.py`](tools/delete-clauses.py)
 makes those mutants itself:
 
-- for every concept and requires-clause in a public header, it deletes, one at a time, each operand of an `and`
+- for every concept and requires-clause in a header, it deletes, one at a time, each operand of an `and`
   or an `or`, each `not`, and each requirement of a requires-expression;
 - it then compiles every test source, without running it, on GCC 15 and on clang 22 with libc++.
 
@@ -219,7 +219,7 @@ failed", or comments on the open one.
 
 ```sh
 tools/delete-clauses.py                                           # every header
-tools/delete-clauses.py include/xstd/misc/concepts/proxy_reference.hpp
+tools/delete-clauses.py include/xstd/misc/detail/proxy_reference.hpp
 ```
 
 ### Running the standard libraries' test suites
