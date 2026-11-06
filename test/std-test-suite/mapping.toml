@@ -32,9 +32,13 @@ rewrite = [
     { from = "std::hash<", to = "xstd::hash<" },
 ]
 expect = [
+    { file = "libcxx/test/std/strings/basic.string.hash/char_type_hash.verify.cpp", sha256 = "8ddfe5a81cb39f4e9b415736e73ceb88ba3cf300a2e285be33675130e66636cd", fails = "compile", paragraph = "[basic.string.hash] and [string.view.hash] enable the hash of a string or view only with std::char_traits, since other traits may compare as equal what differs in its characters; xstd::hash hashes the characters of one with any traits" },
+    { file = "libcxx/test/std/strings/string.view/string.view.hash/char_type.hash.verify.cpp", sha256 = "212800fbb68eed3430b3b75e068c0ddb8a8efe3bc0b1cec4a0ed195de1458413", fails = "compile", paragraph = "[basic.string.hash] and [string.view.hash] enable the hash of a string or view only with std::char_traits, since other traits may compare as equal what differs in its characters; xstd::hash hashes the characters of one with any traits" },
     { file = "libcxx/test/std/utilities/function.objects/unord.hash/non_enum.pass.cpp", sha256 = "dd4b923be466d8da6bb8738d03fa89a9cc0c1b517e0c596a6d17a934a47a085c", fails = "compile", paragraph = "[unord.hash]/4, a disabled specialization: xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile" },
 ]
 assertion = [
+    { file = "libcxx/test/std/utilities/variant/variant.hash/hash.depr.verify.cpp", sha256 = "6ef5abcb9981c0a0acda99d61caecf5c3a377687f96012f89c45a665b4527af9", line = "// expected-error@-3 {{no type named 'argument_type' in 'std::hash<monostate>'}}", to = "// expected-error@-3 {{no type named 'argument_type' in 'std::hash<std::monostate>'}}", departure = "Clang names monostate unqualified in std::hash, which shares its namespace, and qualified in xstd::hash" },
+    { file = "libcxx/test/std/utilities/variant/variant.hash/hash.depr.verify.cpp", sha256 = "6ef5abcb9981c0a0acda99d61caecf5c3a377687f96012f89c45a665b4527af9", line = "// expected-error@-3 {{no type named 'result_type' in 'std::hash<monostate>'}}", to = "// expected-error@-3 {{no type named 'result_type' in 'std::hash<std::monostate>'}}", departure = "Clang names monostate unqualified in std::hash, which shares its namespace, and qualified in xstd::hash" },
     { file = "libcxx/test/std/utilities/function.objects/unord.hash/integral.pass.cpp", sha256 = "a10ba24a9e1137543110e836a94167be432524814faffbfb8d0641de71159af3", line = "LIBCPP_ASSERT(result == static_cast<std::size_t>(t));", drop = true, departure = "a value the standard library computes itself, which xstd::hash does not reproduce" },
     { file = "libcxx/test/support/poisoned_hash_helper.h", sha256 = "cf8d9012d735ec617467ea821811014a145480e5e6ff1e04c8fc1fd7198385e1", line = "static_assert(!std::is_default_constructible<Hash>::value, \"\");", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", drop = true },
     { file = "libcxx/test/support/poisoned_hash_helper.h", sha256 = "cf8d9012d735ec617467ea821811014a145480e5e6ff1e04c8fc1fd7198385e1", line = "static_assert(!std::is_copy_constructible<Hash>::value, \"\");", departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile", drop = true },
@@ -130,7 +134,6 @@ take = [
     { path = "tests/std/tests/Dev10_590599_hash_string" },
     { path = "tests/std/tests/P0513R0_poisoning_the_hash" },
     { path = "tests/std/tests/P0414R2_shared_ptr_for_arrays" },
-    { path = "tests/std/tests/P0881R7_stacktrace" },
     { path = "tests/std/tests/P0912R5_coroutine" },
 ]
 include = ["xstd/misc/functional/hash.hpp", "xstd/misc/utility/to_underlying.hpp"]
