@@ -32,8 +32,6 @@ rewrite = [
     { from = "std::hash<", to = "xstd::hash<" },
 ]
 expect = [
-    { file = "libcxx/test/std/strings/basic.string.hash/char_type_hash.verify.cpp", sha256 = "8ddfe5a81cb39f4e9b415736e73ceb88ba3cf300a2e285be33675130e66636cd", fails = "compile", paragraph = "[basic.string.hash] and [string.view.hash] enable the hash of a string or view only with std::char_traits, since other traits may compare as equal what differs in its characters; xstd::hash hashes the characters of one with any traits" },
-    { file = "libcxx/test/std/strings/string.view/string.view.hash/char_type.hash.verify.cpp", sha256 = "212800fbb68eed3430b3b75e068c0ddb8a8efe3bc0b1cec4a0ed195de1458413", fails = "compile", paragraph = "[basic.string.hash] and [string.view.hash] enable the hash of a string or view only with std::char_traits, since other traits may compare as equal what differs in its characters; xstd::hash hashes the characters of one with any traits" },
     { file = "libcxx/test/std/utilities/function.objects/unord.hash/non_enum.pass.cpp", sha256 = "dd4b923be466d8da6bb8738d03fa89a9cc0c1b517e0c596a6d17a934a47a085c", fails = "compile", paragraph = "[unord.hash]/4, a disabled specialization: xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile" },
 ]
 assertion = [

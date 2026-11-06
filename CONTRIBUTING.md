@@ -234,20 +234,17 @@ on every pull request, on the stable rung in Debug, since what is under test is 
 
 | Suite | Tag | Tests | Under GCC 15 | Under Clang 22 with libc++ |
 | :---- | :-- | :---- | :----------- | :------------------------- |
-| libc++ | `llvmorg-22.1.8` | `to_underlying`, and the hash of every key the standard specializes `std::hash` for | 28 run, 2 expected not to compile | 28 run, 2 tests of diagnostics, 4 expected not to compile |
+| libc++ | `llvmorg-22.1.8` | `to_underlying`, and the hash of every key the standard specializes `std::hash` for | 28 run, 2 expected not to compile | 28 run, 4 tests of diagnostics, 2 expected not to compile |
 | libstdc++ | `releases/gcc-15.3.0` | `to_underlying`, the hash of every key the standard specializes `std::hash` for, and its distribution | 22 run, 7 compiled only, 3 expected not to compile | skipped: its support headers include libstdc++'s internal ones, such as `<bits/c++config.h>` |
 | MSVC STL | `vs-2022-17.14` | `to_underlying`, and the hashes of strings, floating-point values, `shared_ptr<T[]>` and `coroutine_handle` | 5 run, 1 expected not to compile | the same |
 
-The departures are of four kinds, and `mapping.toml` names each one with the line it drops or the test it expects to
+The departures are of three kinds, and `mapping.toml` names each one with the line it drops or the test it expects to
 fail:
 
 - **`xstd::hash` is unconstrained.** For a key Hash2 cannot hash, or a cv-qualified one, it constructs and is
   invocable, and only a call fails to compile. The checks that such a hash is disabled are dropped, and the tests made
   of them, libc++'s `non_enum.pass.cpp`, libstdc++'s `unique_ptr/hash/90388.cc` and the MSVC STL's
   `P0513R0_poisoning_the_hash`, are expected not to compile.
-- **`xstd::hash` hashes a string or view with any traits.** [[basic.string.hash]](https://eel.is/c++draft/basic.string.hash)
-  and [[string.view.hash]](https://eel.is/c++draft/string.view.hash) enable the hash only with `std::char_traits`, so
-  libc++'s two `char_type` tests of diagnostics are expected not to compile.
 - **A value or layout the standard library computes itself**, such as an integer's hash being that integer, a
   `type_index`'s being its `hash_code()`, or the size of a class deriving from several of libstdc++'s hashes, is not
   one `xstd::hash` reproduces.
