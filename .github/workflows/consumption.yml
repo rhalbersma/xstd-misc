@@ -20,7 +20,7 @@ on:
 
 jobs:
   consumption:
-    uses: rhalbersma/cpp-ci/.github/workflows/consumption.yml@0e0b8a1ec3476589bb39dc798d41551e18165916 # main after rhalbersma/cpp-ci#90, which adds the layering action
+    uses: rhalbersma/cpp-ci/.github/workflows/consumption.yml@ad68808302b69e6521722c7fbd41c069f873c41a # main after rhalbersma/cpp-ci#102, which closes the test-suite gaps
     with:
       # CMakeLists.txt find_package()s boost_hash2 unconditionally, so every configure here needs vcpkg.
       vcpkg: true

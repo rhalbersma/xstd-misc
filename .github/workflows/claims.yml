@@ -31,7 +31,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: rhalbersma/cpp-ci/.github/actions/install-gcc@0e0b8a1ec3476589bb39dc798d41551e18165916 # main after rhalbersma/cpp-ci#90, which adds the layering action
+      - uses: rhalbersma/cpp-ci/.github/actions/install-gcc@ad68808302b69e6521722c7fbd41c069f873c41a # main after rhalbersma/cpp-ci#102, which closes the test-suite gaps
         with:
           version: "15"
           trunk: "false"
