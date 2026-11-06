@@ -21,4 +21,4 @@ jobs:
   # Big-endian: the one leg where an integer's first byte is its highest, so a byte copy or a known-answer digest that
   # assumes otherwise fails here and passes everywhere else.
   s390x:
-    uses: rhalbersma/cpp-ci/.github/workflows/s390x.yml@0e0b8a1ec3476589bb39dc798d41551e18165916 # main after rhalbersma/cpp-ci#90, which adds the layering action
+    uses: rhalbersma/cpp-ci/.github/workflows/s390x.yml@ad68808302b69e6521722c7fbd41c069f873c41a # main after rhalbersma/cpp-ci#102, which closes the test-suite gaps
