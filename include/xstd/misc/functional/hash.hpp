@@ -11,11 +11,11 @@
 #include <xstd/misc/functional/detail/value_hasher.hpp> // value_hasher
 #include <boost/hash2/flavor.hpp>                       // default_flavor
 #include <boost/hash2/xxhash.hpp>                       // xxhash_64
-#include <concepts>                                     // convertible_to
+#include <concepts>                                     // convertible_to, same_as
 #include <cstddef>                                      // size_t
 #include <memory>                                       // indirect
 #include <optional>                                     // optional
-#include <string>                                       // basic_string
+#include <string>                                       // basic_string, char_traits
 #include <string_view>                                  // basic_string_view
 #include <type_traits>                                  // is_nothrow_convertible_v, remove_const_t
 
@@ -69,6 +69,16 @@ public:
                 return detail::hasher<hash_type, Flavor>::operator()(std::basic_string_view<CharT, Traits>(v));
         }
 };
+
+// [basic.string.hash]: other traits, such as a case-insensitive one, may equate what differs in its characters.
+template<class CharT, class Traits, class Allocator, hash_algorithm H64, hash_algorithm H32, class Flavor>
+        requires (not std::same_as<Traits, std::char_traits<CharT>>)
+class hash<std::basic_string<CharT, Traits, Allocator>, H64, H32, Flavor>;
+
+// [string.view.hash]: other traits, such as a case-insensitive one, may equate what differs in its characters.
+template<class CharT, class Traits, hash_algorithm H64, hash_algorithm H32, class Flavor>
+        requires (not std::same_as<Traits, std::char_traits<CharT>>)
+class hash<std::basic_string_view<CharT, Traits>, H64, H32, Flavor>;
 
 // [optional.hash]: an engaged optional hashes as its value does, and an empty one as no bytes, which no value appends.
 template<class T, hash_algorithm H64, hash_algorithm H32, class Flavor>

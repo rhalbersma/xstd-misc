@@ -20,6 +20,16 @@ class hash<optional<T>, H64, H32, Flavor>;
 // (4)
 template<class T, class Allocator, hash_algorithm H64, hash_algorithm H32, class Flavor>
 class hash<indirect<T, Allocator>, H64, H32, Flavor>;
+
+// (5), not defined
+template<class CharT, class Traits, class Allocator, hash_algorithm H64, hash_algorithm H32, class Flavor>
+  requires (!same_as<Traits, char_traits<CharT>>)
+class hash<basic_string<CharT, Traits, Allocator>, H64, H32, Flavor>;
+
+// (6), not defined
+template<class CharT, class Traits, hash_algorithm H64, hash_algorithm H32, class Flavor>
+  requires (!same_as<Traits, char_traits<CharT>>)
+class hash<basic_string_view<CharT, Traits>, H64, H32, Flavor>;
 ```
 
 An unordered container's hash for keys of type `T`, from a seeded Boost.Hash2 algorithm. The class holds a prototype
@@ -35,15 +45,21 @@ of `hash_type`, seeded once; each call copies the prototype, appends the key and
 4. The indirect specialization, where the standard library declares `indirect`. An `indirect` hashes as
    `hash<T, H64, H32, Flavor>` hashes its value, as [[indirect.hash]](https://eel.is/c++draft/indirect.hash) requires,
    and a valueless one as no bytes at all.
+5. and 6. A string or view with traits other than `char_traits<CharT>` has no hash, as
+   [[basic.string.hash]](https://eel.is/c++draft/basic.string.hash) and
+   [[string.view.hash]](https://eel.is/c++draft/string.view.hash) enable `std::hash` for `char_traits` alone. Other
+   traits may compare as equal strings whose characters differ, as a case-insensitive one does, and a hash of the
+   characters would then tell equal keys apart. Such a string inside another key, such as a `vector` of them, does
+   not compile either.
 
 A key's own hash is its Boost.Hash2 `tag_invoke`, which every key containing it follows at any depth. A
 specialization of `hash` for a key is followed only by the optional and indirect specializations.
 
 ### Keys
 
-Every key Boost.Hash2's `hash_append` hashes, and every key the standard specializes `std::hash` for. Hash2 1.92
-hashes the arithmetic, enumeration and pointer types, `nullptr_t`, strings and their views, ranges, tuple-likes,
-`optional`, `variant` and `monostate`. For the other standard keys, the header appends the state each one's
+Every key Boost.Hash2's `hash_append` hashes, and every key the standard specializes `std::hash` for. Hash2 1.92 hashes
+the arithmetic, enumeration and pointer types, `nullptr_t`, strings and their views with `char_traits`, ranges,
+tuple-likes, `optional`, `variant` and `monostate`. For the other standard keys, the header appends the state each one's
 `operator==` reads:
 
 | Key | Appends |
@@ -129,7 +145,8 @@ specialization takes `const optional<T>&` and the indirect one `const indirect<T
   `unique_ptr`, `duration`, `time_point` and `zoned_time`. The optional and indirect specializations are `noexcept`
   where the hash of their value is.
 - *Remarks:* It is unconstrained: Hash2 declares `hash_append` for every type, so a constraint would admit keys it
-  then rejects, such as `weak_ptr`.
+  then rejects, such as `weak_ptr`. A string or view with other traits is the exception, which (5) and (6) leave
+  undefined.
 - *Remarks:* As of Boost.Hash2 1.92 a call is not a constant expression, since
   [`get_integral_result`](https://www.boost.org/doc/libs/latest/libs/hash2/doc/html/hash2.html#ref_get_integral_result) is not `constexpr`.
 

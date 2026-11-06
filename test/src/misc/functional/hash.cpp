@@ -269,6 +269,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(HashesItsKeyAsHash2Does, H, test::algorithms)
         BOOST_CHECK_EQUAL((xstd::hash<int, H>(seed)(42)), hash2_of(H(seed), 42));
         BOOST_CHECK_EQUAL((xstd::hash<double, H>(seed)(2.5)), hash2_of(H(seed), 2.5));
         BOOST_CHECK_EQUAL((xstd::hash<std::string, H>(seed)(word)), hash2_of(H(seed), word));
+        BOOST_CHECK_EQUAL((xstd::hash<std::string_view, H>(seed)(word)), hash2_of(H(seed), std::string_view(word)));
         BOOST_CHECK_EQUAL((xstd::hash<std::vector<int>, H>(seed)(numbers)), hash2_of(H(seed), numbers));
         BOOST_CHECK_EQUAL((xstd::hash<std::pair<int, std::string>, H>(seed)(entry)), hash2_of(H(seed), entry));
 }

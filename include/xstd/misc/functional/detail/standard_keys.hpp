@@ -14,6 +14,7 @@
 #include <bitset>                      // bitset
 #include <chrono>                      // day, duration, month, time_point, weekday, year, year_month_day, ...
 #include <climits>                     // CHAR_BIT
+#include <concepts>                    // same_as
 #include <coroutine>                   // coroutine_handle
 #include <cstddef>                     // ptrdiff_t, size_t
 #include <cstdint>                     // uint16_t, uint64_t
@@ -21,7 +22,8 @@
 #include <iterator>                    // next
 #include <limits>                      // numeric_limits
 #include <memory>                      // shared_ptr, unique_ptr
-#include <string_view>                 // string_view
+#include <string>                      // basic_string, char_traits
+#include <string_view>                 // basic_string_view, string_view
 #include <system_error>                // error_code, error_condition
 #include <thread>                      // thread
 #include <type_traits>                 // has_unique_object_representations_v, is_floating_point_v, type_identity
@@ -417,6 +419,15 @@ auto tag_invoke(hash_append_tag const&, Provider const&, Hash& h, Flavor const& 
         Provider::hash_append(h, f, v->date());
 }
 #endif
+
+// Declared only, to make Hash2's string overload ambiguous: other traits may equate what differs in its characters.
+template<class Provider, class Hash, class Flavor, class CharT, class Traits, class Allocator>
+        requires (not std::same_as<Traits, std::char_traits<CharT>>)
+auto tag_invoke(hash_append_tag const&, Provider const&, Hash&, Flavor const&, std::basic_string<CharT, Traits, Allocator> const*) -> void;
+
+template<class Provider, class Hash, class Flavor, class CharT, class Traits>
+        requires (not std::same_as<Traits, std::char_traits<CharT>>)
+auto tag_invoke(hash_append_tag const&, Provider const&, Hash&, Flavor const&, std::basic_string_view<CharT, Traits> const*) -> void;
 
 } // namespace boost::hash2
 
