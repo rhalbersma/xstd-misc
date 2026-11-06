@@ -81,10 +81,10 @@ take = [
     { path = "libstdc++-v3/testsuite/20_util/bitset/hash" },
     { path = "libstdc++-v3/testsuite/20_util/hash" },
     { path = "libstdc++-v3/testsuite/20_util/monostate" },
-    { path = "libstdc++-v3/testsuite/20_util/optional", select = "hashable<" },
+    { path = "libstdc++-v3/testsuite/20_util/optional", select = "hashable<|MultiHash" },
     { path = "libstdc++-v3/testsuite/20_util/shared_ptr/hash" },
     { path = "libstdc++-v3/testsuite/20_util/typeindex", select = "hash<type_index>" },
-    { path = "libstdc++-v3/testsuite/20_util/unique_ptr/hash", select = "PointerDeleter|has_res_type" },
+    { path = "libstdc++-v3/testsuite/20_util/unique_ptr/hash" },
     { path = "libstdc++-v3/testsuite/20_util/variant", select = "No hash specialization|MultiHash" },
     { path = "libstdc++-v3/testsuite/23_containers/vector/bool/hash" },
     { path = "libstdc++-v3/testsuite/27_io/filesystem/path/nonmember", select = "hash_value" },
@@ -97,6 +97,14 @@ rewrite = [
     { from = "std::hash<", to = "xstd::hash<" },
     { regex = '(?<![\w:])hash<', to = 'xstd::hash<' },
     { regex = '(?<![\w:])hash_value\((p+|path\([^()]*\))\)', to = 'xstd::hash<path>()(\1)' },
+]
+support = [
+    { path = "libstdc++-v3/testsuite/20_util/hash/chi2_quality.h" },
+]
+expect = [
+    { file = "libstdc++-v3/testsuite/20_util/optional/hash_abi.cc", sha256 = "6fba7f905d75daaf6c3ca30499f5f014eb0be5f41c7d1ab0202edbabdbf82c03", fails = "compile", paragraph = "libstdc++'s own layout: the size of a class deriving from several of its hash specializations" },
+    { file = "libstdc++-v3/testsuite/20_util/unique_ptr/hash/abi.cc", sha256 = "fe59d1b68c251a4bb32a12beeaccb6086ae40f1f5b4c8f76339763bccc0f2980", fails = "compile", paragraph = "libstdc++'s own layout: the size of a class deriving from several of its hash specializations" },
+    { file = "libstdc++-v3/testsuite/20_util/unique_ptr/hash/90388.cc", sha256 = "696a7fb8dbb08b5e115ce65a98d89e8a7795914fc4e3becad490c605453a362a", fails = "compile", paragraph = "[unord.hash]/4, a disabled specialization: xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile; and a key customizes its hash through Hash2's tag_invoke, not through a specialization of xstd::hash" },
 ]
 assertion = [
     { file = "libstdc++-v3/testsuite/20_util/hash/52931.cc", sha256 = "ad3a0fbf93c345ec378db47a481fe5102bfe38d727f8fe92e72086103f7867e1", line = "static_assert(!decltype(f<S>(0))::value, \"\");", drop = true, departure = "xstd::hash is unconstrained, so for a key Hash2 cannot hash, or a cv-qualified one, it constructs and is invocable, and only a call fails to compile" },
@@ -122,6 +130,8 @@ take = [
     { path = "tests/std/tests/Dev10_590599_hash_string" },
     { path = "tests/std/tests/P0513R0_poisoning_the_hash" },
     { path = "tests/std/tests/P0414R2_shared_ptr_for_arrays" },
+    { path = "tests/std/tests/P0881R7_stacktrace" },
+    { path = "tests/std/tests/P0912R5_coroutine" },
 ]
 include = ["xstd/misc/functional/hash.hpp", "xstd/misc/utility/to_underlying.hpp"]
 # The tests call to_underlying and hash unqualified, under a using-directive for std.
@@ -135,5 +145,6 @@ expect = [
 ]
 assertion = [
     { file = "tests/std/tests/Dev10_491486_floating_point_hash/test.cpp", sha256 = "420c5716adb4e540bbdf8cccec421ab771bc157b9ebb69c71b040ecb44ba1029", line = "test_case<long double>();", departure = "the test reads long double as the 8 bytes MSVC's has", drop = true },
-    { file = "tests/std/tests/P0414R2_shared_ptr_for_arrays/test.cpp", sha256 = "4e0c54dab353edc4c996327c6e9767fa5a49df7497fe5e883fc1e191bacfa7ce", line = "assert(first[i].weak_from_this().expired());", departure = "libc++ enables shared_from_this for a shared_ptr<T[]>, which [util.smartptr.shared.const] does not", drop = true },
+    { file = "tests/std/tests/P0912R5_coroutine/test.cpp", sha256 = "14dda56a40518cdbbb400bc07c640ab970b1c14a9e4f76b190eddadd7fa841d4", line = "STATIC_ASSERT(noexcept(as_void.done()));", when = "stdlib=libc++", departure = "the MSVC STL's coroutine_handle<>::done() is noexcept, which [coroutine.handle.observers] does not require and libc++'s is not", drop = true },
+    { file = "tests/std/tests/P0414R2_shared_ptr_for_arrays/test.cpp", sha256 = "4e0c54dab353edc4c996327c6e9767fa5a49df7497fe5e883fc1e191bacfa7ce", line = "assert(first[i].weak_from_this().expired());", when = "stdlib=libc++", departure = "libc++ enables shared_from_this for a shared_ptr<T[]>, which [util.smartptr.shared.const] does not", drop = true },
 ]
