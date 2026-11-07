@@ -271,18 +271,12 @@ ctest --test-dir build/suites -L std-test-suite
 ### Reproducing the coverage gate
 
 ```sh
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
-  -DCMAKE_CXX_FLAGS="--coverage -O0 -g" -DCMAKE_EXE_LINKER_FLAGS="--coverage"
-cmake --build build
-ctest --test-dir build --output-on-failure
-gcovr --root . --exclude 'test/.*' --exclude 'build/.*' --exclude 'examples/.*' \
-  --exclude-lines-by-pattern '^\s*assert\(' \
-  --exclude-lines-by-pattern '=\s*default;' \
-  --exclude-branches-by-pattern '^\s*assert\(' \
-  --exclude-branches-by-pattern '^\s*.*=\s*default;' \
-  --exclude-throw-branches --exclude-unreachable-branches \
-  --print-summary --fail-under-line 100 --fail-under-branch 100
+tools/ci-local.sh coverage
 ```
+
+The leg builds and runs the suite on GCC 15 at `-O0` with `--coverage`, then runs cpp-ci's own gate,
+`.github/actions/gcovr/gcovr.sh`, checked out at the commit the workflows pin. The exclusion patterns and bars are
+therefore the Coverage workflow's, not a copy of them.
 
 ### Reproducing the clang-tidy gate
 
