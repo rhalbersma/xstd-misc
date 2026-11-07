@@ -4,7 +4,7 @@ Each release of xstd-misc, newest first. A version is a tag `vX.Y.Z` matching `p
 [CMakeLists.txt](CMakeLists.txt); an entry is written from the pull requests merged since the previous tag, grouped
 by what a user of the library meets. The numbers are this repository's pull requests.
 
-## 0.1.0 (unreleased)
+## 0.1.0 (2026-11-07)
 
 The first release: small extensions to the C++ standard library that the xstd family needs beyond integers and bit
 containers, each under the standard header it extends, in namespace `xstd`. It needs a C++20 compiler, CMake 3.30 or
