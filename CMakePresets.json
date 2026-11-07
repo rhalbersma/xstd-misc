@@ -41,15 +41,33 @@
       }
     },
     {
+      "name": "no-tests-vcpkg",
+      "displayName": "Header-only package build without tests (Boost.Hash2 via vcpkg, needs VCPKG_ROOT)",
+      "inherits": [
+        "no-tests",
+        "vcpkg"
+      ],
+      "binaryDir": "${sourceDir}/build/no-tests-vcpkg",
+      "cacheVariables": {
+        "VCPKG_MANIFEST_NO_DEFAULT_FEATURES": "ON"
+      }
+    },
+    {
       "name": "dev-vcpkg",
       "displayName": "Developer debug build (Boost.Test via vcpkg, needs VCPKG_ROOT)",
-      "inherits": ["dev", "vcpkg"],
+      "inherits": [
+        "dev",
+        "vcpkg"
+      ],
       "binaryDir": "${sourceDir}/build/dev-vcpkg"
     },
     {
       "name": "release-vcpkg",
       "displayName": "Release build (Boost.Test via vcpkg, needs VCPKG_ROOT)",
-      "inherits": ["release", "vcpkg"],
+      "inherits": [
+        "release",
+        "vcpkg"
+      ],
       "binaryDir": "${sourceDir}/build/release-vcpkg"
     }
   ],
@@ -65,6 +83,10 @@
     {
       "name": "no-tests",
       "configurePreset": "no-tests"
+    },
+    {
+      "name": "no-tests-vcpkg",
+      "configurePreset": "no-tests-vcpkg"
     },
     {
       "name": "dev-vcpkg",
