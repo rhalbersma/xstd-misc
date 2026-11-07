@@ -1,0 +1,30 @@
+#          Copyright Rein Halbersma 2014-2026.
+# Distributed under the Boost Software License, Version 1.0.
+#    (See accompanying file LICENSE_1_0.txt or copy at
+#          http://www.boost.org/LICENSE_1_0.txt)
+
+name: Config drift
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  schedule:
+    - cron: '23 7 * * 1'
+  workflow_dispatch:
+
+jobs:
+  # The xstd family's shared configuration, compared across its repositories, with each one's cpp-ci pin: a report in
+  # the step summary that never fails. A difference that stays gets its reason in the file; any other is removed.
+  drift:
+    name: config drift
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: rhalbersma/cpp-ci/.github/actions/config-drift@ad68808302b69e6521722c7fbd41c069f873c41a # main after rhalbersma/cpp-ci#102, which closes the test-suite gaps
+        with:
+          repositories: rhalbersma/xstd-misc rhalbersma/xstd-ints rhalbersma/xstd-bits rhalbersma/tabula
+          files: .clang-format .clang-tidy CMakePresets.json .gitignore codecov.yml .github/dependabot.yml

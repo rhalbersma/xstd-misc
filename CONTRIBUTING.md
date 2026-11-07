@@ -360,6 +360,17 @@ false with nothing here changing:
 
 A scheduled run that fails opens an issue titled "The weekly claims check failed", or comments on the open one.
 
+Nor can the [Config drift workflow](.github/workflows/drift.yml), which runs on Mondays and by hand. It compares the
+configuration the xstd family shares across xstd-misc, xstd-ints, xstd-bits and tabula, and writes a table per file
+to the step summary, beside the commit of cpp-ci each repository calls:
+- **The files:** `.clang-format`, `.clang-tidy`, `CMakePresets.json`, `.gitignore`, `codecov.yml` and
+  `.github/dependabot.yml`.
+- **The verdict:** for each file, which repositories agree. The newest variant, by its last commit, is named, and
+  every other variant is shown as a diff against it.
+
+It never fails. A difference a library's dependencies require gets its reason in a one-line comment in the file,
+and any other difference is removed.
+
 Each ladder ends in an `all` job that is red unless every one of its legs succeeded, and that gate is what
 branch protection requires: a leg name changes whenever a rung moves, the gate name does not.
 

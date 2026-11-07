@@ -52,7 +52,7 @@ jobs:
           # else builds: a new directory, and examples/, whose programs the
           # reference pages pull in and every ladder compiles and runs.
           unbuilt='\.md$|^LICENSE_1_0\.txt$|^doc/|^tools/|^mkdocs\.yml$|^\.clang-format$|^\.git-blame-ignore-revs$'
-          unbuilt="${unbuilt}"'|^\.github/workflows/(actionlint|canary|claims|clang-format|codeql|consumption|coverage|layering|pages|scorecard)\.yml$'
+          unbuilt="${unbuilt}"'|^\.github/workflows/(actionlint|canary|claims|clang-format|codeql|consumption|coverage|drift|layering|pages|scorecard)\.yml$'
           # The README's C++ examples, fenced as the test suite's CMake finds
           # them: a line ```cpp opens one and a line ``` closes it. Its prose
           # builds nothing; an example added, removed or changed builds.
