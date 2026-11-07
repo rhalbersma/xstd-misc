@@ -97,7 +97,7 @@ include(FetchContent)
 FetchContent_Declare(
     xstd-misc
     GIT_REPOSITORY https://github.com/rhalbersma/xstd-misc.git
-    GIT_TAG main # Prefer a release tag for reproducible builds.
+    GIT_TAG v0.1.0 # The newest release; main carries what has merged since.
 )
 FetchContent_MakeAvailable(xstd-misc)
 
