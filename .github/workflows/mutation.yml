@@ -29,12 +29,12 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: rhalbersma/cpp-ci/.github/actions/install-gcc@9f3e580868b62debec276f6f257bfa9105fbb252 # main after rhalbersma/cpp-ci#108, which runs the compile budget
+      - uses: rhalbersma/cpp-ci/.github/actions/install-gcc@a634ddb30dc4da914d7eb281029e8f9bb85e2d63 # v0.16.0
         with:
           version: "15"
           trunk: "false"
 
-      - uses: rhalbersma/cpp-ci/.github/actions/install-clang@9f3e580868b62debec276f6f257bfa9105fbb252 # main after rhalbersma/cpp-ci#108, which runs the compile budget
+      - uses: rhalbersma/cpp-ci/.github/actions/install-clang@a634ddb30dc4da914d7eb281029e8f9bb85e2d63 # v0.16.0
         with:
           version: "22"
           llvm_suffix: "-22"
