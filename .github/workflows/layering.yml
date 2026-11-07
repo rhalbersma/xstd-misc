@@ -28,6 +28,6 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: rhalbersma/cpp-ci/.github/actions/layering@9f3e580868b62debec276f6f257bfa9105fbb252 # main after rhalbersma/cpp-ci#108, which runs the compile budget
+      - uses: rhalbersma/cpp-ci/.github/actions/layering@1e974d191cafdc2dbc4bbc7c3900c97416e06e47 # v0.16.0
         with:
           config: tools/layering.toml
