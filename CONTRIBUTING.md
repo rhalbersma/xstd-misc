@@ -357,7 +357,7 @@ A scheduled run that fails opens an issue titled "The weekly claims check failed
 Nor can the [Config drift workflow](.github/workflows/drift.yml), which runs on Mondays and by hand. It compares the
 configuration the xstd family shares across xstd-misc, xstd-ints, xstd-bits and tabula, and writes a table per file
 to the step summary, beside the commit of cpp-ci each repository calls:
-- **The files:** `.clang-format`, `.clang-tidy`, `CMakePresets.json`, `.gitignore`, `codecov.yml` and
+- **The files:** `.clang-format`, `.clang-tidy`, `CMakePresets.json`, `.gitignore`, `.github/codecov.yml` and
   `.github/dependabot.yml`.
 - **The verdict:** for each file, which repositories agree. The newest variant, by its last commit, is named, and
   every other variant is shown as a diff against it.
