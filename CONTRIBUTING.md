@@ -271,18 +271,12 @@ ctest --test-dir build/suites -L std-test-suite
 ### Reproducing the coverage gate
 
 ```sh
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
-  -DCMAKE_CXX_FLAGS="--coverage -O0 -g" -DCMAKE_EXE_LINKER_FLAGS="--coverage"
-cmake --build build
-ctest --test-dir build --output-on-failure
-gcovr --root . --exclude 'test/.*' --exclude 'build/.*' --exclude 'examples/.*' \
-  --exclude-lines-by-pattern '^\s*assert\(' \
-  --exclude-lines-by-pattern '=\s*default;' \
-  --exclude-branches-by-pattern '^\s*assert\(' \
-  --exclude-branches-by-pattern '^\s*.*=\s*default;' \
-  --exclude-throw-branches --exclude-unreachable-branches \
-  --print-summary --fail-under-line 100 --fail-under-branch 100
+tools/ci-local.sh coverage
 ```
+
+The leg builds and runs the suite on GCC 15 at `-O0` with `--coverage`, then runs cpp-ci's own gate,
+`.github/actions/gcovr/gcovr.sh`, checked out at the commit the workflows pin. The exclusion patterns and bars are
+therefore the Coverage workflow's, not a copy of them.
 
 ### Reproducing the clang-tidy gate
 
@@ -359,6 +353,17 @@ false with nothing here changing:
   cpp-ci's `main`, through `tools/check-readme-matrix.py`.
 
 A scheduled run that fails opens an issue titled "The weekly claims check failed", or comments on the open one.
+
+Nor can the [Config drift workflow](.github/workflows/drift.yml), which runs on Mondays and by hand. It compares the
+configuration the xstd family shares across xstd-misc, xstd-ints, xstd-bits and tabula, and writes a table per file
+to the step summary, beside the commit of cpp-ci each repository calls:
+- **The files:** `.clang-format`, `.clang-tidy`, `CMakePresets.json`, `.gitignore`, `codecov.yml` and
+  `.github/dependabot.yml`.
+- **The verdict:** for each file, which repositories agree. The newest variant, by its last commit, is named, and
+  every other variant is shown as a diff against it.
+
+It never fails. A difference a library's dependencies require gets its reason in a one-line comment in the file,
+and any other difference is removed.
 
 Each ladder ends in an `all` job that is red unless every one of its legs succeeded, and that gate is what
 branch protection requires: a leg name changes whenever a rung moves, the gate name does not.

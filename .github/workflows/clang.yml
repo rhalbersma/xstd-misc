@@ -28,7 +28,7 @@ jobs:
   clang_ladder:
     needs: changes
     if: needs.changes.outputs.build == 'true'
-    uses: rhalbersma/cpp-ci/.github/workflows/clang.yml@ad68808302b69e6521722c7fbd41c069f873c41a # main after rhalbersma/cpp-ci#102, which closes the test-suite gaps
+    uses: rhalbersma/cpp-ci/.github/workflows/clang.yml@9f3e580868b62debec276f6f257bfa9105fbb252 # main after rhalbersma/cpp-ci#108, which runs the compile budget
     with:
       # A pull request builds only the floor and ceiling rungs, in Debug. The
       # all gate cannot see what was skipped, so the nightly canary covers it,

@@ -81,20 +81,26 @@ tidy() {
         return "${status}"
 }
 
-# The coverage job: the suite on GCC 15 at -O0 with --coverage, then gcovr's gate at the bars coverage.yml sets.
+# cpp-ci at the commit the workflows pin, checked out under build/ci-local/cpp-ci: <prints the checkout's path>
+cpp_ci() {
+        local dir="${out}/cpp-ci" sha
+        sha="$(grep -m1 -oE 'rhalbersma/cpp-ci/[^@ ]+@[0-9a-f]{40}' "${root}/.github/workflows/gcc.yml" | sed 's/.*@//')"
+        [ -n "${sha}" ] || { echo "no rhalbersma/cpp-ci pin in .github/workflows/gcc.yml" >&2; return 1; }
+        if [ ! -d "${dir}/.git" ]; then
+                git init -q "${dir}" && git -C "${dir}" remote add origin https://github.com/rhalbersma/cpp-ci.git || return 1
+        fi
+        git -C "${dir}" fetch -q --depth 1 origin "${sha}" && git -C "${dir}" checkout -q FETCH_HEAD && echo "${dir}"
+}
+
+# The coverage job: the suite on GCC 15 at -O0 with --coverage, then cpp-ci's gate, at the pinned commit, at the bars
+# and excludes coverage.yml sets.
 coverage() {
-        local dir="${out}/coverage"
+        local dir="${out}/coverage" gate
         [ -d "${dir}" ] && find "${dir}" -name '*.gcda' -delete
         suite coverage g++-15 "--coverage -O0" Debug -DCMAKE_EXE_LINKER_FLAGS=--coverage || return 1
-        (cd "${root}" && "${HOME:-/root}/.local/bin/gcovr" --root . --gcov-executable gcov-15 --merge-lines \
-                --exclude 'test/.*' --exclude 'build/.*' --exclude 'examples/.*' \
-                --exclude-lines-by-pattern '^\s*(assert|[A-Z][A-Z0-9_]*_ASSERT)\(' \
-                --exclude-lines-by-pattern '=\s*default;' \
-                --exclude-lines-by-pattern '\s*\}\s*$' \
-                --exclude-branches-by-pattern '^\s*(assert|[A-Z][A-Z0-9_]*_ASSERT)\(' \
-                --exclude-branches-by-pattern '^\s*.*=\s*default;' \
-                --exclude-throw-branches --exclude-unreachable-branches \
-                --print-summary --fail-under-line 100 --fail-under-branch 100 "${dir}")
+        gate="$(cpp_ci)" || return 1
+        (cd "${root}" && PATH="${HOME:-/root}/.local/bin:${PATH}" GCOV=gcov-15 BUILD_DIR="${dir}" SEARCH_PATHS="${dir}" \
+                EXCLUDE='test/.* build/.* examples/.*' bash "${gate}/.github/actions/gcovr/gcovr.sh")
 }
 
 # The format gate: the stable rung's clang-format over include/, test/ and examples/, reporting rather than rewriting.
@@ -104,14 +110,9 @@ format() {
 
 # cpp-ci's layering check, at the commit the workflows pin, over the folder kinds tools/layering.toml names.
 layering() {
-        local dir="${out}/layering" sha
-        sha="$(grep -m1 -oE 'rhalbersma/cpp-ci/[^@ ]+@[0-9a-f]{40}' "${root}/.github/workflows/gcc.yml" | sed 's/.*@//')"
-        [ -n "${sha}" ] || { echo "no rhalbersma/cpp-ci pin in .github/workflows/gcc.yml" >&2; return 1; }
-        if [ ! -d "${dir}/.git" ]; then
-                git init -q "${dir}" && git -C "${dir}" remote add origin https://github.com/rhalbersma/cpp-ci.git || return 1
-        fi
-        git -C "${dir}" fetch -q --depth 1 origin "${sha}" && git -C "${dir}" checkout -q FETCH_HEAD \
-                && (cd "${root}" && python3 -I "${dir}/.github/actions/layering/layering.py" tools/layering.toml)
+        local checker
+        checker="$(cpp_ci)" || return 1
+        (cd "${root}" && python3 -I "${checker}/.github/actions/layering/layering.py" tools/layering.toml)
 }
 
 # The working draft at the tag the headers cite, from the draft's own repository, then the check of their wording.
