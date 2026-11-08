@@ -29,19 +29,19 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: rhalbersma/cpp-ci/.github/actions/install-gcc@a634ddb30dc4da914d7eb281029e8f9bb85e2d63 # v0.16.0
+      - uses: rhalbersma/cpp-ci/.github/actions/install-gcc@46625f976faaa32503d9b73479fb7cff298f66b1
         with:
           version: "15"
           trunk: "false"
 
-      - uses: rhalbersma/cpp-ci/.github/actions/install-clang@a634ddb30dc4da914d7eb281029e8f9bb85e2d63 # v0.16.0
+      - uses: rhalbersma/cpp-ci/.github/actions/install-clang@46625f976faaa32503d9b73479fb7cff298f66b1
         with:
           version: "22"
           llvm_suffix: "-22"
           libcxx: "true"
 
       # The mutants are compiled with -fsyntax-only, so Boost's headers are all they need: the release tarball's, from
-      # every library's include directory, at the version and SHA-256 tools/setup-toolchain.sh pins.
+      # every library's include directory, at the version and SHA-256 cpp-ci's tools/setup-toolchain.sh pins.
       - name: Install Boost's headers
         env:
           BOOST_VERSION: 1.92.0

@@ -207,13 +207,15 @@ entity or family. Its rules are the same across the xstd libraries, so that a re
 Break things here, not on CI's runners, where a push waits hours for its first result. Two scripts make that
 possible, and the work relies on them rather than on whatever happens to be installed:
 
-- [`tools/setup-toolchain.sh`](tools/setup-toolchain.sh) installs what CI builds with: every rung of
-  [README.md](README.md)'s matrix, clang-tidy for each of the three clangs, the format gate's clang-format 22, the
-  CMake the workflows pin and the Boost CI resolves. Run it once per container; it is idempotent, and in a Claude
-  Code cloud session the SessionStart hook in `.claude/hooks/session-start.sh` has already run it.
-- [`tools/ci-local.sh`](tools/ci-local.sh) runs the ladders' Linux legs on that toolchain. Run the legs a change can
-  break while iterating, and every leg before a push. Push only what it reports green: CI is there to confirm,
-  not to discover.
+- [`tools/setup-toolchain.sh`](tools/setup-toolchain.sh) installs what CI builds with, through cpp-ci's own setup
+  script at the commit the workflows pin: every rung of [README.md](README.md)'s matrix, clang-tidy for each of the
+  three clangs, the format gate's clang-format 22, the CMake the workflows pin and the Boost CI resolves. Run it once
+  per container; it is idempotent, and in a Claude Code cloud session the SessionStart hook in
+  `.claude/hooks/session-start.sh` has already run it.
+- [`tools/ci-local.sh`](tools/ci-local.sh) runs the CI jobs' Linux legs on that toolchain, cheapest first. cpp-ci's
+  `ci_local.py` derives the shared workflows' legs from the stubs, so a leg a stub gains is a leg the script gains;
+  the legs this repository defines run beside them. Run `--quick` while iterating, and every leg before a push. Push
+  only what it reports green: CI is there to confirm, not to discover.
 
 Run every job that takes more than a moment in the background: the setup script, a `ci-local.sh` run, a build, a
 test suite, clang-tidy. A leg takes minutes and a full run far longer, and a conversation waiting on one in the
@@ -223,8 +225,8 @@ when it reports back.
 Never build with whatever `g++` or `clang++` happen to resolve to. Ubuntu 24.04 ships GCC 13, which rejects
 `-std=c++2c` outright, so the default compiler cannot build this library at all, and a check that quietly falls
 back to a cut-down reproduction proves less than it appears to. What `ci-local.sh` cannot cover, MSVC, clang-cl,
-MinGW, Apple Clang, Emscripten, Android, iOS and the libc++ legs of the two newer rungs, is CI's alone; say so rather
-than claim it was checked.
+MinGW, Apple Clang, Emscripten, Android, iOS, CodeQL and the libc++ and sanitizer legs of the two newer rungs, is CI's
+alone; say so rather than claim it was checked.
 
 A comment or formatting change is not exempt, because two gates read lines rather than syntax. `NOLINT` and
 `GCOVR_EXCL_LINE` suppress the line they sit on, so a formatter that splits that line leaves the marker behind on

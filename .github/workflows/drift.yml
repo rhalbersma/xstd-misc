@@ -24,7 +24,7 @@ jobs:
     name: config drift
     runs-on: ubuntu-24.04
     steps:
-      - uses: rhalbersma/cpp-ci/.github/actions/config-drift@a634ddb30dc4da914d7eb281029e8f9bb85e2d63 # v0.16.0
+      - uses: rhalbersma/cpp-ci/.github/actions/config-drift@46625f976faaa32503d9b73479fb7cff298f66b1
         with:
           repositories: rhalbersma/xstd-misc rhalbersma/xstd-ints rhalbersma/xstd-bits rhalbersma/tabula
           files: .clang-format .clang-tidy CMakePresets.json .gitignore .github/codecov.yml .github/dependabot.yml
