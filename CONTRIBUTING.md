@@ -78,7 +78,7 @@ The library itself needs one dependency, the header-only [Boost.Hash2](https://w
 | [CMake](https://cmake.org/) 3.30+ | configuring and building | `cmake_minimum_required` in [`CMakeLists.txt`](CMakeLists.txt); CTest ships with it. Noble's is 3.28; `setup-toolchain.sh` installs the version the workflows pin, from [`tools/cmake-requirements.txt`](tools/cmake-requirements.txt) |
 | [Boost.Test](https://www.boost.org/doc/libs/latest/libs/test/) 1.70+ | the unit tests under `test/src/` | The floor the CMake project asks for, shared with the other xstd repositories; declared in the checked-in [`vcpkg.json`](vcpkg.json) manifest, the `*-vcpkg` presets pick it up from a `VCPKG_ROOT`-configured vcpkg, or install it with your system package manager |
 | [Boost.Unordered](https://www.boost.org/doc/libs/latest/libs/unordered/) | the tests running `xstd::hasher` in an open-addressing container | Found quietly: without it those tests compile to a placeholder, so CI installs it through the [`vcpkg.json`](vcpkg.json) `test` feature |
-| [gcovr](https://gcovr.com/) | reproducing the coverage gate | `setup-toolchain.sh` installs the coverage job's version, hash-pinned in [`tools/gcovr-requirements.txt`](tools/gcovr-requirements.txt) |
+| [gcovr](https://gcovr.com/) | reproducing the coverage gate | `setup-toolchain.sh` installs the coverage job's version, hash-pinned in cpp-ci's `install-gcovr` action |
 | `clang-tidy` and `run-clang-tidy` | reproducing the clang-tidy gate | Only for the workflow below |
 | `clang-format` | the formatting gate | Run `clang-format -i` on changed files before pushing |
 | [MkDocs Material](https://squidfunk.github.io/mkdocs-material/) | building the documentation site | Hash-pinned in [`tools/mkdocs-requirements.txt`](tools/mkdocs-requirements.txt); `ci-local.sh`'s site leg installs it into a virtual environment of its own |
@@ -90,13 +90,18 @@ rejects `-std=c++2c`, `CMakeLists.txt` asks for CMake 3.30, clang-format before 
 requires-expression as a pointer declaration, so it calls files dirty that are clean against
 [`.clang-format`](.clang-format), and Boost 1.83 has no Boost.Hash2, which the library itself needs.
 [`tools/setup-toolchain.sh`](tools/setup-toolchain.sh) brings a container as close to the GitHub Actions ladders as
-an Ubuntu box gets, every rung of [README.md](README.md)'s matrix and the Boost CI resolves:
+an Ubuntu box gets, every rung of [README.md](README.md)'s matrix and the Boost CI resolves. It runs cpp-ci's own
+`tools/setup-toolchain.sh`, from a checkout at the commit the workflows pin that [`tools/cpp-ci.sh`](tools/cpp-ci.sh)
+fetches once into `~/.cache/cpp-ci`, so the rungs come from the same toolchain table CI's jobs read, and adds what is
+this repository's own:
 
 - GCC 15 and 16 from the Ubuntu toolchain PPA, and the GCC trunk snapshot the development rung uses, as `g++-17`;
 - clang 22, 23 and trunk, as `clang++-24`, each with its clang-tidy, and clang-format 22 and libc++ 22, from apt.llvm.org;
 - GCC 15's 32-bit multilib, for the i686 leg;
 - the same clang-format 22 as an unversioned `clang-format`, CMake and the coverage job's gcovr, from PyPI, pinned by
   hash;
+- actionlint at the release the actionlint job installs, and vcpkg at the commit CI's jobs check out, for
+  `CI_LOCAL_DEPS=vcpkg`;
 - Boost 1.92's Hash2, Test and Unordered, the libraries [`vcpkg.json`](vcpkg.json) asks for, built by GCC 15 from
   Boost's CMake release tarball, checked against the SHA-256 Boost publishes, into `/usr/local`.
 
@@ -161,42 +166,57 @@ ctest --preset dev-vcpkg
 The Boost.Test that `setup-toolchain.sh` builds is GCC 15's, and serves the released rungs, GCC 15 and 16 and clang 22
 and 23. A compiler on another standard library, on the trunk snapshot's libstdc++ or on a 32-bit target needs a
 Boost.Test built for it: linked with libc++ or with GCC 17's libstdc++, GCC 15's fails before the first test, on a
-corrupted parameter. CI gets one from vcpkg, which builds Boost with the compiler under test. Locally,
-[`tools/boost-test.sh`](tools/boost-test.sh) builds the framework from the installed headers with the compiler and
-flags given, in about a minute, and prints the `-D` that makes the suite use it:
+corrupted parameter. CI gets one from vcpkg, which builds Boost with the compiler under test. Locally, cpp-ci's `tools/boost-test.sh` builds
+the framework from the installed headers with the compiler and flags given, in about a minute, and prints the `-D` that
+makes the suite use it; `ci-local.sh` does this for each such leg:
 
 ```sh
 cmake -S . -B build-libcxx -DCMAKE_CXX_COMPILER=clang++-22 -DCMAKE_CXX_FLAGS=-stdlib=libc++ -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++ \
-      "$(tools/boost-test.sh build-boost-test-libcxx clang++-22 -stdlib=libc++)"
+      "$("$(tools/cpp-ci.sh)/tools/boost-test.sh" build-boost-test-libcxx clang++-22 -stdlib=libc++)"
 ```
 
-Before a push, [`tools/ci-local.sh`](tools/ci-local.sh) runs the GitHub Actions ladders' Linux legs on what
-`setup-toolchain.sh` installs, so a change is green here before it waits on CI's runners:
+Before a push, [`tools/ci-local.sh`](tools/ci-local.sh) runs the GitHub Actions jobs' Linux legs on what
+`setup-toolchain.sh` installs, so a change is green here before it waits on CI's runners. The legs from cpp-ci's shared
+workflows run through cpp-ci's `tools/ci_local.py`, from the same pinned checkout, which reads them from this
+repository's workflow stubs, so a leg a stub adds or drops is added or dropped here too; this repository's own legs,
+layering, draft and site, run in `ci-local.sh` beside them:
 
 - the suite on GCC 15, 16 and 17-SVN, and on clang 22, 23 and 24-SVN, each clang on its own rung's libstdc++;
 - the libc++ 22 leg, and the i686 leg, at `-m32` in Debug;
+- libc++'s, libstdc++'s and the MSVC STL's tests of what xstd-misc mirrors, on GCC 15 and on clang 22;
 - the coverage gate, the suite on GCC 15 with `--coverage`, held to 100% of lines and branches by the coverage job's
   `gcovr` command;
 - clang-tidy 22, 23 and 24-SVN, each on GCC 15's libstdc++ as the clang-tidy job compiles, with that job's passes:
   the generated per-header units, each public header on its own, and the test sources;
-- the format gate;
+- the sanitizer ladder's legs on the stable rung: ASan and LSan, and UBSan, on GCC 15; ASan on clang 22 with libc++;
+  UBSan and implicit conversions on clang 22;
+- the three consumption models, the format gate, actionlint and the layering check;
 - the draft check, which no workflow runs: it fetches the working draft the headers cite from
   [cplusplus/draft](https://github.com/cplusplus/draft), at that draft's tag, and `tools/check-draft-wording.py` checks
   that each definition copied from it still reads as the cited paragraph does, token for token;
 - the site, built as the Pages workflow builds it.
 
-It takes a list of legs, or runs them all, one after another, with every core each; `--list` names them. Each leg
-logs to `build/ci-local/<leg>.log`, and the run ends in one line per leg. The suite legs build in Debug, or in
-`CI_LOCAL_BUILD_TYPE`; CI builds both.
+Legs run cheapest first, and the run stops at the first failure; `--keep-going` runs them all regardless. `--quick`
+is the set to pass before a commit, and a full run is the one to pass before a push. Each leg logs to
+`build/ci-local/<leg>.log`, and the run ends in one line per leg. The suite legs build in Debug where the stub lists
+it, as the pull-request ladders do.
+
+The dependencies come from what `setup-toolchain.sh` installs, the Boost in `/usr/local`, and a leg on libc++, on the
+trunk snapshot's libstdc++ or on i686 builds a Boost.Test of its own first. That works on a machine whose network
+refuses the source archives vcpkg's Boost ports download, as a Claude Code cloud container's does. `CI_LOCAL_DEPS=vcpkg`
+resolves them through vcpkg instead, as CI does. `CPP_CI_DIR` runs a cpp-ci checkout of your own in place of the pinned
+one.
 
 ```sh
-tools/ci-local.sh                  # every leg
-tools/ci-local.sh gcc-17 tidy-24   # the ones a change is likeliest to break
+tools/ci-local.sh --quick                        # before a commit
+tools/ci-local.sh                                # before a push or a pull request
+tools/ci-local.sh gcc-17-svn clang-tidy-24-svn   # the legs named
+tools/ci-local.sh --list                         # every leg, in the order a full run takes them
 ```
 
-MSVC, clang-cl, MinGW, Apple Clang, Emscripten, Android and iOS have no Linux equivalent, and the libc++ 23 and
-24-SVN legs need a libc++ that cannot be installed beside 22. The sanitizer, CodeQL, consumption and actionlint jobs
-are not in it either; the coverage and clang-tidy commands are also given on their own in the sections below.
+MSVC, clang-cl, MinGW, Apple Clang, Emscripten, Android and iOS have no Linux equivalent, and the libc++ and sanitizer
+legs of the rungs above the stable one stay CI's; `--list` names the legs a full run takes. CodeQL is CI's alone. The
+coverage and clang-tidy commands are also given on their own in the sections below.
 
 ### Deleting clauses
 

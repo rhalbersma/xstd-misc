@@ -4,115 +4,44 @@
 #    (See accompanying file LICENSE_1_0.txt or copy at
 #          http://www.boost.org/LICENSE_1_0.txt)
 
-# Runs the GitHub Actions ladders' Linux legs on what setup-toolchain.sh installs, so a change is green here before it
-# waits on CI's runners. Each leg does what its job does: configure, build and test the suite on one compiler, or run
-# clang-tidy or the format gate. The draft leg is the one no workflow runs: it fetches the working draft the headers
-# cite and checks that what they copy from it still reads as it does. The site leg builds the documentation as the
-# Pages workflow does. Each leg works under build/ci-local/<leg>, logs to build/ci-local/<leg>.log, and the run ends
-# in one line per leg.
+# Runs the GitHub Actions jobs' Linux legs on what setup-toolchain.sh installs, so a change is green here before it
+# waits on CI's runners. The legs this repository's workflow stubs take from cpp-ci run through cpp-ci's
+# tools/ci_local.py, at the commit the stubs pin, which reads them from the stubs themselves; this repository's own
+# legs, layering, draft and site, run here beside them. The draft leg is the one no workflow runs: it fetches the
+# working draft the headers cite and checks that what they copy from it still reads as it does. Legs run cheapest
+# first and the run stops at the first that fails. Each leg works under build/ci-local/<leg>, logs to
+# build/ci-local/<leg>.log, and the run ends in one line per leg.
 #
-#   tools/ci-local.sh                     every leg, one after another, each on every core
-#   tools/ci-local.sh gcc-17 tidy-24      the legs named
-#   tools/ci-local.sh --list              the legs
+#   tools/ci-local.sh --quick                before a commit: actionlint, format, layering, GCC 15, clang 22, clang-tidy 22
+#   tools/ci-local.sh                        before a push or a pull request: every leg
+#   tools/ci-local.sh gcc-17-svn clang-tidy-24-svn   the legs named, in the order given
+#   tools/ci-local.sh --keep-going ...       every leg asked for, whatever fails
+#   tools/ci-local.sh --list                 the legs, in the order a full run takes them
 #
-# CI_LOCAL_BUILD_TYPE picks the suite legs' build type, Debug by default; CI runs both Debug and Release.
+# CI_LOCAL_DEPS=vcpkg builds the dependencies through vcpkg, as CI does; the default, system, builds against the Boost
+# setup-toolchain.sh installs, for a machine whose network refuses the source archives vcpkg downloads. CPP_CI_DIR runs
+# a cpp-ci checkout of your own in place of the pinned one.
 #
-# Not here, having no Linux equivalent: MSVC, clang-cl, MinGW, Apple Clang and Emscripten. Nor the libc++ legs of the
-# two newer rungs, whose libc++ cannot be installed beside libc++ 22, nor the sanitizer, CodeQL, consumption and
-# actionlint jobs, whose own commands CONTRIBUTING.md gives.
+# Not here, having no Linux equivalent: MSVC, clang-cl, MinGW, Apple Clang, Emscripten, Android and iOS. The libc++
+# and sanitizer legs of the rungs above the stable one are CI's too; --list names each with its reason.
 
 set -uo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly root
 readonly out="${root}/build/ci-local"
-readonly build_type="${CI_LOCAL_BUILD_TYPE:-Debug}"
-readonly jobs="$(nproc)"
-cmake="${HOME:-/root}/.local/bin/cmake"
-[ -x "${cmake}" ] || cmake="cmake"
-readonly cmake
+readonly deps="${CI_LOCAL_DEPS:-system}"
+cpp_ci="$("${root}/tools/cpp-ci.sh")" || exit 1
+readonly cpp_ci
+ci_local=(python3 -I "${cpp_ci}/tools/ci_local.py" --caller "${root}" --out "${out}" --deps "${deps}")
 
-readonly all_legs=(gcc-15 gcc-16 gcc-17 clang-22 clang-23 clang-24 libcxx-22 i686 coverage tidy-22 tidy-23 tidy-24 format layering draft site)
+# This repository's own legs, the cheap checks, after format.
+readonly own_checks=(layering draft site)
+readonly quick_legs=(actionlint format layering gcc-15 clang-22 clang-tidy-22)
 
-# Each clang uses the libstdc++ of its own rung, as on the runners, rather than the newest GCC installed.
-gcc_for_clang() {
-        case "$1" in
-                22) echo "--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/15" ;;
-                23) echo "--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/16" ;;
-                24) echo "--gcc-toolchain=/opt/gcc-latest" ;;
-        esac
-}
-
-# Configure, build and test the suite, as the ladders' jobs do: <leg> <compiler> <flags> <build type> [CMake arguments...]
-suite() {
-        local leg="$1" cxx="$2" flags="$3" type="$4"
-        shift 4
-        local dir="${out}/${leg}"
-        "${cmake}" -S "${root}" -B "${dir}" -G Ninja -DCMAKE_BUILD_TYPE="${type}" -DCMAKE_CXX_COMPILER="${cxx}" \
-                -DCMAKE_CXX_FLAGS="${flags}" -DCMAKE_CXX_SCAN_FOR_MODULES=OFF -DCMAKE_CXX_FLAGS_DEBUG=-g1 "$@" \
-                && "${cmake}" --build "${dir}" --parallel "${jobs}" \
-                && ctest --test-dir "${dir}" --output-on-failure --parallel "${jobs}"
-}
-
-# A suite leg on another standard library, a trunk one or another target links a Boost.Test built for it by the same
-# compiler and flags, and fails if that build does rather than fall back to the installed one: <as suite>
-suite_with_boost_test() {
-        local leg="$1" cxx="$2" flags="$3" type="$4" boost_test
-        shift 4
-        # shellcheck disable=SC2086 # the flags are a word list
-        boost_test="$("${root}/tools/boost-test.sh" "${out}/boost-test-${leg}" "${cxx}" ${flags})" || return 1
-        suite "${leg}" "${cxx}" "${flags}" "${type}" "$@" "${boost_test}"
-}
-
-# The clang-tidy job's passes over the compile database, and its check of each public header on its own. Every rung
-# compiles against the stable rung's libstdc++, the job's gcc_tier, and the job's adapted_dirs are vcpkg's include
-# directories, whose local equivalent is the installed Boost on the default search path.
-tidy() {
-        local version="$1" dir="${out}/tidy-$1" flags std status=0
-        flags="$(gcc_for_clang 22)"
-        "${cmake}" -S "${root}" -B "${dir}" -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER="clang++-${version}" \
-                -DCMAKE_CXX_FLAGS="${flags}" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_SCAN_FOR_MODULES=OFF || return 1
-        std="$(jq -r '.[0].command // (.[0].arguments | join(" "))' "${dir}/compile_commands.json" | grep -o -- '-std=[^ ]*' | head -1)"
-        "run-clang-tidy-${version}" -quiet -p "${dir}" "${dir}/test/header_self_sufficiency/.*" || status=1
-        while IFS= read -r -d '' header; do
-                "clang-tidy-${version}" --quiet "${header}" -- -x c++-header "${std}" -I"${root}/include" ${flags} || status=1
-        done < <(find "${root}/include" -type f -name '*.hpp' -print0)
-        "run-clang-tidy-${version}" -quiet -p "${dir}" "${root}/test/src/.*" || status=1
-        return "${status}"
-}
-
-# cpp-ci at the commit the workflows pin, checked out under build/ci-local/cpp-ci: <prints the checkout's path>
-cpp_ci() {
-        local dir="${out}/cpp-ci" sha
-        sha="$(grep -m1 -oE 'rhalbersma/cpp-ci/[^@ ]+@[0-9a-f]{40}' "${root}/.github/workflows/gcc.yml" | sed 's/.*@//')"
-        [ -n "${sha}" ] || { echo "no rhalbersma/cpp-ci pin in .github/workflows/gcc.yml" >&2; return 1; }
-        if [ ! -d "${dir}/.git" ]; then
-                git init -q "${dir}" && git -C "${dir}" remote add origin https://github.com/rhalbersma/cpp-ci.git || return 1
-        fi
-        git -C "${dir}" fetch -q --depth 1 origin "${sha}" && git -C "${dir}" checkout -q FETCH_HEAD && echo "${dir}"
-}
-
-# The coverage job: the suite on GCC 15 at -O0 with --coverage, then cpp-ci's gate, at the pinned commit, at the bars
-# and excludes coverage.yml sets.
-coverage() {
-        local dir="${out}/coverage" gate
-        [ -d "${dir}" ] && find "${dir}" -name '*.gcda' -delete
-        suite coverage g++-15 "--coverage -O0" Debug -DCMAKE_EXE_LINKER_FLAGS=--coverage || return 1
-        gate="$(cpp_ci)" || return 1
-        (cd "${root}" && PATH="${HOME:-/root}/.local/bin:${PATH}" GCOV=gcov-15 BUILD_DIR="${dir}" SEARCH_PATHS="${dir}" \
-                EXCLUDE='test/.* build/.* examples/.*' bash "${gate}/.github/actions/gcovr/gcovr.sh")
-}
-
-# The format gate: the stable rung's clang-format over include/, test/ and examples/, reporting rather than rewriting.
-format() {
-        find "${root}/include" "${root}/test" "${root}/examples" -regex '.*\.\(hpp\|cpp\)' -print0 | xargs -0 clang-format-22 --dry-run --Werror
-}
-
-# cpp-ci's layering check, at the commit the workflows pin, over the folder kinds tools/layering.toml names.
+# cpp-ci's layering check, from the pinned checkout, over the folder kinds tools/layering.toml names.
 layering() {
-        local checker
-        checker="$(cpp_ci)" || return 1
-        (cd "${root}" && python3 -I "${checker}/.github/actions/layering/layering.py" tools/layering.toml)
+        (cd "${root}" && python3 -I "${cpp_ci}/.github/actions/layering/layering.py" tools/layering.toml)
 }
 
 # The working draft at the tag the headers cite, from the draft's own repository, then the check of their wording.
@@ -137,46 +66,57 @@ site() {
         (cd "${root}" && PYTHONDONTWRITEBYTECODE=1 "${dir}/venv/bin/mkdocs" build --strict --site-dir "${dir}/html")
 }
 
+# cpp-ci's legs in its run order, with this repository's own checks woven in after format.
+all_legs() {
+        "${ci_local[@]}" --list | awk -v checks="${own_checks[*]}" '
+                /^run, in order:/ { listing = 1; next }
+                listing && NF == 0 { exit }
+                listing { print $1; if ($1 == "format") print checks }' | tr ' ' '\n' | sed '/^$/d'
+}
+
 run_leg() {
         case "$1" in
-                gcc-1[56]) suite "$1" "g++-${1#gcc-}" "" "${build_type}" ;;
-                clang-2[23]) suite "$1" "clang++-${1#clang-}" "$(gcc_for_clang "${1#clang-}")" "${build_type}" ;;
-                # The trunk libstdc++ is newer than the GCC 15 that built the installed Boost.Test.
-                gcc-17) suite_with_boost_test "$1" g++-17 "" "${build_type}" ;;
-                clang-24) suite_with_boost_test "$1" clang++-24 "$(gcc_for_clang 24)" "${build_type}" ;;
-                libcxx-22) suite_with_boost_test "$1" clang++-22 "-stdlib=libc++" "${build_type}" -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++ ;;
-                # One rung in Debug, as the i686 job runs it.
-                i686) suite_with_boost_test "$1" g++-15 "-m32" Debug ;;
-                coverage) coverage ;;
-                tidy-2[234]) tidy "${1#tidy-}" ;;
-                format) format ;;
-                layering) layering ;;
-                draft) draft ;;
-                site) site ;;
-                *) echo "no leg named $1; tools/ci-local.sh --list names them" >&2; return 2 ;;
+                layering) layering > "${out}/$1.log" 2>&1 ;;
+                draft) draft > "${out}/$1.log" 2>&1 ;;
+                site) site > "${out}/$1.log" 2>&1 ;;
+                *) "${ci_local[@]}" "$1" > "${out}/$1.run" 2>&1 ;;
         esac
 }
 
-if [ "${1:-}" = "--list" ]; then
-        printf '%s\n' "${all_legs[@]}"
-        exit 0
-fi
-legs=("$@")
-[ "${#legs[@]}" -gt 0 ] || legs=("${all_legs[@]}")
+keep_going=0
+legs=()
+for argument in "$@"; do
+        case "${argument}" in
+                --list) all_legs; exit ;;
+                --quick) legs+=("${quick_legs[@]}") ;;
+                -k|--keep-going) keep_going=1 ;;
+                *) legs+=("${argument}") ;;
+        esac
+done
+mapfile -t known < <(all_legs) || exit 1
+[ "${#legs[@]}" -gt 0 ] || legs=("${known[@]}")
+for leg in "${legs[@]}"; do
+        printf '%s\n' "${known[@]}" | grep -qx -- "${leg}" \
+                || { echo "no leg named ${leg}; tools/ci-local.sh --list names them" >&2; exit 2; }
+done
 
 mkdir -p "${out}"
 results=()
 failed=0
 for leg in "${legs[@]}"; do
+        if [ "${failed}" -eq 1 ] && [ "${keep_going}" -eq 0 ]; then
+                results+=("$(printf '%-4s %-26s' skip "${leg}")")
+                continue
+        fi
         start="$(date +%s)"
         echo "== ${leg}"
-        if run_leg "${leg}" > "${out}/${leg}.log" 2>&1; then
+        if run_leg "${leg}"; then
                 verdict="pass"
         else
                 verdict="FAIL"
                 failed=1
         fi
-        results+=("$(printf '%-4s %-11s %5ss  %s' "${verdict}" "${leg}" "$(( $(date +%s) - start ))" "${out}/${leg}.log")")
+        results+=("$(printf '%-4s %-26s %5ss  %s' "${verdict}" "${leg}" "$(( $(date +%s) - start ))" "${out}/${leg}.log")")
 done
 printf '%s\n' "${results[@]}"
 exit "${failed}"
