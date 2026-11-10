@@ -4,6 +4,15 @@ Each release of xstd-misc, newest first. A version is a tag `vX.Y.Z` matching `p
 [CMakeLists.txt](CMakeLists.txt); an entry is written from the pull requests merged since the previous tag, grouped
 by what a user of the library meets. The numbers are this repository's pull requests.
 
+## Unreleased
+
+### Boost.Hash2 is opt-in
+
+- The CMake target and the installed package find nothing: a project that uses no hashing needs no Boost.Hash2.
+- The headers that use Hash2, `<xstd/misc/functional.hpp>`, `<xstd/misc/format.hpp>` and
+  `<xstd/misc/concepts/hash_algorithm.hpp>`, keep their paths. `<xstd/misc.hpp>` leaves them out, and
+  `<xstd/misc/concepts.hpp>` leaves out `hash_algorithm`. A consumer who includes one links `Boost::hash2` itself.
+
 ## 0.1.0 (2026-11-07)
 
 The first release: small extensions to the C++ standard library that the xstd family needs beyond integers and bit

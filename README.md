@@ -18,7 +18,8 @@
 xstd-misc is a header-only collection of small extensions to the C++ standard library: what the xstd family needs
 beyond integers, which [xstd-ints](https://github.com/rhalbersma/xstd-ints) holds, and bit containers, which
 [xstd-bits](https://github.com/rhalbersma/xstd-bits) holds. Each facility lives under the standard header it extends.
-[Boost.Hash2](https://www.boost.org/doc/libs/latest/libs/hash2/) is the one dependency. The library relies on the
+Only the hashing headers depend on anything: [Boost.Hash2](https://www.boost.org/doc/libs/latest/libs/hash2/), which
+the rest never includes. The library relies on the
 [C++20](https://wg21.link/N4861) standard and targets the draft [C++29](https://wg21.link/std) standard library, and
 every public API is in namespace `xstd`.
 
@@ -26,7 +27,7 @@ every public API is in namespace `xstd`.
 
 The headers come at three levels:
 
-- `<xstd/misc.hpp>` includes the whole library.
+- `<xstd/misc.hpp>` includes the whole library but the headers that use Boost.Hash2.
 - An umbrella per standard header the library has counterparts for, named after it: `<xstd/misc/utility.hpp>` for
   `<utility>`, `<xstd/misc/functional.hpp>` for `<functional>`, and so on.
 - Beneath each umbrella, in the folder of its name, a header per entity, such as
@@ -38,9 +39,9 @@ The umbrellas are:
 
 | Header | Description |
 | :----- | :---------- |
-| `<xstd/misc/concepts.hpp>` | The proxy concepts, a Boost.Hash2 hash algorithm, `specialization_of`, and two exposition-only concepts copied from the standard. |
-| `<xstd/misc/format.hpp>` | A `std::formatter` that writes a Boost.Hash2 digest as hex. |
-| `<xstd/misc/functional.hpp>` | `hash` and `digest`: an unordered container's hash and a key's digest, from a seeded Boost.Hash2 algorithm. |
+| `<xstd/misc/concepts.hpp>` | The proxy concepts, `specialization_of`, and two exposition-only concepts copied from the standard. `hash_algorithm`, a Boost.Hash2 hash algorithm, is opt-in, in `<xstd/misc/concepts/hash_algorithm.hpp>`. |
+| `<xstd/misc/format.hpp>` | A `std::formatter` that writes a Boost.Hash2 digest as hex. Opt-in. |
+| `<xstd/misc/functional.hpp>` | `hash` and `digest`: an unordered container's hash and a key's digest, from a seeded Boost.Hash2 algorithm. Opt-in. |
 | `<xstd/misc/type_traits.hpp>` | `is_specialization_of`, whether a hash algorithm avalanches, `XSTD_NO_UNIQUE_ADDRESS`, and the types that keep the place of a base or member that may be absent. |
 | `<xstd/misc/utility.hpp>` | `std::to_underlying`, extended to an enumerator in `std::integral_constant` and to a proxy reference to one. |
 
@@ -105,8 +106,15 @@ target_link_libraries(my_target PRIVATE xstd::misc)
 ```
 
 `find_package(xstd-misc CONFIG REQUIRED)` and `add_subdirectory(external/xstd-misc)` provide
-the same `xstd::misc` target. Each finds Boost.Hash2 with `find_package(boost_hash2 CONFIG)`, so it
-must be installed where CMake looks, as vcpkg's `boost-hash2` port or Boost 1.89+ puts it.
+the same `xstd::misc` target, which brings no dependency. The headers that use Boost.Hash2, everything under
+`functional/` and `format/`, and `concepts/hash_algorithm.hpp`, are opt-in: `<xstd/misc.hpp>` leaves them out, and
+`<xstd/misc/concepts.hpp>` leaves out `hash_algorithm`. A consumer who includes one links Boost.Hash2 1.89+ too, as
+vcpkg's `boost-hash2` port or Boost installs it:
+
+```cmake
+find_package(boost_hash2 1.89 CONFIG REQUIRED)
+target_link_libraries(my_target PRIVATE xstd::misc Boost::hash2)
+```
 
 To build and install the headers alone, without the test suite and its [Boost.Test](https://www.boost.org/doc/libs/latest/libs/test/)
 dependency, configure with tests off:

@@ -4,8 +4,6 @@
 namespace xstd {
   template<class R, class T>
     concept container_compatible_range = see below;
-  template<class H>
-    concept hash_algorithm = see below;
   template<class R, class V>
     concept proxy_semi_reference = see below;
   template<class I>
@@ -31,3 +29,6 @@ namespace xstd {
 | [`<xstd/misc/concepts/proxy_semi_reference.hpp>`](proxy_semi_reference.md) | `proxy_semi_reference` |
 | [`<xstd/misc/concepts/simple_allocator.hpp>`](simple_allocator.md) | `simple_allocator` |
 | [`<xstd/misc/concepts/specialization_of.hpp>`](specialization_of.md) | `specialization_of` |
+
+`<xstd/misc/concepts.hpp>` leaves out `hash_algorithm`, which uses Boost.Hash2: include its own header and link
+`Boost::hash2`.

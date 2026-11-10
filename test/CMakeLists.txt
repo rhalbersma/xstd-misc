@@ -9,6 +9,11 @@ string(MAKE_C_IDENTIFIER ${PROJECT_NAME} project_id)
 string(TOUPPER ${project_id} project_option_prefix)
 
 add_library(${project_id}_test_options INTERFACE)
+
+# The opt-in headers' one dependency, which every test links as a consumer of them would.
+find_package(boost_hash2 1.89 CONFIG REQUIRED)
+target_link_libraries(${project_id}_test_options INTERFACE Boost::hash2)
+
 option(${project_option_prefix}_WARNINGS_AS_ERRORS "Treat warnings as errors in ${PROJECT_NAME} tests" ${PROJECT_IS_TOP_LEVEL})
 
 # clang-cl reports CXX_COMPILER_ID Clang but only understands its MSVC-style
