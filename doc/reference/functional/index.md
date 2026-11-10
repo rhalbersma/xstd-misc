@@ -20,4 +20,6 @@ namespace xstd {
 | [`<xstd/misc/functional/digest.hpp>`](digest.md) | `digest` |
 | [`<xstd/misc/functional/hash.hpp>`](hash.md) | `hash` |
 
+Every header here uses Boost.Hash2, so `<xstd/misc.hpp>` leaves this group out: include it and link `Boost::hash2`.
+
 Where the digest is as wide as `size_t`, the hash is the digest unchanged.

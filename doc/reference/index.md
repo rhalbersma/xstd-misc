@@ -114,7 +114,9 @@ What each entity builds on in C++, and, for an entity that introduces a name or 
 
 ## Headers
 
-Each group of headers has a page, and each header a page under it:
+Each group of headers has a page, and each header a page under it. The headers that use Boost.Hash2, the `format` and
+`functional` groups and `hash_algorithm`, are left out of `<xstd/misc.hpp>`, `hash_algorithm` out of
+`<xstd/misc/concepts.hpp>` too, and a consumer who includes one links `Boost::hash2`:
 
 - [`<xstd/misc/concepts.hpp>`](concepts/index.md)
 - [`<xstd/misc/format.hpp>`](format/index.md)

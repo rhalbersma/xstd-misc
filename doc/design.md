@@ -7,8 +7,8 @@ that belong to no one domain. There is no single proposal behind it: it collects
 facilities suggested by existing practice that can be implemented portably, with
 a standard-library interface. What is here is what the domain libraries kept
 reaching for and none of them owns. The baseline is [C++20](https://wg21.link/N4861),
-and may move once a later standard is common across the tested toolchains. Consumers
-need one third-party library, Boost.Hash2, which the hashing facilities are built on.
+and may move once a later standard is common across the tested toolchains. Only the
+hashing facilities need a third-party library, Boost.Hash2, and they are opt-in.
 
 ## Principles
 
@@ -20,10 +20,9 @@ need one third-party library, Boost.Hash2, which the hashing facilities are buil
   A library that everything may depend on can depend on nothing, or the split that
   gave each of them a repository would make a chain of them. `test/CMakeLists.txt`
   enforces this over every public header rather than trusting it.
-- **Stay modular and header-only.** Linking `xstd::misc` adds include paths, the
-  [C++20](https://wg21.link/N4861) requirement and the header-only `Boost::hash2`,
-  but no runtime library; see [`hash`](#hash) for why Hash2 is a dependency
-  rather than an opt-in.
+- **Stay modular and header-only.** Linking `xstd::misc` adds include paths and the
+  [C++20](https://wg21.link/N4861) requirement, but no dependency and no runtime
+  library; see [`hash`](#hash) for why the headers that use Boost.Hash2 are opt-in.
 
 ## API shape
 
@@ -205,12 +204,15 @@ instead, so the library has no `hash_combine`.
 `std::hash`, beside [`digest`](#digest); the concept goes under `concepts/` and the avalanching
 trait under `type_traits/`, as every other concept and trait here does. Each header holds one
 name, so a consumer that needs only the concept or the trait does not pull in xxHash and XXH3.
-Boost.Hash2 is therefore a dependency of the library rather than of an opt-in adapter: the
-CMake target links `Boost::hash2`, the installed package config calls `find_dependency` for it,
-and the vcpkg manifest lists it. It is header-only, so that costs an include path and no
-runtime library, and xstd-bits, the library's main consumer, requires it already. An adapter
-directory such as xstd-ints' `ext/boost/` would keep it optional, but would fence off from
-`<xstd/misc.hpp>` the one facility here whose dependency every consumer has. `xstd::hash`,
+Boost.Hash2 is a dependency of those headers alone, not of the library: the CMake target and
+the installed package find nothing, `<xstd/misc.hpp>` and the `concepts/` umbrella leave the
+hashing headers out, and a consumer who includes `functional/`, `format/` or
+`concepts/hash_algorithm.hpp` links `Boost::hash2` itself. Boost.Hash2 arrived in Boost 1.88,
+so many installed Boosts lack it, and the headers that need nothing should not wait on it. The
+headers keep their paths rather than move to an adapter directory such as xstd-ints'
+`ext/boost/`: the hash belongs under `functional/` beside its standard counterpart, and only
+the umbrellas mark the line. The avalanching trait stays in `<xstd/misc/type_traits.hpp>`: it
+names Hash2's algorithms through forward declarations and includes none of Hash2. `xstd::hash`,
 `xstd::digest` and `xstd::hash_algorithm` name nothing in xstd-ints or xstd-bits, which share
 the namespace.
 

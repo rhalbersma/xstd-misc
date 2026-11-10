@@ -70,7 +70,7 @@ standard libraries' own tests of the entities with a counterpart: see
 
 Keep a focused test source for each public function, concept, and trait, mirroring its header path under `test/src/`. A source matching an umbrella header (for example, `concepts.cpp`, `type_traits.cpp`, or `utility.cpp`) tests only identities that span several focused facilities.
 
-The library itself needs one dependency, the header-only [Boost.Hash2](https://www.boost.org/doc/libs/latest/libs/hash2/) 1.89+, which [`vcpkg.json`](vcpkg.json) lists and the CMake project finds. Its test suite has a few more, and none of those are needed to *use* xstd-misc:
+The library itself needs no dependency. Its opt-in hashing headers need the header-only [Boost.Hash2](https://www.boost.org/doc/libs/latest/libs/hash2/) 1.89+, which [`vcpkg.json`](vcpkg.json) lists and the test suite finds. The suite has a few more, and none of those are needed to *use* xstd-misc:
 
 | Tool | Needed for | Notes |
 | :--- | :--------- | :---- |

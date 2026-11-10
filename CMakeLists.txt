@@ -19,8 +19,8 @@ include(GNUInstallDirs)
 # Set before any of them; consumers keep control over their own.
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Boost.Hash2 is a public dependency of the functional/ headers, and of the concept and trait they are built on.
-find_package(boost_hash2 1.89 CONFIG REQUIRED)
+# Boost.Hash2 is no dependency of the target: the headers that name it, functional/, format/digest.hpp and
+# concepts/hash_algorithm.hpp, are opt-in, and a consumer who includes one links Boost::hash2 itself.
 
 add_library(
     ${PROJECT_NAME} INTERFACE
@@ -40,11 +40,6 @@ add_library(xstd::misc ALIAS ${PROJECT_NAME})
 target_compile_features(
     ${PROJECT_NAME} INTERFACE
     cxx_std_20
-)
-
-target_link_libraries(
-    ${PROJECT_NAME} INTERFACE
-    Boost::hash2
 )
 
 target_sources(

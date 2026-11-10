@@ -23,6 +23,7 @@ include(${cpp-ci_SOURCE_DIR}/cmake/StdTestSuite.cmake)
 # The suites test to_underlying from C++23, the first standard to declare it.
 set(CMAKE_CXX_STANDARD 23)
 
-std_test_suite(libcxx MAPPING mapping.toml LINK_LIBRARIES xstd::misc)
-std_test_suite(libstdcxx MAPPING mapping.toml LINK_LIBRARIES xstd::misc)
-std_test_suite(msvc-stl MAPPING mapping.toml LINK_LIBRARIES xstd::misc)
+# The suites test hash, whose Boost.Hash2 its consumer links.
+std_test_suite(libcxx MAPPING mapping.toml LINK_LIBRARIES xstd::misc Boost::hash2)
+std_test_suite(libstdcxx MAPPING mapping.toml LINK_LIBRARIES xstd::misc Boost::hash2)
+std_test_suite(msvc-stl MAPPING mapping.toml LINK_LIBRARIES xstd::misc Boost::hash2)
