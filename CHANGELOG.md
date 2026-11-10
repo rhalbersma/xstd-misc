@@ -4,7 +4,7 @@ Each release of xstd-misc, newest first. A version is a tag `vX.Y.Z` matching `p
 [CMakeLists.txt](CMakeLists.txt); an entry is written from the pull requests merged since the previous tag, grouped
 by what a user of the library meets. The numbers are this repository's pull requests.
 
-## Unreleased
+## 0.2.0 (2026-11-10)
 
 ### Boost.Hash2 is opt-in
 
